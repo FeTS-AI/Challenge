@@ -1,0 +1,54 @@
+# General TODOs:
+# - The tmpfs when using writable-tmpfs seems to be very small. Not sure how to fix it, here are some ideas: 
+#   https://github.com/hpcng/singularity/issues/5718
+#   https://groups.google.com/a/lbl.gov/g/singularity/c/eq-tLo2SewM
+#   update 21/04/29: I'm not sure any more where this cause a problem, though
+
+
+# For more information on container definition files,
+# visit https://sylabs.io/guides/3.7/user-guide/definition_files.html
+
+Bootstrap: docker
+# this basically provides pytorch and OS
+From: nvcr.io/nvidia/pytorch:20.08-py3
+
+%files
+    # copy prediction script
+    ./predict.py /code/predict.py
+
+    # Copy model files (including model weights and metadata files, test script)
+    # TODO: simplify/mask paths here in final version
+    # /mnt/datasets/nnUNet_experiments/nnUNet/3d_fullres/Task001_BrainTumour /params
+    /mnt/datasets/nnUNet_experiments/nnUNet/2d/Task001_BrainTumour /params
+
+%post
+    # Install ubuntu packages
+    apt-get update && apt-get upgrade -y
+    apt install -y git
+    # Install your python requirements
+    python -m pip install git+https://github.com/MIC-DKFZ/nnUNet.git
+
+%runscript
+    # At test time, container is run like this:
+    # TODO insert final run command
+
+    # special for nnunet
+    # [ignore; if these are set and the container is run with -c option, this causes an error]
+    unset nnUNet_raw_data_base
+    unset nnUNet_preprocessed
+    unset RESULTS_FOLDER
+
+    # run the inference script
+    echo "Starting prediction..."
+    python /code/predict.py $1 $2 /params
+
+%labels
+    # Please add these fields
+    Author "Maximilian Zenk"
+    Institution "German cancer research center (DKFZ)"
+    Email "m.zenk@dkfz-heidelberg.de"
+
+%help
+    # optional
+    This singularity container predicts segmentations on the images in the input folder (first argument)
+    and saves them to the output folder (second argument). It uses a pretrained nnUNet model.
