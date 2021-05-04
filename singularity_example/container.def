@@ -2,7 +2,10 @@
 # - The tmpfs when using writable-tmpfs seems to be very small. Not sure how to fix it, here are some ideas: 
 #   https://github.com/hpcng/singularity/issues/5718
 #   https://groups.google.com/a/lbl.gov/g/singularity/c/eq-tLo2SewM
-#   update 21/04/29: I'm not sure any more where this cause a problem, though
+#   update 21/04/29: I'm not sure any more where this causes a problem. My container does not need the tmpfs.
+# - bootstrap image: Could there be problems with the nvidia driver? 
+#   From: nvcr.io/nvidia/pytorch:21.04-py3 worked but I'm not sure if this was just "luck". Find out how gpu support works!
+#   -> May have to specify minimum driver version as "HW requirement"
 
 
 # For more information on container definition files,
@@ -23,14 +26,14 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
 
 %post
     # Install ubuntu packages
-    apt-get update && apt-get upgrade -y
+    apt update && apt upgrade -y
     apt install -y git
     # Install your python requirements
     python -m pip install git+https://github.com/MIC-DKFZ/nnUNet.git
 
 %runscript
     # At test time, container is run like this:
-    # TODO insert final run command
+    # TODO insert final run command (singularity run ...)
 
     # special for nnunet
     # [ignore; if these are set and the container is run with -c option, this causes an error]
