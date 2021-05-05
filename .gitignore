@@ -1,0 +1,19 @@
+*.pyc
+.DS_Store
+.idea
+.vscode
+build/
+*.pdf
+
+# pycache etc
+**/__pycache__/
+
+# others
+_build/
+_templates/
+autodoc/
+.ipynb_checkpoints/
+*.egg-info/
+
+# ranking simulation data
+ranking/data
