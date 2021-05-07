@@ -42,12 +42,12 @@ def load_convert_save(filename):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description='Evaluate the model on the passed data folder')
-    parser.add_argument('in_folder', type=str,
+    parser = ArgumentParser(description='Evaluate a nnunet model on the data in the input folder.')
+    parser.add_argument('-i', '--in_folder', type=str,
                         help='Path to the data for which predictions are required.')
-    parser.add_argument('out_folder', type=str,
-                        help='Path to the data for which predictions are required.')
-    parser.add_argument('params_folder', type=str,
+    parser.add_argument('-o', '--out_folder', type=str,
+                        help='Path to the directory where segmentations should be saved.')
+    parser.add_argument('-p', '--params_folder', type=str,
                         help='Path to saved model parameters.')
     parser.add_argument('--nnunet_naming', action='store_true',
                         help='Path to saved model parameters.')

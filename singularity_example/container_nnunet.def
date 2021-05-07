@@ -43,7 +43,7 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
 
     # run the inference script
     echo "Starting prediction..."
-    python /code/predict.py $1 $2 /params
+    python /code/predict.py "$@" -p /params
 
 %labels
     # Please add these fields
