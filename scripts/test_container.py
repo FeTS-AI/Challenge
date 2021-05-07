@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    TIME_PER_CASE = 0.1   # seconds
+    TIME_PER_CASE = 200   # seconds
 
     sif_file = args.sif_file
     input_dir = Path(args.input_dir)
@@ -116,16 +116,45 @@ if __name__ == "__main__":
     #         print("Input folder test not passed. Please check messages above. Exiting...")
     #         exit(1)
 
+    # build singularity bind mount paths (to include only test cases without segmentation)
+    # this will result in a very long bind path, but I don't see another option.
+    hide_segmentations = True
+    if hide_segmentations:
+        bind_str = ""
+        container_dir = Path("/data")
+        for case in input_dir.iterdir():
+            if not case.is_dir():
+                continue
+            subject_id = case.name
+            t1_path = case / f"{subject_id}_t1.nii.gz"
+            t1c_path = case / f"{subject_id}_t1ce.nii.gz"
+            t2_path = case / f"{subject_id}_t2.nii.gz"
+            fl_path = case / f"{subject_id}_flair.nii.gz"
+            bind_str += (
+                f"{t1_path}:{container_dir.joinpath(*t1_path.parts[-2:])}:ro,"
+                f"{t1c_path}:{container_dir.joinpath(*t1c_path.parts[-2:])}:ro,"
+                f"{t2_path}:{container_dir.joinpath(*t2_path.parts[-2:])}:ro,"
+                f"{fl_path}:{container_dir.joinpath(*fl_path.parts[-2:])}:ro,"
+            )
+        bind_str += f"{output_dir}:/out_dir:rw"
+    else:
+        bind_str = f"{input_dir}:/data:ro,{output_dir}:/out_dir:rw"
+    os.environ["SINGULARITY_BINDPATH"] = bind_str
+
     print("\nRunning container...")
 
     ret = ""
     try:
         start_time = time.monotonic()
         singularity_str = (
-            f"singularity run -c --writable-tmpfs --net --network=none --nv"
-            f" -B {input_dir}:/data:ro,{output_dir}:/out_dir:rw"   # TODO adapt this so that individual files are bound
+            f"singularity run -C --writable-tmpfs --net --network=none --nv"
             f" {sif_file} -i /data -o /out_dir"
         )
+        # # this is for checking that the segmentations are hidden
+        # singularity_str = (
+        #     f"singularity exec -C --writable-tmpfs --net --network=none --nv"
+        #     f" {sif_file} ls -aR /data"
+        # )
         ret = subprocess.run(
             shlex.split(singularity_str),
             timeout=TIME_PER_CASE * num_cases,
