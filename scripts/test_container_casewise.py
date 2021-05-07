@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    TIME_PER_CASE = 0.1   # seconds
+    TIME_PER_CASE = 200   # seconds
 
     sif_file = args.sif_file
     input_dir = Path(args.input_dir)
@@ -109,7 +109,9 @@ if __name__ == "__main__":
     else:
         output_dir = Path(args.output_dir)
 
-    num_cases = len(list(input_dir.iterdir()))
+    case_list = [x for x in input_dir.iterdir() if x.is_dir()]
+    num_cases = len(case_list)
+    print(f"Found {num_cases} subjects")
     # # check input
     # for subdir in input_dir.iterdir():
     #     if not is_fets_patient_folder(subdir):
@@ -121,21 +123,27 @@ if __name__ == "__main__":
     ret = ""
     try:
         start_time = time.monotonic()
-        singularity_str = (
-            f"singularity run -c --writable-tmpfs --net --network=none --nv"
-            f" -B {input_dir}:/data:ro,{output_dir}:/out_dir:rw"   # TODO adapt this so that individual files are bound
-            f" {sif_file} -i /data -o /out_dir"
-        )
-        ret = subprocess.run(
-            shlex.split(singularity_str),
-            timeout=TIME_PER_CASE * num_cases,
-            check=True
-        )
+        for case_dir in case_list:
+            subject_id = case_dir.name
+            t1_path = Path("/data") / case_dir.name / f"{subject_id}_t1.nii.gz"
+            t1c_path = Path("/data") / case_dir.name / f"{subject_id}_t1ce.nii.gz"
+            t2_path = Path("/data") / case_dir.name / f"{subject_id}_t2.nii.gz"
+            fl_path = Path("/data") / case_dir.name / f"{subject_id}_flair.nii.gz"
+            singularity_str = (
+                f"singularity run -c --writable-tmpfs --net --network=none --nv"
+                f" -B {input_dir}:/data:ro,{output_dir}:/out_dir:rw"   # TODO adapt this so that individual files are bound
+                f" {sif_file} -s {subject_id} -t1 {t1_path} -t1c {t1c_path} -t2 {t2_path} -fl {fl_path} -o /out_dir"
+            )
+            print(singularity_str)
+            ret = subprocess.run(
+                shlex.split(singularity_str),
+                timeout=TIME_PER_CASE * num_cases,
+                check=True
+            )
         end_time = time.monotonic()
     except subprocess.TimeoutExpired:
         print(f"Timeout of {TIME_PER_CASE * num_cases} reached (for {num_cases} cases)."
               f" Aborting...")
-        exit(1)
     except subprocess.CalledProcessError:
         print(f"Running container failed:")
         print(ret)

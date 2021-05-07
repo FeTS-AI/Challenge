@@ -1,0 +1,51 @@
+# General TODOs:
+# - The tmpfs when using writable-tmpfs seems to be very small. Not sure how to fix it, here are some ideas: 
+#   https://github.com/hpcng/singularity/issues/5718
+#   https://groups.google.com/a/lbl.gov/g/singularity/c/eq-tLo2SewM
+#   update 21/04/29: I'm not sure any more where this causes a problem. My container does not need the tmpfs.
+# - bootstrap image: Could there be problems with the nvidia driver? 
+#   From: nvcr.io/nvidia/pytorch:21.04-py3 worked but I'm not sure if this was just "luck". Find out how gpu support works!
+#   -> May have to specify minimum driver version as "HW requirement"
+
+
+# For more information on container definition files,
+# visit https://sylabs.io/guides/3.7/user-guide/definition_files.html
+
+Bootstrap: docker
+# this basically provides pytorch and OS
+From: nvcr.io/nvidia/pytorch:20.08-py3
+
+%files
+    # copy prediction script
+    ./predict_simple_casewise.py /code/predict.py
+
+    # Copy model files (including model weights etc.)
+    # ...
+
+    # and maybe other stuff
+    ../requirements.txt /code/requirements.txt
+
+%post
+    # Install ubuntu packages
+    apt update && apt upgrade -y
+    # Install your python requirements
+    pip install -r /code/requirements.txt
+
+%runscript
+    # At test time, container is run like this:
+    # TODO insert final run command (singularity run ...)
+
+    # run the inference script
+    echo "Starting prediction..."
+    python /code/predict.py "$@" -p /params
+
+%labels
+    # Please add these fields
+    Author "Maximilian Zenk"
+    Institution "German cancer research center (DKFZ)"
+    Email "m.zenk@dkfz-heidelberg.de"
+
+%help
+    # optional
+    This singularity container predicts segmentations on the images in the input folder (first argument)
+    and saves them to the output folder (second argument). It uses thresholding as a dummy model.
