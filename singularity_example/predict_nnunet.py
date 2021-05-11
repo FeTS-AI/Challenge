@@ -3,6 +3,7 @@
 # - adapt to FeTS folder structure
 
 from argparse import ArgumentParser
+from pathlib import Path
 import shutil
 
 from batchgenerators.utilities.file_and_folder_operations import *
@@ -57,9 +58,11 @@ if __name__ == "__main__":
     in_folder = args.in_folder
     out_folder = args.out_folder
     params_folder = args.params_folder
+    output_suffix = "_nnunet_seg.nii.gz"
     
     # TODO remove this and go with fets-naming; just for testing purposes
-    if args.nnunet_naming:
+    nnunet_folder = args.nnunet_naming   # folder structure
+    if nnunet_folder:
         t1_suffix = "_0001.nii.gz"
         t1ce_suffix = "_0002.nii.gz"
         t2_suffix = "_0003.nii.gz"
@@ -85,17 +88,28 @@ if __name__ == "__main__":
     threshold = 200
 
     # we need to figure out the case IDS in the folder
-    case_identifiers = [filename[:-len(t1_suffix)]
-                        for filename in subfiles(in_folder, suffix=t1_suffix, join=False)]
-    print("Found %d case identifiers! Here are some examples: %s" % (
+    if nnunet_folder:
+        case_identifiers = [filename[:-len(t1_suffix)]
+                            for filename in subfiles(in_folder, suffix=t1_suffix, join=False)]
+    else:
+        case_identifiers = [p.name for p in Path(in_folder).iterdir() if p.is_dir()]
+    print("Found %d case identifiers! Here is an example: %s" % (
         len(case_identifiers), np.random.choice(case_identifiers, replace=False)))
+
 
     list_of_lists = []
     for c in case_identifiers:
-        t1_file = join(in_folder, c + t1_suffix)
-        t1c_file = join(in_folder, c + t1ce_suffix)
-        t2_file = join(in_folder, c + t2_suffix)
-        flair_file = join(in_folder, c + flair_suffix)
+        if nnunet_folder:
+            t1_file = join(in_folder, c + t1_suffix)
+            t1c_file = join(in_folder, c + t1ce_suffix)
+            t2_file = join(in_folder, c + t2_suffix)
+            flair_file = join(in_folder, c + flair_suffix)
+        else:
+            t1_file = join(in_folder, c, c + t1_suffix)
+            t1c_file = join(in_folder, c, c + t1ce_suffix)
+            t2_file = join(in_folder, c, c + t2_suffix)
+            flair_file = join(in_folder, c, c + flair_suffix)
+
         if not isfile(t1_file):
             print("file missing for case identifier %s. Expected to find: %s" %
                 (c, t1_file))
@@ -117,7 +131,7 @@ if __name__ == "__main__":
         maybe_mkdir_p(output_model)
         params_folder_model = join(params_folder, model_name)
 
-        output_filenames = [join(output_model, case + ".nii.gz")
+        output_filenames = [join(output_model, case + output_suffix)
                             for case in case_identifiers]
 
         predict_cases(params_folder_model, list_of_lists, output_filenames, folds, True, 6, 2, None, True, True,

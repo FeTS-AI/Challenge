@@ -1,13 +1,3 @@
-# General TODOs:
-# - The tmpfs when using writable-tmpfs seems to be very small. Not sure how to fix it, here are some ideas: 
-#   https://github.com/hpcng/singularity/issues/5718
-#   https://groups.google.com/a/lbl.gov/g/singularity/c/eq-tLo2SewM
-#   update 21/04/29: I'm not sure any more where this causes a problem. My container does not need the tmpfs.
-# - bootstrap image: Could there be problems with the nvidia driver? 
-#   From: nvcr.io/nvidia/pytorch:21.04-py3 worked but I'm not sure if this was just "luck". Find out how gpu support works!
-#   -> May have to specify minimum driver version as "HW requirement"
-
-
 # For more information on container definition files,
 # visit https://sylabs.io/guides/3.7/user-guide/definition_files.html
 
@@ -17,7 +7,7 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
 
 %files
     # copy prediction script
-    ./predict.py /code/predict.py
+    ./predict_nnunet.py /code/predict.py
 
     # Copy model files (including model weights and metadata files, test script)
     # TODO: simplify/mask paths here in final version
