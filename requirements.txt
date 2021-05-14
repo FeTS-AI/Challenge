@@ -1,6 +1,0 @@
-# TODO check if these are really necessary! Only for building?
-
-nnunet
-batchgenerators
-numpy
-SimpleITK

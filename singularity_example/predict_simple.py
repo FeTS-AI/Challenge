@@ -6,23 +6,29 @@ import numpy as np
 import SimpleITK as sitk
 
 
-def predict_thresholding(subject_dir, output_dir, model="dummy"):
-    output_fname = output_dir / f"{subject_dir.name}_{model}_seg.nii.gz"
+def dummy_predict(subject_dir: Path, output_dir: Path, algo_id="dummy"):
+    # Please stick to this naming convention for your prediction!
+    output_fname = output_dir / f"{subject_dir.name}_{algo_id}_seg.nii.gz"
 
+    # FeTS structure: one folder for each test case (subject), containing t1, t1ce, t2, flair
     image_files = list(subject_dir.glob('*.nii.gz'))
-    # subject dir is expected to have the four modalities
     if len(image_files) != 4:
         warnings.warn(f"Found {len(image_files)} files in subject directory, but expected four. Check data folder!!!")
 
     # use only t1 for "prediction"
-    t1_img = next(subject_dir.glob('*_t1.nii.gz'))
-    img_itk = sitk.ReadImage(str(t1_img.absolute()))
-    img_npy = sitk.GetArrayFromImage(img_itk)
-    seg_npy = np.zeros_like(img_npy)
-    labels = [1, 2, 4]
-    thresholds = np.percentile(img_npy[img_npy > 0.], [50, 70, 90])
-    for thresh, lab in zip(thresholds, labels):
-        seg_npy[img_npy > thresh] = lab
+    modalities = ["t1", "t1ce", "t2", "flair"]
+    labels = [0, 1, 2, 4]
+    seg_npy = None
+    for mod, lab in zip(modalities, labels):
+        # In this dummy example, I "predict" class 0 from the t1-image, 1 from t1ce etc.,
+        # using a simple thresholding operation
+        img_path = next(subject_dir.glob(f'*_{mod}.nii.gz'))
+        img_itk = sitk.ReadImage(str(img_path.absolute()))
+        img_npy = sitk.GetArrayFromImage(img_itk)
+        
+        if seg_npy is None:
+            seg_npy = np.zeros_like(img_npy)
+        seg_npy[img_npy > np.percentile(img_npy, 95)] = lab
     
     seg_itk = sitk.GetImageFromArray(seg_npy)
     seg_itk.CopyInformation(img_itk)
@@ -35,17 +41,15 @@ if __name__ == "__main__":
                         help='Path to the data for which predictions are required.')
     parser.add_argument('-o', '--out_folder', type=str,
                         help='Path to the directory where segmentations should be saved.')
-    parser.add_argument('-p', '--params_folder', type=str,
-                        help='Path to saved model parameters.')
-
     args = parser.parse_args()
 
+    algorithm_identifier = "dummy"
     in_folder = Path(args.in_folder)
     out_folder = Path(args.out_folder)
-    params_folder = Path(args.params_folder)   # not used in this example
+    params_folder = Path("/params")
+    # no parameters are used in this example. Please copy model weights to the image when it is built.
 
-    # we need to figure out the case IDS in the folder
     for subject in in_folder.iterdir():
         if subject.is_dir():
             print(f"Processing subject {subject.name}")
-            predict_thresholding(subject, out_folder)
+            dummy_predict(subject, out_folder, algo_id=algorithm_identifier)

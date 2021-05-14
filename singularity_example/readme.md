@@ -1,17 +1,23 @@
 # Guide for singularity example
 
-Maybe explain here what the files are, how to build the container and how the container is run at test time.
+This repository contains examples for how to build a container:
+- A simplistic example using a dummy prediction algorithm (`_simple`)
+- An example using nnUNet-models to make predictions (`_nnunet`)
+Each features a definition file (`.def`) and a python script that calls the actual prediction function (`prediction_*.py`).
 
-Useful external resource: https://singularity-tutorial.github.io/
+Instructions how to build and run a singularity container are given below. For a comprehensive introduction to singularity, this  [Singularity tutorial](https://singularity-tutorial.github.io/) (external resource) is recommended.
 
-## Build
+## Prerequisites
+Singularity has to be installed [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps)
+
+## Building a container
 ```
 singularity build --fakeroot container_simple.sif container_simple.def
 ```
 With `--fakeroot`, you don't need to build with sudo (security option).
 Tip for debugging building: use the `--sandbox` option
 
-## Run
+## Running a container
 This is the command that will be executed at test time:
 ```
 singularity run -c --writable-tmpfs --net --network=none --nv -B /path/to/test/data:/data:ro,/path/to/output/dir:/out_dir:rw container_simple.sif -i /data -o /out_dir

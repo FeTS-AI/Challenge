@@ -6,14 +6,15 @@ Bootstrap: docker
 From: nvcr.io/nvidia/pytorch:20.08-py3
 
 %files
-    # copy prediction script
+    # Specify here what should be copied to the container when it is built
+    # copy prediction script (and other code if necessary)
     ./predict_simple.py /code/predict.py
 
-    # Copy model files (including model weights etc.)
-    # ...
+    # Copy model files (in particular model weights) [not used here], .e.g
+    # /path/to/checkpoints/model.ckpt /params/model.ckpt
 
     # and maybe other stuff
-    ../requirements.txt /code/requirements.txt
+    ./requirements_simple.txt /code/requirements.txt
 
 %post
     # Install ubuntu packages
@@ -22,12 +23,11 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     pip install -r /code/requirements.txt
 
 %runscript
-    # At test time, container is run like this:
-    # TODO insert final run command (singularity run ...)
-
-    # run the inference script
+    # The following interface is required:
+    # -i: path to input folder
+    # -o: path to output folder
     echo "Starting prediction..."
-    python /code/predict.py "$@" -p /params
+    python /code/predict.py "$@"
 
 %labels
     # Please add these fields
@@ -37,5 +37,5 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
 
 %help
     # optional
-    This singularity container predicts segmentations on the images in the input folder (first argument)
-    and saves them to the output folder (second argument). It uses thresholding as a dummy model.
+    This singularity container predicts segmentations on the images in the input folder (-i)
+    and saves them to the output folder (-o). This example uses a dummy prediction algorithm.

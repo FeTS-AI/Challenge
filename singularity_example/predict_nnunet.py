@@ -1,6 +1,10 @@
 # TODO:
 # - refactor a bit
 # - adapt to FeTS folder structure
+# Feedback Fabian:
+# wenn du das skript oeffentlich stellen willst macht es sinn
+# gerade in predict_nnunet.py noch mal die variablennamen klarer zu machen
+# und vielleicht mehr dokumentation zu schreiben
 
 from argparse import ArgumentParser
 from pathlib import Path
@@ -44,22 +48,28 @@ def load_convert_save(filename):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description='Evaluate a nnunet model on the data in the input folder.')
+    # Arguments which are part of the interface of your container
     parser.add_argument('-i', '--in_folder', type=str,
                         help='Path to the data for which predictions are required.')
     parser.add_argument('-o', '--out_folder', type=str,
                         help='Path to the directory where segmentations should be saved.')
+    # Further arguments could be passed from your container runscript if necessary
     parser.add_argument('-p', '--params_folder', type=str,
                         help='Path to saved model parameters.')
+    # TODO remove this argument in the final version
     parser.add_argument('--nnunet_naming', action='store_true',
                         help='Path to saved model parameters.')
 
     args = parser.parse_args()
-    # params_folder = join(os.environ["RESULTS_FOLDER"], "nnUNet/2d/Task001_BrainTumour")
+
     in_folder = args.in_folder
     out_folder = args.out_folder
     params_folder = args.params_folder
-    output_suffix = "_nnunet_seg.nii.gz"
     
+    algo_id = "nnunet"
+    threshold = 200
+    # necrosis and non-enhancing tumor in MY label convention (apply postprocessing before converting to brats labels!)
+    replace_with = 2
     # TODO remove this and go with fets-naming; just for testing purposes
     nnunet_folder = args.nnunet_naming   # folder structure
     if nnunet_folder:
@@ -72,9 +82,6 @@ if __name__ == "__main__":
         t1ce_suffix = "_t1ce.nii.gz"
         t2_suffix = "_t2.nii.gz"
         flair_suffix = "_flair.nii.gz"
-    
-    # necrosis and non-enhancing tumor in MY label convention (apply postprocessing before converting to brats labels!)
-    replace_with = 2
 
     # could include more models for ensembling
     model_list = [
@@ -83,9 +90,8 @@ if __name__ == "__main__":
     # model_list = ['nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5',
     #             'nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5',
     #             'nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5']
-    folds_list = [tuple(np.arange(5))]
+    folds_list = [tuple(np.arange(5)),]   # one for each model
 
-    threshold = 200
 
     # we need to figure out the case IDS in the folder
     if nnunet_folder:
@@ -96,51 +102,56 @@ if __name__ == "__main__":
     print("Found %d case identifiers! Here is an example: %s" % (
         len(case_identifiers), np.random.choice(case_identifiers, replace=False)))
 
-
-    list_of_lists = []
-    for c in case_identifiers:
+    # Build list [[case1_t1, case1_t1ce, case1_t2, case1_flair],
+    #             [case2_t1, case2_t1ce, case2_t2, case2_flair], ...] used by nnunet
+    model_inputs_list = []
+    for case in case_identifiers:
         if nnunet_folder:
-            t1_file = join(in_folder, c + t1_suffix)
-            t1c_file = join(in_folder, c + t1ce_suffix)
-            t2_file = join(in_folder, c + t2_suffix)
-            flair_file = join(in_folder, c + flair_suffix)
+            t1_file = join(in_folder, case + t1_suffix)
+            t1c_file = join(in_folder, case + t1ce_suffix)
+            t2_file = join(in_folder, case + t2_suffix)
+            flair_file = join(in_folder, case + flair_suffix)
         else:
-            t1_file = join(in_folder, c, c + t1_suffix)
-            t1c_file = join(in_folder, c, c + t1ce_suffix)
-            t2_file = join(in_folder, c, c + t2_suffix)
-            flair_file = join(in_folder, c, c + flair_suffix)
+            t1_file = join(in_folder, case, case + t1_suffix)
+            t1c_file = join(in_folder, case, case + t1ce_suffix)
+            t2_file = join(in_folder, case, case + t2_suffix)
+            flair_file = join(in_folder, case, case + flair_suffix)
 
         if not isfile(t1_file):
             print("file missing for case identifier %s. Expected to find: %s" %
-                (c, t1_file))
+                (case, t1_file))
         if not isfile(t1c_file):
             print("file missing for case identifier %s. Expected to find: %s" %
-                (c, t1c_file))
+                (case, t1c_file))
         if not isfile(t2_file):
             print("file missing for case identifier %s. Expected to find: %s" %
-                (c, t2_file))
+                (case, t2_file))
         if not isfile(flair_file):
             print("file missing for case identifier %s. Expected to find: %s" %
-                (c, flair_file))
-        list_of_lists.append([t1_file, t1c_file, t2_file, flair_file])
+                (case, flair_file))
+        model_inputs_list.append([t1_file, t1c_file, t2_file, flair_file])
 
-    prediction_folders = []
+    # each model saves predictions in its own folder first; will be merged later
+    tmp_prediction_dirs = []
     for model_name, folds in zip(model_list, folds_list):
-        output_model = join(out_folder, model_name)
-        prediction_folders.append(output_model)
-        maybe_mkdir_p(output_model)
-        params_folder_model = join(params_folder, model_name)
+        curr_out_folder = join(out_folder, model_name)
+        tmp_prediction_dirs.append(curr_out_folder)
+        maybe_mkdir_p(curr_out_folder)
+        curr_params_folder = join(params_folder, model_name)
 
-        output_filenames = [join(output_model, case + output_suffix)
+        output_filenames = [join(curr_out_folder, f"{case}_{algo_id}_seg.nii.gz")
                             for case in case_identifiers]
 
-        predict_cases(params_folder_model, list_of_lists, output_filenames, folds, True, 6, 2, None, True, True,
+        # TODO resolve this messy argument list
+        predict_cases(curr_params_folder, model_inputs_list, output_filenames, folds, True, 6, 2, None, True, True,
                       True, False, 0.5)
 
-    merge(prediction_folders, out_folder, 1, True, None, False)
+    merge(tmp_prediction_dirs, out_folder, 1, True, None, False)
 
     for f in subfiles(out_folder):
+        # custom post-processing of predicted segmentations
         apply_brats_threshold(f, f, threshold, replace_with)
         load_convert_save(f)
 
-    _ = [shutil.rmtree(i) for i in prediction_folders]
+    # cleanup of temporary predictions
+    _ = [shutil.rmtree(i) for i in tmp_prediction_dirs]
