@@ -9,11 +9,7 @@ import time
 
 # TODO use logging instead of prints
 
-# Max: Why necessary? to import evaluation script?
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
-
-
+# deprecated; participants will be provided a folder with appropriate structure
 def is_fets_patient_folder(data_path: Path):
     # expected structure: see https://fets-ai.github.io/Front-End/process_data
     # in principle, each patient dir has to have these four files (with prefix patient-id)
@@ -47,40 +43,41 @@ def is_fets_patient_folder(data_path: Path):
     return check_ok
 
 
-def is_fets_prediction_folder(pred_path: Path, data_path: Path):
-    check_ok = True
+def is_fets_prediction_folder(pred_path: Path, data_path: Path, algorithm_id: str):
+    error_list = []
 
-    patients = list(data_path.iterdir())
+    subjects = list(data_path.iterdir())
     predictions = list(pred_path.iterdir())
-    if len(patients) != len(predictions):
-        print(f"Number of patients and predictions does not match!")
-        check_ok = False
+    if len(subjects) != len(predictions):
+        print(f"Number of patients and predictions does not match!")   # warning
     # TODO decide how strict we are going to be during evaluation: What happens if more than the required files exist in output dir? check here?
-    for case in patients:
-        if not case.is_dir():
-            print(
-                f"Found misplaced file: {case}. This will not be considered for evaluation!")
-            check_ok = False
-            continue
+    for case in subjects:
+        match_found = False
         for pred in predictions:
             if pred.is_file():
-                check_ok = pred.name == f"{case.name}.nii.gz"
-                # TODO update filename convention here
+                # TODO check filename convention again
+                if pred.name == f"{case.name}_{algorithm_id}_seg.nii.gz":
+                    match_found = True
+                    break
             else:
-                print(
-                    f"Found misplaced dir: {pred}. This will not be considered for evaluation!")
-                check_ok = False
-    return check_ok
+                print(f"Found misplaced dir: {pred}. This will not be considered for evaluation!")   # warning
+        if not match_found:
+            print(f"Could not find a prediction for case {case.name}!")   # error
+            error_list.append(case.name)
+    print(f"encountered {len(error_list)} errors. Please check logs")
+    return error_list
 
 
 if __name__ == "__main__":
+    # TODO 
+    raise RuntimeError("this code is outdated! Will be updated once the run_submission.py is fixed.")
 
     print("Testing FeTS singularity image...")
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "sif_file", type=str,
-        help="Name of the container file you want to test"
+        help="Name of the container file you want to test. Should have the format 'teamXYZ.sif'"
     )
     parser.add_argument(
         "-i",
@@ -88,19 +85,31 @@ if __name__ == "__main__":
         required=True,
         type=str,
         help=(
-            "Input data lies here. Watch out for correct folder structure!"
+            "Input data lies here. Make absolutely sure it has the correct folder structure!"
         ),
     )
     parser.add_argument(
-        "-o", "--output_dir", required=False, type=str, help="Folder where the output/predictions will be written too"
+        "-o", "--output_dir", required=False, type=str, help="Folder where the output/predictions will be written to"
+    )
+    parser.add_argument(
+        "--timeout", default=200, required=False, type=int,
+        help="Time budget PER CASE in seconds. Evaluation will be stopped after the total timeout of timeout * n_cases."
+    )
+    parser.add_argument(
+        "--bind_segs", action="store_true", help="Testing option for binding the whole FeTS data folder (including groundtruth seg.)."
+    )
+    parser.add_argument(
+        "--test_bindings", action="store_true", help="Testing option for printing the directory content of /data to a file."
     )
 
     args = parser.parse_args()
 
-    TIME_PER_CASE = 200   # seconds
-
+    TIME_PER_CASE = args.timeout   # seconds
     sif_file = args.sif_file
     input_dir = Path(args.input_dir)
+    bind_all = args.bind_segs   # TODO remove this option
+    test_ls = args.test_bindings   # TODO remove this option
+    
     tmp_dir = None
     if args.output_dir is None:
         # Max: not sure where this is saved eventually. Looks like all results are cleared after the run in this case?
@@ -110,16 +119,10 @@ if __name__ == "__main__":
         output_dir = Path(args.output_dir)
 
     num_cases = len(list(input_dir.iterdir()))
-    # # check input
-    # for subdir in input_dir.iterdir():
-    #     if not is_fets_patient_folder(subdir):
-    #         print("Input folder test not passed. Please check messages above. Exiting...")
-    #         exit(1)
 
-    # build singularity bind mount paths (to include only test cases without segmentation)
-    # this will result in a very long bind path, but I don't see another option.
-    hide_segmentations = True
-    if hide_segmentations:
+    # build singularity bind mount paths (to include only test case images without segmentation)
+    # this will result in a very long bind path, unfortunately.
+    if not bind_all:   # default case
         bind_str = ""
         container_dir = Path("/data")
         for case in input_dir.iterdir():
@@ -139,6 +142,7 @@ if __name__ == "__main__":
         bind_str += f"{output_dir}:/out_dir:rw"
     else:
         bind_str = f"{input_dir}:/data:ro,{output_dir}:/out_dir:rw"
+    print(f"The bind path string is in total {len(bind_str)} characters long.")
     os.environ["SINGULARITY_BINDPATH"] = bind_str
 
     print("\nRunning container...")
@@ -146,15 +150,18 @@ if __name__ == "__main__":
     ret = ""
     try:
         start_time = time.monotonic()
-        singularity_str = (
-            f"singularity run -C --writable-tmpfs --net --network=none --nv"
-            f" {sif_file} -i /data -o /out_dir"
-        )
-        # # this is for checking that the segmentations are hidden
-        # singularity_str = (
-        #     f"singularity exec -C --writable-tmpfs --net --network=none --nv"
-        #     f" {sif_file} ls -aR /data"
-        # )
+
+        if not test_ls:   # default case
+            singularity_str = (
+                f"singularity run -C --writable-tmpfs --net --network=none --nv"
+                f" {sif_file} -i /data -o /out_dir"
+            )
+        else:
+            # this is for checking that the segmentations are hidden
+            singularity_str = (
+                f"singularity exec -C --writable-tmpfs --net --network=none --nv"
+                f" {sif_file} ls -aR /data > /out_dir/file_list_container"
+            )
         ret = subprocess.run(
             shlex.split(singularity_str),
             timeout=TIME_PER_CASE * num_cases,
@@ -169,20 +176,20 @@ if __name__ == "__main__":
         print(f"Running container failed:")
         print(ret)
         exit(1)
+    # TODO maybe "except else" block to catch any other exceptions and try to continue evaluation?
     print(f"Execution time of the container: {end_time - start_time:0.2f} s")
 
-    # # check output
-    # if not is_fets_prediction_folder(output_dir, input_dir):
-    #     print("Output folder test not passed. Please check messages above. Exiting...")
-    #     exit(1)
+    # check output
+    if not is_fets_prediction_folder(output_dir, input_dir, algorithm_id=sif_file.stem):
+        print("Output folder test not passed. Please check messages above. Exiting...")
+        exit(1)
 
     print("\nEvaluating predictions...")
-
-    # TODO get evaluation code from Spyros
-    brain_score = 0
-    print("Brain-dataset score:", brain_score)
+    # Metrics are calculated in FeTS-CLI
+    # TODO but for testing, it would be good if the participants can do it here.
 
     if tmp_dir is not None:
         tmp_dir.cleanup()
+    # TODO maybe clean-up? But maybe it's also better to just wipe the output folder after evaluation of one algorithm is done (in CLI)
 
     print("Done.")
