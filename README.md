@@ -3,6 +3,10 @@
 # Challenge
 The repo for the FeTS Challenge
 
+## Frequently asked questions
+
+Please see [FAQ](FAQ.md).
+
 ## Citation
 
 Please cite [this paper](https://arxiv.org/abs/2105.05874) when using the data:
