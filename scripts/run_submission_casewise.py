@@ -21,18 +21,18 @@ if __name__ == "__main__":
         "sif_file", type=str,
         help="Name of the container file you want to test. Should have the format 'teamXYZ.sif'"
     )
-    parser.add_argument(
-        "-i",
-        "--input_dir",
-        required=True,
-        type=str,
-        help=(
-            "Input data FOR ONE SUBJECT lies here. Make absolutely sure it has the correct folder structure!"
-        ),
-    )
-    parser.add_argument(
-        "-o", "--output_dir", required=True, type=str, help="Folder where the output/predictions will be written to"
-    )
+    parser.add_argument('-s', '--subject_id', type=str,
+                        help='Subjext ID.')
+    parser.add_argument('-t1', '--t1_path', type=str,
+                        help='absolute path to t1 image.')
+    parser.add_argument('-t1c', '--t1c_path', type=str,
+                        help='absolute path to t1 post contrast image.')
+    parser.add_argument('-t2', '--t2_path', type=str,
+                        help='absolute path to t2 image.')
+    parser.add_argument('-fl', '--fl_path', type=str,
+                        help='absolute path to flair image.')
+    parser.add_argument('-o', '--out_folder', type=str,
+                        help='absolute path to output directory where the container will write all results, ')
     parser.add_argument(
         "--timeout", default=200, required=False, type=int,
         help="Time budget PER CASE in seconds. Evaluation will be stopped after the total timeout of timeout * n_cases."
@@ -42,9 +42,12 @@ if __name__ == "__main__":
 
     TIME_PER_CASE = args.timeout   # seconds
     sif_file = args.sif_file
-    subject_dir = Path(args.input_dir)
-    bind_all = args.bind_segs   # TODO remove this option
-    output_dir = Path(args.output_dir)
+    subject_id = args.subject_id
+    t1_path = Path(args.t1_path)
+    t1c_path = Path(args.t1c_path)
+    t2_path = Path(args.t2_path)
+    fl_path = Path(args.fl_path)
+    output_dir = Path(args.out_folder)
 
     container_indir = Path("/data")
     container_outdir = Path("/out_dir")
@@ -52,15 +55,10 @@ if __name__ == "__main__":
     # build singularity bind mount paths (to include only test case images without segmentation)
     # this will result in a very long bind path, unfortunately.
     bind_str = ""
-    subject_id = subject_dir.name
-    t1_path = subject_dir / f"{subject_id}_t1.nii.gz"
-    t1c_path = subject_dir / f"{subject_id}_t1ce.nii.gz"
-    t2_path = subject_dir / f"{subject_id}_t2.nii.gz"
-    fl_path = subject_dir / f"{subject_id}_flair.nii.gz"
-    t1_path_container = container_indir.joinpath(*t1_path.parts[-2:])
-    t1c_path_container = container_indir.joinpath(*t1c_path.parts[-2:])
-    t2_path_container = container_indir.joinpath(*t2_path.parts[-2:])
-    fl_path_container = container_indir.joinpath(*fl_path.parts[-2:])
+    t1_path_container = container_indir / t1_path.name
+    t1c_path_container = container_indir / t1c_path.name
+    t2_path_container = container_indir / t2_path.name
+    fl_path_container = container_indir / fl_path.name
     bind_str += (
         f"{t1_path}:{t1_path_container}:ro,"
         f"{t1c_path}:{t1c_path_container}:ro,"
@@ -82,7 +80,7 @@ if __name__ == "__main__":
         singularity_str = (
             f"singularity run -C --writable-tmpfs --net --network=none --nv"
             f" {sif_file}"
-            f" -s {subject_dir.name}"
+            f" -s {subject_id}"
             f" -t1 {t1_path_container}"
             f" -t1c {t1c_path_container}"
             f" -t2 {t2_path_container}"

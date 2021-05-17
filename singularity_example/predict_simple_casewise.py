@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import SimpleITK as sitk
 
+# TODO outdated; copy & adapt the predict_simple.py code once it is final.
 
 def predict_thresholding_subject(subject_id, t1_path, t1c_path, t2_path, fl_path, output_dir, model="dummy"):
     output_fname = output_dir / f"{subject_id}_{model}_seg.nii.gz"

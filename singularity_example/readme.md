@@ -1,11 +1,11 @@
 # Guide for singularity example
 
-This repository contains examples for how to build a container:
+This repository contains examples for how to prepare a container submission for task 2:
 - A simplistic example using a dummy prediction algorithm (`_simple`)
 - An example using nnUNet-models to make predictions (`_nnunet`)
 Each features a definition file (`.def`) and a python script that calls the actual prediction function (`prediction_*.py`).
 
-Instructions how to build and run a singularity container are given below. For a comprehensive introduction to singularity, this  [Singularity tutorial](https://singularity-tutorial.github.io/) (external resource) is recommended.
+Instructions how to build and run a singularity container are given below. For a comprehensive introduction to singularity, [this tutorial](https://singularity-tutorial.github.io/) (external resource) is recommended.
 
 ## Prerequisites
 Singularity has to be installed [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps)
@@ -15,27 +15,23 @@ Singularity has to be installed [(instructions)](https://sylabs.io/guides/3.7/us
 singularity build --fakeroot container_simple.sif container_simple.def
 ```
 With `--fakeroot`, you don't need to build with sudo (security option).
+
 Tip for debugging building: use the `--sandbox` option
 
 ## Running a container
 This is the command that will be executed at test time:
 ```
-singularity run -c --writable-tmpfs --net --network=none --nv -B /path/to/test/data:/data:ro,/path/to/output/dir:/out_dir:rw container_simple.sif -i /data -o /out_dir
+export SINGULARITY_BINDPATH="/path/to/test/data:/data:ro,/path/to/output/dir:/out_dir:rw"
+singularity run -C --writable-tmpfs --net --network=none --nv container_simple.sif -i /data -o /out_dir
 ```
-Description of the options:
-- `--c` : TODO
-- `--writable-tmpfs` : TODO
+The environment variable makes sure that all necessary data files can be accessed from within the container as bind mounts (pattern `src:dest:read-write-mode`).
+Description of the `singularity run` options (see also `singularity run --help`):
+- `--C` : Restrict access to host filesytem and environment to a minimum
+- `--writable-tmpfs` : Allows writing to a in-memory temporary filesystem
 - `--net --network=none` : No network access
 - `--nv` : use experimental GPU (nvidia) support
-- `-B` : bind directory (src:dest:read-write-mode).
 
-Tip for debugging runscript (from .def file): `singularity shell` instead of `singularity run` gives an interactive shell.
-
-*TODO* Open questions:
-- Maybe even `-C` (contain all) instead of `-c`? (recommended in tutorial) -> contain all works as well with my container
-- in the tutorial, they also recommend `--no-home`. Necessary if `-c` or `-C` are set?
-- Why do we need `--writable-tmpfs`? -> maybe temporary results can be saved (however, not much space available?)
--> ask David again and maybe kaapana guys about these options
+Tip for debugging runscript (defined in the .def file): `singularity shell` instead of `singularity run` gives an interactive shell.
 
 
 # To do's

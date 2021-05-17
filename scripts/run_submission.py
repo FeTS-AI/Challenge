@@ -43,7 +43,6 @@ if __name__ == "__main__":
     TIME_PER_CASE = args.timeout   # seconds
     sif_file = args.sif_file
     input_dir = Path(args.input_dir)
-    bind_all = args.bind_segs   # TODO remove this option
     output_dir = Path(args.output_dir)
 
     container_indir = Path("/data")
