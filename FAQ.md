@@ -1,5 +1,11 @@
 # Frequently asked questions
 
+## Table of contents
+* [What is the main website for the challenge?](#what-is-the-main-website-for-the-challenge)
+* [How do I register for the challenge?](#how-do-i-register-for-the-challenge)
+* [How do I obtain the data for the challenge?](#how-do-i-obtain-the-data-for-the-challenge)
+* [What is the data citation?](#what-is-the-data-citation)
+
 ## What is the main website for the challenge?
 
 The main website is https://miccai2021.fets.ai/. Additionally, participants may follow the related [Twitter handle](https://twitter.com/FeTS_Challenge) for updates.
