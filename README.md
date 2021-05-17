@@ -5,7 +5,7 @@ The repo for the FeTS Challenge
 
 ## Citation
 
-Please cite the following paper when using the data:
+Please cite [this paper](https://arxiv.org/abs/2105.05874) when using the data:
 
 ```latex
 @misc{pati2021federated,
