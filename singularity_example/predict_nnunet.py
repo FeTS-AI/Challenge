@@ -1,11 +1,3 @@
-# TODO:
-# - refactor a bit
-# - adapt to FeTS folder structure
-# Feedback Fabian:
-# wenn du das skript oeffentlich stellen willst macht es sinn
-# gerade in predict_nnunet.py noch mal die variablennamen klarer zu machen
-# und vielleicht mehr dokumentation zu schreiben
-
 from argparse import ArgumentParser
 from pathlib import Path
 import shutil
@@ -17,6 +9,7 @@ import SimpleITK as sitk
 import numpy as np
 
 
+# part of custom segmentation post-processing1
 def apply_brats_threshold(fname, output_fname, threshold, replace_with):
     img_itk = sitk.ReadImage(fname)
     img_npy = sitk.GetArrayFromImage(img_itk)
@@ -29,6 +22,7 @@ def apply_brats_threshold(fname, output_fname, threshold, replace_with):
     sitk.WriteImage(img_itk_postprocessed, output_fname)
 
 
+# nnUNet has a different label convention than BraTS; convert back here
 def convert_labels_back_to_BraTS(seg: np.ndarray):
     new_seg = np.zeros_like(seg)
     new_seg[seg == 1] = 2
@@ -47,7 +41,8 @@ def load_convert_save(filename):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description='Evaluate a nnunet model on the data in the input folder.')
+    parser = ArgumentParser(
+        description='Evaluate a nnunet model on the data in the input folder.')
     # Arguments which are part of the interface of your container
     parser.add_argument('-i', '--in_folder', type=str,
                         help='Path to the data for which predictions are required.')
@@ -56,49 +51,28 @@ if __name__ == "__main__":
     # Further arguments could be passed from your container runscript if necessary
     parser.add_argument('-p', '--params_folder', type=str,
                         help='Path to saved model parameters.')
-    # TODO remove this argument in the final version
-    parser.add_argument('--nnunet_naming', action='store_true',
-                        help='Path to saved model parameters.')
 
     args = parser.parse_args()
 
     in_folder = args.in_folder
     out_folder = args.out_folder
     params_folder = args.params_folder
-    
+
     algo_id = "nnunet"
     threshold = 200
-    # necrosis and non-enhancing tumor in MY label convention (apply postprocessing before converting to brats labels!)
+    # necrosis and non-enhancing tumor in nnUNet label convention
+    # (postprocessing is applied before converting to brats labels!)
     replace_with = 2
-    # TODO remove this and go with fets-naming; just for testing purposes
-    nnunet_folder = args.nnunet_naming   # folder structure
-    if nnunet_folder:
-        t1_suffix = "_0001.nii.gz"
-        t1ce_suffix = "_0002.nii.gz"
-        t2_suffix = "_0003.nii.gz"
-        flair_suffix = "_0000.nii.gz"
-    else:
-        t1_suffix = "_t1.nii.gz"
-        t1ce_suffix = "_t1ce.nii.gz"
-        t2_suffix = "_t2.nii.gz"
-        flair_suffix = "_flair.nii.gz"
 
-    # could include more models for ensembling
-    model_list = [
-        'nnUNetTrainerV2__nnUNetPlansv2.1',
-    ]
-    # model_list = ['nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5',
-    #             'nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5',
-    #             'nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5']
-    folds_list = [tuple(np.arange(5)),]   # one for each model
+    # this adds all available model paths (nnunet result folders) to a dict
+    # each model has been trained on several folds with nnunet
+    model_folds_dict = {}
+    for model_path in Path(params_folder).iterdir():
+        n_folds = len(list(model_path.glob("fold_*")))
+        model_folds_dict[model_path] = tuple(range(n_folds))
 
-
-    # we need to figure out the case IDS in the folder
-    if nnunet_folder:
-        case_identifiers = [filename[:-len(t1_suffix)]
-                            for filename in subfiles(in_folder, suffix=t1_suffix, join=False)]
-    else:
-        case_identifiers = [p.name for p in Path(in_folder).iterdir() if p.is_dir()]
+    # figure out the case IDS in the folder
+    case_identifiers = [p.name for p in Path(in_folder).iterdir() if p.is_dir()]
     print("Found %d case identifiers! Here is an example: %s" % (
         len(case_identifiers), np.random.choice(case_identifiers, replace=False)))
 
@@ -106,47 +80,51 @@ if __name__ == "__main__":
     #             [case2_t1, case2_t1ce, case2_t2, case2_flair], ...] used by nnunet
     model_inputs_list = []
     for case in case_identifiers:
-        if nnunet_folder:
-            t1_file = join(in_folder, case + t1_suffix)
-            t1c_file = join(in_folder, case + t1ce_suffix)
-            t2_file = join(in_folder, case + t2_suffix)
-            flair_file = join(in_folder, case + flair_suffix)
-        else:
-            t1_file = join(in_folder, case, case + t1_suffix)
-            t1c_file = join(in_folder, case, case + t1ce_suffix)
-            t2_file = join(in_folder, case, case + t2_suffix)
-            flair_file = join(in_folder, case, case + flair_suffix)
+        t1_file = join(in_folder, case, case + "_t1.nii.gz")
+        t1c_file = join(in_folder, case, case + "_t1ce.nii.gz")
+        t2_file = join(in_folder, case, case + "_t2.nii.gz")
+        flair_file = join(in_folder, case, case + "_flair.nii.gz")
 
         if not isfile(t1_file):
-            print("file missing for case identifier %s. Expected to find: %s" %
-                (case, t1_file))
+            print(f"file missing for case identifier {case}. Expected to find: {t1_file}")
         if not isfile(t1c_file):
-            print("file missing for case identifier %s. Expected to find: %s" %
-                (case, t1c_file))
+            print(f"file missing for case identifier {case}. Expected to find: {t1c_file}")
         if not isfile(t2_file):
-            print("file missing for case identifier %s. Expected to find: %s" %
-                (case, t2_file))
+            print(f"file missing for case identifier {case}. Expected to find: {t2_file}")
         if not isfile(flair_file):
-            print("file missing for case identifier %s. Expected to find: %s" %
-                (case, flair_file))
+            print(f"file missing for case identifier {case}. Expected to find: {flair_file}")
         model_inputs_list.append([t1_file, t1c_file, t2_file, flair_file])
 
     # each model saves predictions in its own folder first; will be merged later
     tmp_prediction_dirs = []
-    for model_name, folds in zip(model_list, folds_list):
-        curr_out_folder = join(out_folder, model_name)
+    for model_path, folds in model_folds_dict.items():
+        curr_out_folder = join(out_folder, model_path.name)
         tmp_prediction_dirs.append(curr_out_folder)
         maybe_mkdir_p(curr_out_folder)
-        curr_params_folder = join(params_folder, model_name)
+        output_filenames = [
+            # Please stick to this naming convention for your prediction!
+            join(curr_out_folder, f"{case}_{algo_id}_seg.nii.gz")
+            for case in case_identifiers
+        ]
 
-        output_filenames = [join(curr_out_folder, f"{case}_{algo_id}_seg.nii.gz")
-                            for case in case_identifiers]
+        predict_cases(
+            model=str(model_path),
+            list_of_lists=model_inputs_list,
+            output_filenames=output_filenames,
+            folds=folds,
+            save_npz=True,
+            num_threads_preprocessing=6,
+            num_threads_nifti_save=2,
+            segs_from_prev_stage=None,
+            do_tta=True,
+            mixed_precision=True,
+            overwrite_existing=True,
+            all_in_gpu=False,
+            step_size=0.5
+        )
 
-        # TODO resolve this messy argument list
-        predict_cases(curr_params_folder, model_inputs_list, output_filenames, folds, True, 6, 2, None, True, True,
-                      True, False, 0.5)
-
-    merge(tmp_prediction_dirs, out_folder, 1, True, None, False)
+    merge(tmp_prediction_dirs, out_folder, 1, override=True,
+          postprocessing_file=None, store_npz=False)
 
     for f in subfiles(out_folder):
         # custom post-processing of predicted segmentations

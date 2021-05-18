@@ -39,7 +39,8 @@ Tip for debugging runscript (defined in the .def file): `singularity shell` inst
   https://github.com/hpcng/singularity/issues/5718
   https://groups.google.com/a/lbl.gov/g/singularity/c/eq-tLo2SewM
 
-  *update 21/04/29*: I'm not sure any more where this causes a problem. My container does not need the tmpfs.
+  *update 21/04/21*: I'm not sure any more where this causes a problem. My container does not need the tmpfs.
+  *update 18/05/21*: Maybe add a warning on this, discuss with David
 - bootstrap image: Could there be problems with the nvidia driver? 
   From: nvcr.io/nvidia/pytorch:21.04-py3 worked on my workstation but I'm not sure if this was just because of "enhanced compatibility in the CUDA 11 versions.
   -> May have to specify minimum/maximum driver version as "HW requirement" for collaborators/participants

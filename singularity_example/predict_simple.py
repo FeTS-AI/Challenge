@@ -15,13 +15,12 @@ def dummy_predict(subject_dir: Path, output_dir: Path, algo_id="dummy"):
     if len(image_files) != 4:
         warnings.warn(f"Found {len(image_files)} files in subject directory, but expected four. Check data folder!!!")
 
-    # use only t1 for "prediction"
     modalities = ["t1", "t1ce", "t2", "flair"]
     labels = [0, 1, 2, 4]
     seg_npy = None
-    for mod, lab in zip(modalities, labels):
-        # In this dummy example, I "predict" class 0 from the t1-image, 1 from t1ce etc.,
-        # using a simple thresholding operation
+    # In this dummy example, I "predict" class 0 from the t1-image, 1 from t1ce etc.,
+    # using a simple thresholding operation
+    for mod, lab in zip(modalities, labels):    
         img_path = next(subject_dir.glob(f'*_{mod}.nii.gz'))
         img_itk = sitk.ReadImage(str(img_path.absolute()))
         img_npy = sitk.GetArrayFromImage(img_itk)

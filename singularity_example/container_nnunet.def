@@ -10,9 +10,10 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     ./predict_nnunet.py /code/predict.py
 
     # Copy model files (including model weights and metadata files, test script)
-    # TODO: simplify/mask paths here in final version
-    # /mnt/datasets/nnUNet_experiments/nnUNet/3d_fullres/Task001_BrainTumour /params
-    /mnt/datasets/nnUNet_experiments/nnUNet/2d/Task001_BrainTumour /params
+    # When trying this example, please make sure you installed nnunet (includes setting RESULTS_FOLDER)
+    # and downloaded these pretrained models (see https://github.com/MIC-DKFZ/nnUNet#installation)
+    $RESULTS_FOLDER/nnUNet/2d/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/2d
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/3d_fullres
 
 %post
     # Install ubuntu packages
@@ -22,8 +23,9 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     python -m pip install git+https://github.com/MIC-DKFZ/nnUNet.git
 
 %runscript
-    # At test time, container is run like this:
-    # TODO insert final run command (singularity run ...)
+    # The following interface is required:
+    # -i: path to input folder
+    # -o: path to output folder
 
     # special for nnunet
     # [ignore; if these are set and the container is run with -c option, this causes an error]
