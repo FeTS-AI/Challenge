@@ -1,0 +1,7 @@
+- name: Task 1
+  link: /task1/
+- name: Task 2
+  link: /task2/
+  dropdown: 
+    - name: Submission instructions
+      link: /about/
