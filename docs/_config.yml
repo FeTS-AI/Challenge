@@ -71,5 +71,10 @@ defaults:
       layout: page
       hide_hero: true
       show_sidebar: false
+      menubar_toc: true
+      # toc_title: Contents
+      # TODO only headings starting from ## are included here.
 
 footer_menu: footer
+
+fixed_navbar: top
