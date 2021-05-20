@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 import tempfile
 
-# TODO use logging instead of prints
 
 # deprecated; participants will be provided a folder with appropriate structure
 def is_fets_patient_folder(data_path: Path):
@@ -55,7 +54,6 @@ def is_fets_prediction_folder(pred_path: Path, data_path: Path, algorithm_id: st
         match_found = False
         for pred in predictions:
             if pred.is_file():
-                # TODO check filename convention again
                 if pred.name == f"{case.name}_{algorithm_id}_seg.nii.gz":
                     match_found = True
                     break
@@ -123,7 +121,7 @@ if __name__ == "__main__":
 
     # check output
     if not is_fets_prediction_folder(output_dir, input_dir, algorithm_id=sif_file.stem):
-        # TODO: not sure if the algorithm id will be part of the container name.
+        # TODO: clarify if and how we obtain the algorithm id from the container.
         logging.error("Output folder test not passed. Please error messages in the logs.")
         # exit(1)
 
