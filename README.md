@@ -2,7 +2,11 @@
 <a href="https://twitter.com/FeTS_Challenge" alt="Citation"><img src="https://img.shields.io/twitter/follow/fets_challenge?style=social" /></a>
 
 # Challenge
-The repo for the FeTS Challenge
+The repo for the FeTS Challenge.
+
+## Welcome message
+
+https://github.com/FETS-AI/Challenge/discussions/3
 
 ## Frequently asked questions
 
