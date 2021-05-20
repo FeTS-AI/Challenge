@@ -1,4 +1,6 @@
+- name: Github
+  link: "https://github.com/FETS-AI/Challenge"
 - name: Twitter
-  link: "https://twitter.com/"
-- name: About
-  link: /about/
+  link: "https://twitter.com/FeTS_Challenge"
+- name: Contact
+  link: /contact/

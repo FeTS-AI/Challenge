@@ -6,42 +6,50 @@ permalink: /
 title: Federated Tumor Segmentation Challenge 2021
 # callouts: home_callouts
 hide_hero: false
+hero_height: is-medium
 ---
 
-Welcome to the github pages of the FeTS 2021 challenge! Here you can find details on the challenge rules and submission instructions for the two tasks.
-I think we should look for another theme, preferably one that has a "menu" at the top, so that participants can navigate the site better.
-
-Insert page from former website here
+Welcome to the webpages of the FeTS 2021 challenge! Here you can find general information on the two challenge tasks, their data, as well as details on how to participate. The official challenge design document can be found [here](https://zenodo.org/record/4573128#.YJKcEcCSk4s) and the accompanying arXiv-manuscript [here](https://arxiv.org/abs/2105.05874).
 
 ## News
 
-no news so far
+No news so far
 
 ## Important Dates
 
-todo
-## Task Descriptions
-### Task 1
+All deadlines are for **23:59 Eastern Time**
 
-todo
+| Date | Description|
+| --- | --- |
+| **21 May** | Training phase (Release of training data + associated ground truth). |
+| **14 Jun** | Validation phase (Release of validation data. Hidden ground truth). |
+| **19 Jul** | Submission of short paper and prediction algorithm (incl model weights).|
+| **20 Jul-27 Aug** | Testing phase (Evaluation by organizers, only for methods with submitted papers) |
+| **3 Sep** | Contacting top-ranked methods to prepare their oral presentation at MICCAI |
+| **1 Oct (PM)** | Announcement of top 3 ranked teams at MICCAI FeTS 2021. |
+| **10 Oct** | Submission deadline for extended LNCS papers (12-14 pages) |
+| **24 Oct** | Reviewers' feedback. |
+| **10 Nov** | Camera-ready paper submission. |
+| **15 Dec** | Summarizing meta-analysis manuscript. |
 
-### Task 2
+## Challenge Description
+
+International challenges have become the standard for validation of biomedical image analysis methods. We argue, though, that the actual performance even of the winning algorithms on “real-world” clinical data often  remains unclear, as the data included in these challenges are usually acquired in very controlled settings at few institutions. The seemingly obvious solution of just collecting increasingly more data from more geographically distinct institutions in such challenges does not scale well due to privacy, ownership, and technical hurdles.
+
+The Federated Tumor Segmentation (FeTS) challenge 2021 is the first challenge to ever be proposed for federated learning in medicine, and intends to address these hurdles, for both the creation and the evaluation of tumor segmentation models. Specifically, the FeTS 2021 challenge uses clinically acquired, multi-institutional MRI scans from the BraTS 2020 challenge, as well as from various remote independent institutions included in the collaborative network of a real-world federation ([FeTS initiative](https://www.fets.ai/)).
+
+The FeTS challenge focuses on the construction and evaluation of a consensus model for the segmentation of intrinsically heterogeneous (in appearance, shape, and histology) brain tumors, namely gliomas. Compared to the BraTS 2020 challenge, the ultimate goal of FeTS is 1) the creation of a consensus segmentation model that has gained knowledge from data of multiple institutions without pooling their data together (i.e., by retaining the data within each institution), and 2) the evaluation of segmentation models in such a federated configuration (i.e., in the wild).
+
+The FeTS 2021 challenge is structured in two explicit tasks:
+
+### Task 1: Federated Training (FL Weight Aggregation Methods)
+
+The first task of the challenge involves creating a robust con-sensus model for segmentation of brain tumor sub-regions that has gained knowl-edge from data acquired at multiple sites, without pooling datatogether. The specific focus of this task is to identify the best way to aggregate the knowledge  coming  from  segmentation  models  trained  on  individual  institutions,  instead  of  identifying  the  best  segmentation  method.  More  precisely,the focus is on the methodological portions specific to federated learning (e.g.,aggregation,  client  selection,  training-per-round,  compression,  communicationefficiency),  and  not  on  the  development  of  segmentation  algorithms  (which  is the focus of the BraTS challenge). To facilitate this, an existing infrastructure for  federated  tumor  segmentation  using  federated  averaging  will  be  providedto all participants indicating the exact places that the participants are allowed and expected to make changes. The primary objective of this task is to develop methods for effective aggregation of local segmentation models, given the partitioning of the data into their real-world distribution. As an optional sub-task, participants will be asked to account for network communication outages, i.e. dealing with stragglers.
+
+### Task 2: Federated Evaluation (Generalization “In The Wild”)
+
+The discrepancy between AI systems’ performance in researchenvironments and real-life applications is one of the key challenges in our field.  This  “AI  chasm”  can  be  attributed  in  part  to  the  limited  diversityof  training  datasets,  which  do  not  necessarily  reflect  the  variety  of  real-world datasets  “in  the  wild”.  As  a  consequence,  most  deep  learning  models  exhibit limited generalizability when applied to datasets acquired from different imaging devices  and  populations.  Federated  setups  are  not  only  beneficial  for  learning models: they also allow to extend the size and diversity of typical test datasets substantially, as clinicians may contribute data to a challenge without having to publicly release them, thus constituting an important step towards the evaluation of model robustness in the wild. In  this  task,  the  goal  is  to  find  algorithms  that  robustly  produce  accurate brain tumor segmentations across different medical institutions, MRI scanners, image acquisition parameters and populations. To this end, we use a real-world federated evaluation environment (based on the [FeTS initiative](https://www.fets.ai/)), which enables scaling  up  algorithm  validation  in  the  context  of  competitions.  Based  on  the wide  variety  of  data  distributions  covered  by  the  federation,  we  hope  to  gain insights into which i) algorithmic components are crucial for robustness and ii) potentially which dataset characteristics might hinder generalization.
 
 ## Organizing Team
 
-
-## Drafting
-
-Contents:
-- Home page with abstract and introduction of tasks
-- Important dates (if not included in home page)
-- Tasks (if not included in home page)
-- Organizing team, sponsors, links etc. (if not included in home page)
-- News (if not included in home page)
-- Data description
-- Evaluation
-- Code, Rules, Registration and Submission -> for participants
-- Results
-- FAQs
-- Contact, Forum
-
+TODO

@@ -26,12 +26,13 @@ description: >- # this means to ignore newlines until "baseurl:"
 # url: "" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
 # github_username:  jekyll
+favicon: ./img/fets-logo.png
 
 # Build settings
 # theme: jekyll-theme-cayman
 remote_theme: chrisrhymes/bulma-clean-theme
-# plugins:
-#   - jekyll-feed
+# kramdown:
+#   input: GFM
 
 include:
   - "_pages"
@@ -69,7 +70,8 @@ defaults:
     values:
       author: "Author Name"
       layout: page
-      hide_hero: true
+      # hide_hero: true
+      hero_height: is-small
       show_sidebar: false
       menubar_toc: true
       # toc_title: Contents
@@ -78,3 +80,6 @@ defaults:
 footer_menu: footer
 
 fixed_navbar: top
+
+# for more customizations, have a look at the designer's homepage: https://github.com/chrisrhymes/chrisrhymes.github.io
+# (e.g. footer with buttons)
