@@ -1,0 +1,14 @@
+- name: Data
+  link: /data/
+- name: Participate
+  link: /participate/
+- name: Results
+  link: /results/
+- name: FAQ
+  link: /faq/
+# - name: Github
+#   link: https://github.com/FETS-AI/Challenge
+
+  # dropdown: 
+  #   - name: Submission instructions
+  #     link: /about/
