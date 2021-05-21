@@ -40,6 +40,7 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
 %labels
     # Please add these fields
     Author "Maximilian Zenk"
+    Team "Organizer"
     Institution "German cancer research center (DKFZ)"
     Email "m.zenk@dkfz-heidelberg.de"
 

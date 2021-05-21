@@ -2,16 +2,16 @@
 
 This repository includes information on the container submission and ranking for task 2 of the FeTS challenge 2021. It is structured as follows
 
-- `ranking`: Code for performing the final ranking
-- `scripts`: Code for running containers, both in the participant's environment and in the final federated testing environment
 - `singularity_example`: Guide how to build the container submission with examples
+- `scripts`: Code for running containers, both in the participant's environment and in the federated testing environment
+- `ranking`: Code for performing the final ranking
 
 Details about the submission process are given on the challenge [website](https://fets-ai.github.io/Challenge/).
 
 ## Requirements
 Singularity has to be installed to create a container submission [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps).
 
-Python 3.6 is required to run the scripts.
+Python 3.6 or higher is required to run the scripts.
 
 ## Test your singularity container
 
