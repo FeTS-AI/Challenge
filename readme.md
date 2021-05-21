@@ -6,17 +6,34 @@ This repository includes information on the container submission and ranking for
 - `scripts`: Code for running containers, both in the participant's environment and in the federated testing environment
 - `ranking`: Code for performing the final ranking
 
-Details about the submission process are given on the challenge [website](https://fets-ai.github.io/Challenge/).
+Details about the submission process are given on the [challenge website](https://fets-ai.github.io/Challenge/).
 
 ## Requirements
 Singularity has to be installed to create a container submission [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps).
 
 Python 3.6 or higher is required to run the scripts.
 
-## Test your singularity container
+The examples in this repo assume the following data folder structure, which will also be present at test-time:
+```
+data/ # this should be passed for inference
+│
+└───Patient_001 # case identifier
+│   │ Patient_001_brain_t1.nii.gz
+│   │ Patient_001_brain_t1ce.nii.gz
+│   │ Patient_001_brain_t2.nii.gz
+│   │ Patient_001_brain_flair.nii.gz
+│   
+└───Pat_JohnDoe # other case identifier
+│   │ ...
+```
 
-If you don't know how to create a container, have a look at the guide [here](singularity_example/readme.md).
-Once you built your container, you can run the testing script as follows:
+## How to build a singularity container
+
+If you don't know how to create a container, have a look at the guide in the [singularity_example](singularity_example/readme.md).
+
+## Test your own container
+
+Once you have built your container, you can run the testing script as follows:
 
 ```bash
 python scripts/test_container.py container.sif -i /path/to/data [-o /path/to/output_dir]
