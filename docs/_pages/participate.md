@@ -49,7 +49,7 @@ todo
 
 ### Task 2 Submission
 
-To provide high implementation flexibility to the participants while also facilitating the federated evaluation on different computation infrastructures, algorithm submissions for this task have to be [singularity containers](https://sylabs.io/singularity/). The container application should be able to produce segmentations for a list of test cases. Details on the interface and examples for how to build such a container are given in the [challenge repository](https://github.com/FETS-AI/Challaenge).
+To provide high implementation flexibility to the participants while also facilitating the federated evaluation on different computation infrastructures, algorithm submissions for this task have to be [singularity containers](https://sylabs.io/singularity/). The container application should be able to produce segmentations for a list of test cases. Details on the interface and examples for how to build such a container are given in the [challenge repository](https://github.com/FETS-AI/Challenge).
 
 <!-- 1. registration at e.g. gitlab (tbd)
 2. upload of singularity container
