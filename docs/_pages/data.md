@@ -17,6 +17,8 @@ All the imaging datasets have been segmented manually, by one to four raters, fo
 
 ## Non-Imaging Data Description
 
+**!!! TODO describe more precisely; also differences task 1/2!!!**
+
 All imaging data will be accompanied by a comma-separated value (.csv) file including information of the data partitioning according to the acquisition origin for each of the pseudo-identified imaging data, to further facilitate research on FL.
 
 Furthermore, since FeTS leverages the BraTS 2020 data, information on the overall survival (OS), defined in days, are included in a csv file with correspondences to the pseudo-identifiers of the imaging data. The .csv file also includes the age of patients, as well as the resection status. Note that all these data are complementary and not required for the FeTS challenge.

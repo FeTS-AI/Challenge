@@ -5,7 +5,7 @@ permalink: /participate/
 
 ## Timeline
 
-For the exact dates and deadlines, please see the schedule on the [home page](/).
+For the exact dates and deadlines, please see the schedule on the [challenge schedule](/#important-dates).
 
 **Training Phase.** Register (see [FAQ](/faq)) to download the co-registered, skull-stripped, and annotated training data.
 
@@ -31,6 +31,15 @@ For the exact dates and deadlines, please see the schedule on the [home page](/)
 - The top 3 performing methods for each task will be announced publicly at the conference and the participants will be invited to present their method.
 - Inclusion criteria for the test phase of task 2: As we are going to perform a real-world federated evaluation in task 2, the computation capabilities are heterogeneous and restricted. Therefore, we reserve the right to limit the number of task-2 submissions included in the final ranking. Details are given in [below](#federated-evaluation-process).
 - We reserve the right to exclude teams and team members if they do not adhere to the challenge rules.
+
+## Registration and Data Access
+
+To register and request the training and the validation data of the FeTS 2021 challenge, please follow the steps below. Please note that the i) training data includes ground truth annotations, ii) validation data does not include annotations, and iii) testing data are not available to either challenge participants or the public.
+
+1. Create an account in [CBICA's Image Processing Portal](https://ipp.cbica.upenn.edu/) (IPP) and wait for its approval. Note that a confirmation email will be sent so make sure that you also check your Spam folder. This approval process requires a manual review of the account details and might take 3-4 days until completed.
+2. Once your IPP account is approved, login to [IPP](https://ipp.cbica.upenn.edu/) and then click on the application **FeTS 2021: Registration**, under the **MICCAI FeTS 2021** group.
+3. Fill in the requested details and press "Submit Job".
+4. Once your request is recorded, you will receive an email pointing to the "results" of your submitted job. You need to login to IPP, access the "Results.zip" file, in which you will find the file `REGISTRATION_STATUS.txt`. In this txt file you will find the links to download the FeTS 2021 data. The training data will include for each subject the 4 structural modalities, ground truth segmentation labels and accompanying text information relating to the source institution, whereas the validation data will include only the 4 modalities.
 
 ## Submission Process
 
@@ -69,17 +78,14 @@ todo
 
 #### Code Review
 
-Details will follow soon...
-
-<!-- - Maybe how we'll do it
-- hardware used for container test -->
+To make sure that the submitted containers are functional and to prevent misconduct, we are going to review each submission manually before the actual federated evaluation. Regarding functionality, we intend to check the validity of the algorithm output and measure the execution time of the container on a pre-defined dataset and hardware setup. Regarding security, we will inspect the code being executed by the container and discuss any unclear points with the participants. Details will follow soon...
 
 #### Federated Evaluation Process
 
-To be eligible for evaluation on the test set, participants have to adhere to the challenge rules described [above](#participation-policies]). Furthermore, the following rules apply to the submissions:
+Participants have to adhere to the challenge rules described [above](#participation-policies) to be eligible for evaluation on the test set. Furthermore, the following rules apply to the submissions:
 
-- Only submissions that include a complete short paper will be considered for evaluation
-- Only submissions that pass the code review will be considered for evaluation
+- Only submissions that include a complete short paper will be considered for evaluation.
+- Only submissions that pass the code review will be considered for evaluation.
 - Each algorithm is given 180 seconds per test case to produce a prediction. Algorithms that fail to stay in this time budget during the code review phase will not be considered for evaluation.
 - Algorithms will be evaluated on the test set in the chronological order they were submitted in (sorted by date-time of last container upload). This means the later an algorithm is submitted, the higher the risk it cannot be evaluated on the test set before the ranking is computed. Note that this is a worst-case rule and we will work hard to include every single valid submission in the ranking. In case of very high participation numbers, however, we reserve the right to limit the number of participants in the final MICCAI ranking this way.
 

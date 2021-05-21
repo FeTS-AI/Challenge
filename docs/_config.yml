@@ -31,8 +31,9 @@ favicon: ./img/fets-logo.png
 # Build settings
 # theme: jekyll-theme-cayman
 remote_theme: chrisrhymes/bulma-clean-theme
-# kramdown:
-#   input: GFM
+kramdown:
+  input: GFM
+plugins: ['jekyll-twitter-plugin']
 
 include:
   - "_pages"
@@ -60,7 +61,6 @@ defaults:
       path: "_posts"
       type: "posts"
     values:
-      author: "Author Name"
       layout: post
       hero_image: /path/to/hero-image.jpg
       show_sidebar: true
@@ -68,7 +68,6 @@ defaults:
       path: "_pages"
       type: "pages"
     values:
-      author: "Author Name"
       layout: page
       # hide_hero: true
       hero_height: is-small
