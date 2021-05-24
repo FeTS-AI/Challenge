@@ -5,7 +5,7 @@ permalink: /participate/
 
 ## Timeline
 
-For the exact dates and deadlines, please see the schedule on the [challenge schedule](/#important-dates).
+For the exact dates and deadlines, please see the schedule on the [challenge schedule](index.md/#important-dates).
 
 **Training Phase.** Register (see [FAQ](/faq)) to download the co-registered, skull-stripped, and annotated training data.
 

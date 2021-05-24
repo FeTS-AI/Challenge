@@ -9,11 +9,11 @@ You are on the main website right now. Additionally, participants may follow the
 
 ## How do I register for the challenge?
 
-This is described on the [participation page](/participate/#registration-and-data-access).
+This is described on the [participation page](participate.md/#registration-and-data-access).
 
 ## How do I obtain the data for the challenge?
 
-This is described on the [participation page](/participate/#registration-and-data-access).
+This is described on the [participation page](participate.md/#registration-and-data-access).
 
 ## Can I use additional data for model development?
 
