@@ -45,7 +45,7 @@ To register and request the training and the validation data of the FeTS 2021 ch
 
 ### Task 1 Submission
 
-todo
+Description coming soon...
 
 ### Task 2 Submission
 
@@ -72,7 +72,7 @@ For each region, the predicted segmentation is compared with the groundtruth seg
 
 ### Task 1 Evaluation Details
 
-todo
+Description coming soon...
 
 ### Task 2 Evaluation Details
 

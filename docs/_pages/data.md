@@ -3,6 +3,8 @@ permalink: /data
 title: Data
 ---
 
+## Overview
+
 Ample multi-institutional routine clinically-acquired pre-operative baseline multi-parametric Magnetic Resonance Imaging (mpMRI) scans of radiographically appearing glioblastoma (GBM) are provided as the training and validation data for the FeTS 2021 challenge. The data partitioning according to the acquisition origin will also be provided for the training data of the challenge. Specifically, the datasets used in the FeTS 2021 challenge are the subset of GBM cases from the BraTS 2020 challenge. Ground truth reference annotations are created and approved by expert board-certified neuroradiologists for every subject included in the training, validation, and testing datasets to quantitatively evaluate the performance of the participating algorithms.
 
 Validation data will be released in June, through an email pointing to the accompanying leaderboard. This will allow participants to obtain preliminary results in unseen data and also report it in their submitted papers, in addition to their cross-validated results on the training data, and the implemented algorithm. The ground truth of the validation data will not be provided to the participants, but multiple submissions to the online evaluation platform ([CBICA's IPP](https://ipp.cbica.upenn.edu/)) will be allowed.
@@ -17,11 +19,20 @@ All the imaging datasets have been segmented manually, by one to four raters, fo
 
 ## Non-Imaging Data Description
 
-**!!! TODO describe more precisely; also differences task 1/2!!!**
+The imaging data are accompanied by a comma-separated value (.csv) file including information of the data partitioning according to the acquisition origin for each of the pseudo-identified imaging data, to further facilitate research on FL.
+The imaging data is complemented by comma-separated value files (.csv) that include information on the data partitioning according to the acquisition origin for each of the pseudo-identified imaging data, to further facilitate research on FL. We provide two strategies to partition the data:
 
-All imaging data will be accompanied by a comma-separated value (.csv) file including information of the data partitioning according to the acquisition origin for each of the pseudo-identified imaging data, to further facilitate research on FL.
+1. **Natural partitioning by institution:** (file: `partitioning_1.csv`) Each institution ID represents the originating institution.
+2. **Artificial partitioning using imaging information** (file: `partitioning_2.csv`) This is same as the institution split, but after further partitioning each of the 5 largest institutions according to the information extracted from the images. Specifically, after measuring the whole tumor size for all records, the median size was used as threshold to create extra partitions.
 
-Furthermore, since FeTS leverages the BraTS 2020 data, information on the overall survival (OS), defined in days, are included in a csv file with correspondences to the pseudo-identifiers of the imaging data. The .csv file also includes the age of patients, as well as the resection status. Note that all these data are complementary and not required for the FeTS challenge.
+We encourage participants to create and explore further partitioning strategies using any information they would feel is relevant, to contribute towards the generalizability of their proposed method. For task 2, however, the natural partitioning (1) may be more relevant, as each originating institution in the test set will also be associated to one "test domain".
+
+The case numbers in each partition of the *training set* are visualized below:
+
+<!-- Furthermore, since FeTS leverages the BraTS 2020 data, information on the overall survival (OS), defined in days, are included in a csv file with correspondences to the pseudo-identifiers of the imaging data. The .csv file also includes the age of patients, as well as the resection status. Note that all these data are complementary and not required for the FeTS challenge. -->
+
+![natural partitioning](../img/partition_natural.png)
+![artificial partitioning](../img/partition_tumorsize.png)
 
 ## Use of Data Beyond FeTS
 
