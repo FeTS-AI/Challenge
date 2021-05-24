@@ -1,5 +1,5 @@
 ---
-permalink: /data
+permalink: /data/
 title: Data
 ---
 
@@ -7,9 +7,7 @@ title: Data
 
 Ample multi-institutional routine clinically-acquired pre-operative baseline multi-parametric Magnetic Resonance Imaging (mpMRI) scans of radiographically appearing glioblastoma (GBM) are provided as the training and validation data for the FeTS 2021 challenge. The data partitioning according to the acquisition origin will also be provided for the training data of the challenge. Specifically, the datasets used in the FeTS 2021 challenge are the subset of GBM cases from the BraTS 2020 challenge. Ground truth reference annotations are created and approved by expert board-certified neuroradiologists for every subject included in the training, validation, and testing datasets to quantitatively evaluate the performance of the participating algorithms.
 
-Validation data will be released in June, through an email pointing to the accompanying leaderboard. This will allow participants to obtain preliminary results in unseen data and also report it in their submitted papers, in addition to their cross-validated results on the training data, and the implemented algorithm. The ground truth of the validation data will not be provided to the participants, but multiple submissions to the online evaluation platform ([CBICA's IPP](https://ipp.cbica.upenn.edu/)) will be allowed.
-
-Finally, the algorithms of the participating teams with a valid short paper submission will be evaluated by the challenge organizers on the same test data, which will not be made available to the participants. Please note that the testing data will be a subset of the BraTS 2020 testing data, as well as data offered by independent geographically distinct institutions that participated in the FeTS federation. The top-ranked participating teams will be invited to prepare their slides for a short oral presentation of their method during the FeTS satellite event at MICCAI 2021.
+Validation data will be released in June, through an email pointing to the accompanying leaderboard. This will allow participants to obtain  library://mzenk/fets-test/simple:latest tutions that participated in the FeTS federation. The top-ranked participating teams will be invited to prepare their slides for a short oral presentation of their method during the FeTS satellite event at MICCAI 2021.
 
 ## Imaging Data Description
 

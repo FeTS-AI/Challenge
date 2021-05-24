@@ -1,5 +1,5 @@
 ---
-permalink: /results
+permalink: /results/
 title: Results
 menubar_toc: false
 ---
