@@ -25,10 +25,10 @@ def run_container(sif, in_dir, out_dir, timeout_case):
         if not case.is_dir():
             continue
         subject_id = case.name
-        t1_path = case / f"{subject_id}_t1.nii.gz"
-        t1c_path = case / f"{subject_id}_t1ce.nii.gz"
-        t2_path = case / f"{subject_id}_t2.nii.gz"
-        fl_path = case / f"{subject_id}_flair.nii.gz"
+        t1_path = case / f"{subject_id}_brain_t1.nii.gz"
+        t1c_path = case / f"{subject_id}_brain_t1ce.nii.gz"
+        t2_path = case / f"{subject_id}_brain_t2.nii.gz"
+        fl_path = case / f"{subject_id}_brain_flair.nii.gz"
         bind_str += (
             f"{t1_path}:{container_in_dir.joinpath(*t1_path.parts[-2:])}:ro,"
             f"{t1c_path}:{container_in_dir.joinpath(*t1c_path.parts[-2:])}:ro,"

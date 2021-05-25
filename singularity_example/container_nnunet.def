@@ -10,12 +10,14 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     ./predict_nnunet.py /code/predict.py
 
     # Copy model files (including model weights and metadata files, test script)
-    # When trying this example, please make sure you installed nnunet (includes setting RESULTS_FOLDER)
-    # and downloaded these pretrained models (see https://github.com/MIC-DKFZ/nnUNet#installation)
+    # When trying this example, please make sure you installed nnunet (https://github.com/MIC-DKFZ/nnUNet#installation)
+    # Pretrained models can be downloaded via nnunet (https://github.com/MIC-DKFZ/nnUNet#how-to-run-inference-with-pretrained-models);
+    # here I use models trained on the brain data from the medical segmentation decathlon (http://medicaldecathlon.com)
     $RESULTS_FOLDER/nnUNet/2d/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/2d
     $RESULTS_FOLDER/nnUNet/3d_fullres/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/3d_fullres
 
 %post
+    # Commands in this block are executed after the files have been copied in %files
     # Install ubuntu packages
     apt update && apt upgrade -y
     apt install -y git
@@ -23,7 +25,8 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     python -m pip install git+https://github.com/MIC-DKFZ/nnUNet.git
 
 %runscript
-    # The following interface is required:
+    # This block is executed inside the container when it is run
+    # The following arguments will be passed:
     # -i: path to input folder
     # -o: path to output folder
 

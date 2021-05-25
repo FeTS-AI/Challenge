@@ -64,26 +64,28 @@ if __name__ == "__main__":
     # (postprocessing is applied before converting to brats labels!)
     replace_with = 2
 
-    # this adds all available model paths (nnunet result folders) to a dict
+    # this adds all available model paths (sub-dirs in params_folder) to a dict
     # each model has been trained on several folds with nnunet
     model_folds_dict = {}
     for model_path in Path(params_folder).iterdir():
         n_folds = len(list(model_path.glob("fold_*")))
         model_folds_dict[model_path] = tuple(range(n_folds))
 
+    print("Found %d models in the parameter folder." % len(model_folds_dict))
+
     # figure out the case IDS in the folder
     case_identifiers = [p.name for p in Path(in_folder).iterdir() if p.is_dir()]
-    print("Found %d case identifiers! Here is an example: %s" % (
-        len(case_identifiers), np.random.choice(case_identifiers, replace=False)))
+    print("Found %d case identifiers! Here is the list:\n%s" % (
+        len(case_identifiers), '\n'.join(sorted(case_identifiers))))
 
     # Build list [[case1_t1, case1_t1ce, case1_t2, case1_flair],
     #             [case2_t1, case2_t1ce, case2_t2, case2_flair], ...] used by nnunet
     model_inputs_list = []
     for case in case_identifiers:
-        t1_file = join(in_folder, case, case + "_t1.nii.gz")
-        t1c_file = join(in_folder, case, case + "_t1ce.nii.gz")
-        t2_file = join(in_folder, case, case + "_t2.nii.gz")
-        flair_file = join(in_folder, case, case + "_flair.nii.gz")
+        t1_file = join(in_folder, case, case + "_brain_t1.nii.gz")
+        t1c_file = join(in_folder, case, case + "_brain_t1ce.nii.gz")
+        t2_file = join(in_folder, case, case + "_brain_t2.nii.gz")
+        flair_file = join(in_folder, case, case + "_brain_flair.nii.gz")
 
         if not isfile(t1_file):
             print(f"file missing for case identifier {case}. Expected to find: {t1_file}")
