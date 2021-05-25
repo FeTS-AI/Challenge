@@ -8,6 +8,11 @@ The repo for the FeTS Challenge.
 
 https://github.com/FETS-AI/Challenge/discussions/3
 
+## Challenge Tasks
+
+### Task 1
+
+The first task of the challenge involves creating a robust consensus model for segmentation of brain tumor sub-regions that has gained knowledge from data acquired at multiple sites, without pooling data together. For more details, please see [Task_1](./Task_1).
 ## Frequently asked questions
 
 Please see [FAQ](FAQ.md).
