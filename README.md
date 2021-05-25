@@ -12,11 +12,11 @@ https://github.com/FETS-AI/Challenge/discussions/3
 
 ### Task 1
 
-The first task of the challenge involves creating a robust consensus model for segmentation of brain tumor sub-regions that has gained knowledge from data acquired at multiple sites, without pooling data together. For more details, please see [Task_1](./Task_1).
+The first task of the challenge involves customizing core functions of a baseline federated learning system implementation. The goal is to improve over the baseline consensus models in terms of robustness in final model scores to data heterogeneity across the simulated collaborators of the federation. For more details, please see [Task_1](./Task_1).
 
 ### Task 2
 
-The goal of this task is to find algorithms that robustly produce accurate brain tumor segmentations across different medical institutions, MRI scanners, image acquisition parameters and populations. For more details, please see [Task_2](./Task_2).
+This task utilizes federated testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
 
 ## Documentation and more details
 
