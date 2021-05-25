@@ -5,9 +5,9 @@ Task 1 (**"Federated Training"**) aims at effective weight aggregation methods f
 
 ### System requirements
 
-1. [Git](https://git-scm.com/downloads)
+1. [Git](https://git-scm.com/downloads).
 2. Python with virtual environment management system: we recommend using [Anaconda](https://www.anaconda.com/products/individual).
-3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
 ### Instructions
 
