@@ -49,7 +49,7 @@ All deadlines are for **23:59 Eastern Time**
 
 (You can also use the navigation bar at the top)
 
-- [Challenge description](/tasks/)
+- [Challenge description](tasks.md/#challenge-description)
     - [Task 1](tasks.md/#task1-description)
     - [Task 2](tasks.md/#task2-description)
 - [Data](/data/)
@@ -60,7 +60,7 @@ All deadlines are for **23:59 Eastern Time**
     - [Policies](participate.md/#participation-policies)
     - [Registration](participate.md/#registration-and-data-access)
     - [Submission process](participate.md/#submission-process)
-    - [Evaluation]()
+    - [Evaluation](participate.md/#evaluation)
 - [Results](/results/)
 - [People](/people/)
 - [FAQ](/faq/)

@@ -4,15 +4,7 @@
   link: /data/
 - name: Participation Summary
   link: /participate/
-- name: Results
-  link: /results/
 - name: Forum
   link: https://github.com/FETS-AI/Challenge/discussions
-- name: FAQ
-  link: /faq/
-# - name: Github
-#   link: https://github.com/FETS-AI/Challenge
-
-  # dropdown: 
-  #   - name: Submission instructions
-  #     link: /about/
+- name: Results
+  link: /results/

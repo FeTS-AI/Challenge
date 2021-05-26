@@ -5,7 +5,7 @@ permalink: /faq/
 
 ## What is the main website for the challenge?
 
-You are on the main website right now. Additionally, participants may follow the related [Twitter handle](https://twitter.com/FeTS_Challenge) for updates.
+You are on the main website right now. Additionally, participants may follow the our [Twitter account](https://twitter.com/FeTS_Challenge) for updates and visit the [challenge repo](https://github.com/FETS-AI/Challenge).
 
 ## How do I register for the challenge?
 
@@ -36,4 +36,4 @@ Please cite [this paper](https://arxiv.org/abs/2105.05874) when using data from 
 
 ## Where can I ask more questions?
 
-See your options on the [contact site](/contact/).
+Either use the [discussion forum](https://github.com/FETS-AI/Challenge/discussions), where you can get help from the organizers and other participants, or, if you do not want to discuss your issue publicly, send us an email to: [challenge@fets.ai](mailto:challenge@fets.ai)
