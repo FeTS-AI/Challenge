@@ -23,6 +23,7 @@ conda activate ./venv
 5. ```pip install --upgrade pip```
 6. ```pip install .```
 7. ```jupyter notebook```
+8. All lower-level details are in the [FeTS Challenge notebook](./FeTS_Challenge.ipynb)
 
 ## Data Partitioning and Sharding
 The FeTS 2021 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS21_Training_###`, and two CSV files: 
