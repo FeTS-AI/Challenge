@@ -68,8 +68,6 @@ Participants are called to produce segmentation labels of the different glioma s
 
 For each region, the predicted segmentation is compared with the groundtruth segmentation using the "Dice score" and "Hausdorff distance (95%)". Additionally for task 1, the communication cost during model training is taken into account.
 
-**TODO some details like formula or reference to arxiv?**
-
 ### Task 1 Evaluation Details
 
 Description coming soon...
