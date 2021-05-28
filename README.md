@@ -2,6 +2,7 @@
 <a href="https://twitter.com/FeTS_Challenge" alt="Citation"><img src="https://img.shields.io/twitter/follow/fets_challenge?style=social" /></a>
 
 # Federated Tumor Segmentation Challenge
+
 The repo for the FeTS Challenge.
 
 ## Welcome message
@@ -16,11 +17,12 @@ The first task of the challenge involves customizing core functions of a baselin
 
 ### Task 2
 
-This task utilizes federated testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. <!--- For more details, please see [Task_2](./Task_2). -->
+This task utilizes federated testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
 
 ## Documentation and more details
 
 Please see https://fets-ai.github.io/Challenge/
+
 ## Frequently asked questions
 
 Please see [FAQ](FAQ.md).
