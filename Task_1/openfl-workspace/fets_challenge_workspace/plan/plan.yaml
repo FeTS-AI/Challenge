@@ -1,0 +1,128 @@
+# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
+
+# Contributing Authors (alphabetical):
+# Brandon Edwards (Intel)
+# Patrick Foley (Intel)
+# Micah Sheller (Intel)
+
+
+aggregator :
+  defaults : plan/defaults/aggregator.yaml
+  template : openfl.component.Aggregator
+  settings :
+    init_state_path : save/fets_challenge_init.pbuf
+    best_state_path : save/fets_challenge_best.pbuf
+    last_state_path : save/fets_challenge_last.pbuf
+    rounds_to_train : 4
+
+collaborator :
+  defaults : plan/defaults/collaborator.yaml
+  template : openfl.component.Collaborator
+  settings :
+    delta_updates    : false
+    opt_treatment    : RESET
+
+data_loader:
+  template: impl.fets_challenge_dataloader.FeTSChallengeDataLoader
+  settings: 
+    federated_simulation_institution_name: __USE_DATA_PATH_AS_INSTITUTION_NAME__
+    divisibility_factor: 16
+    data_usage: 'train-val'
+    patch_sampler: 'uniform'
+    psize: [128, 128, 128]
+    q_samples_per_volume: 1
+    q_verbose: False
+    split_instance_dirname: 'fets_phase2_split_1'
+    np_split_seed: 8950
+    allow_auto_split: True
+    class_list: ['4', '1||4', '1||2||4']
+    data_augmentation:
+      'noise':
+        'mean': 0.0
+        'std': 0.1
+        'probability': 0.2
+      'rotate_90':
+        'axis': [1, 2, 3]
+        'probability': 0.5
+      'rotate_180': 
+        'axis': [1, 2, 3]
+        'probability': 0.5
+      'flip':
+        'axis': [0, 1, 2]
+        'probability': 1.0
+    data_preprocessing:
+      'crop_external_zero_planes': null
+      'normalize_nonZero_masked': null
+
+task_runner:
+  defaults : plan/defaults/task_runner.yaml
+  template: impl.fets_challenge_model.FeTSChallengeModel
+  settings:
+    base_filters: 30
+    lr: 0.00005
+    loss_function: mirrored_brats_dice_loss
+    opt: adam
+    use_penalties: False
+    validate_with_fine_grained_dice: True
+    sigmoid_input_multiplier: 20.0
+    validation_function: 'fets_phase2_validation'
+    validation_function_kwargs: 
+      challenge_reduced_output: True
+
+tasks:
+  defaults: plan/defaults/tasks_torch.yaml
+  aggregated_model_validation:
+    function : validate
+    kwargs   :
+      apply   : global
+      metrics :
+        - acc    
+  locally_tuned_model_validation:
+    function  : validate
+    kwargs    :
+      apply: local
+      metrics :
+        - acc    
+  train:
+    function : train_batches
+    kwargs   :
+      metrics     :
+        - loss
+
+network:
+  defaults: plan/defaults/network.yaml
+
+# tasks:
+#   defaults: plan/defaults/tasks_torch.yaml
+#   aggregated_model_validation:
+#     function : validate
+#     kwargs   :
+#       apply   : global
+#       metrics :
+#         - acc
+    
+#   locally_tuned_model_validation:
+#     function  : validate
+#     kwargs    :
+#       apply: local
+#       metrics :
+#         - acc
+    
+#   train:
+#     function : train_batches
+#     kwargs   :
+#       metrics     :
+#       - loss
+
+assigner:
+  template : impl.challenge_assigner.FeTSChallengeAssigner
+  settings :
+    training_tasks  :
+      - aggregated_model_validation
+      - train
+      - locally_tuned_model_validation
+    validation_tasks  :
+      - aggregated_model_validation    
+
+compression_pipeline :
+  defaults : plan/defaults/compression_pipeline.yaml
