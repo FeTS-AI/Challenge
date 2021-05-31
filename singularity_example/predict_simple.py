@@ -6,9 +6,9 @@ import numpy as np
 import SimpleITK as sitk
 
 
-def dummy_predict(subject_dir: Path, output_dir: Path, algo_id="dummy"):
+def dummy_predict(subject_dir: Path, output_dir: Path):
     # Please stick to this naming convention for your prediction!
-    output_fname = output_dir / f"{subject_dir.name}_{algo_id}_seg.nii.gz"
+    output_fname = output_dir / f"{subject_dir.name}_seg.nii.gz"
 
     # FeTS structure: one folder for each test case (subject), containing t1, t1ce, t2, flair
     image_files = list(subject_dir.glob('*.nii.gz'))
@@ -42,7 +42,6 @@ if __name__ == "__main__":
                         help='Path to the directory where segmentations should be saved.')
     args = parser.parse_args()
 
-    algorithm_identifier = "dummy"
     in_folder = Path(args.in_folder)
     out_folder = Path(args.out_folder)
     params_folder = Path("/params")
@@ -51,4 +50,4 @@ if __name__ == "__main__":
     for subject in in_folder.iterdir():
         if subject.is_dir():
             print(f"Processing subject {subject.name}")
-            dummy_predict(subject, out_folder, algo_id=algorithm_identifier)
+            dummy_predict(subject, out_folder)

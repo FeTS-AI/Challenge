@@ -10,9 +10,14 @@ Instructions on how to build and run a singularity container are given below. Fo
 ## Building a container
 A definition file is required to build a container. You can start from the example `.def`-files provided in this repo to create your own and then run
 ```
-singularity build --fakeroot container_simple.sif container_simple.def
+sudo singularity build container_simple.sif container_simple.def
 ```
-where `container_simple` should be replaced with your file names. With `--fakeroot`, you don't need to build with sudo (security option). Make sure that all files that are required at test-time are copied to the container when you build it. The container will not have access to your filesystem and environment when evaluated in the testing phase!
+where `container_simple` should be replaced with your corresponding file names. To avoid building with sudo, you can use singularity's `--fakeroot` option, but you may have to configure this first (`sudo singularity config fakeroot --add <username>`). Make sure that all files that are required at test-time are copied to the container when you build it. The container will not have access to your filesystem and environment when evaluated in the testing phase!
+
+**Note:** Please use a bootstrap image based on CUDA 11.0 to make sure that the application can run on systems with Ampere architecture, too. Our recommendations are:
+- `nvcr.io/nvidia/pytorch:20.08-py3` (pytorch)
+- `nvcr.io/nvidia/tensorflow:20.08-tf2-py3` or `nvcr.io/nvidia/tensorflow:20.08-tf1-py3` (tensorflow)
+
 
 Tip for debugging: use the `--sandbox` option, as described [here](https://singularity-tutorial.github.io/03-building/).
 

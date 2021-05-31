@@ -58,7 +58,6 @@ if __name__ == "__main__":
     out_folder = args.out_folder
     params_folder = args.params_folder
 
-    algo_id = "nnunet"
     threshold = 200
     # necrosis and non-enhancing tumor in nnUNet label convention
     # (postprocessing is applied before converting to brats labels!)
@@ -105,7 +104,7 @@ if __name__ == "__main__":
         maybe_mkdir_p(curr_out_folder)
         output_filenames = [
             # Please stick to this naming convention for your prediction!
-            join(curr_out_folder, f"{case}_{algo_id}_seg.nii.gz")
+            join(curr_out_folder, f"{case}_seg.nii.gz")
             for case in case_identifiers
         ]
 
