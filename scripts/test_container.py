@@ -8,62 +8,28 @@ from pathlib import Path
 import tempfile
 
 
-# deprecated; participants will be provided a folder with appropriate structure
-def is_fets_patient_folder(data_path: Path):
-    # expected structure: see https://fets-ai.github.io/Front-End/process_data
-    # in principle, each patient dir has to have these four files (with prefix patient-id)
-    expected_files = [
-        '_t1.nii.gz',
-        '_t1ce.nii.gz',
-        '_t2.nii.gz',
-        '_flair.nii.gz',
-    ]
-    counter = 0
-    check_ok = True
-    if data_path.is_file():
-        print(f"Expected a directory, but found file: {data_path}")
-        return False
-    for p in data_path.iterdir():
-        if p.is_dir():
-            check_ok = False
-            print(f"This directory should not be here: {p.absolute()}")
-        match = False
-        for suffix in expected_files:
-            if p.name == data_path.name + suffix:
-                match = True
-                counter += 1
-        if not match:
-            check_ok = False
-            print(f"{p} does not fit into FeTS-naming scheme.")
-    if counter != 4:
-        check_ok = False
-        print(f"Expected 4 niftis, but found {counter}.")
-
-    return check_ok
-
-
-def is_fets_prediction_folder(pred_path: Path, data_path: Path, algorithm_id: str):
-    error_list = []
+def check_prediction_folder(pred_path: Path, data_path: Path):
+    missing_cases = []
 
     subjects = list(data_path.iterdir())
     predictions = list(pred_path.iterdir())
-    if len(subjects) != len(predictions):
-        logging.warning(f"Number of patients and predictions does not match!")
-    # TODO decide how strict we are going to be during evaluation: What happens if more than the required files exist in output dir? check here?
     for case in subjects:
-        match_found = False
-        for pred in predictions:
-            if pred.is_file():
-                if pred.name == f"{case.name}_{algorithm_id}_seg.nii.gz":
-                    match_found = True
-                    break
-            else:
-                logging.warning(f"Found misplaced dir: {pred}. This will not be considered for evaluation!")
-        if not match_found:
-            logging.error(f"Could not find a prediction for case {case.name}!")
-            error_list.append(case.name)
-    logging.info(f"Encountered {len(error_list)} errors. Please check the logs.")
-    return error_list
+        match_found = -1
+        for i, pred in enumerate(predictions):
+            # anything in between the case identifier and the suffix will be ignored
+            if pred.name.startswith(case.name) and pred.name.endswith("_seg.nii.gz"):
+                match_found = i
+                break
+        if match_found >= 0:
+            predictions.pop(match_found)
+        else:
+            missing_cases.append(case.name)
+    if len(predictions) > 0:
+        logging.error(f"The output folder contains files/folders that do not comply with the naming convention:\n{[str(el) for el in predictions]}")
+        return False, missing_cases
+    if len(missing_cases) > 0:
+        logging.warning(f"{len(missing_cases)} cases did not have a prediction:\n{missing_cases}")
+    return True, missing_cases
 
 
 if __name__ == "__main__":
@@ -77,12 +43,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-i",
-        "--input_dir",
-        required=True,
-        type=str,
-        help=(
-            "Input data lies here. Make absolutely sure it has the correct folder structure!"
-        ),
+        "--input_dir", required=True, type=str,
+        help="Input data lies here. Make sure it has the correct folder structure!",
     )
     parser.add_argument(
         "-o", "--output_dir", required=False, type=str, help="Folder where the output/predictions will be written to"
@@ -95,6 +57,8 @@ if __name__ == "__main__":
         "--log_file", default='test.log', required=False, type=str,
         help="Path where logs should be stored."
     )
+    # TODO maybe add "compute_metrics"
+
     args = parser.parse_args()
 
     logging.basicConfig(handlers=[logging.FileHandler(args.log_file), logging.StreamHandler()],
@@ -117,13 +81,16 @@ if __name__ == "__main__":
     # maybe add input dir check here
 
     # This runs the container in the same way it is done in the testing phase
-    run_container(sif_file, input_dir, output_dir, TIME_PER_CASE)
+    runtime = run_container(sif_file, input_dir, output_dir, TIME_PER_CASE)
 
     # check output
-    if not is_fets_prediction_folder(output_dir, input_dir, algorithm_id=sif_file.stem):
-        # TODO: clarify if and how we obtain the algorithm id from the container.
-        logging.error("Output folder test not passed. Please error messages in the logs.")
-        # exit(1)
+    folder_ok, missing_cases = check_prediction_folder(output_dir, input_dir)
+    if len(missing_cases) > 0:
+        # TODO depending on how the evaluation works, do something here
+        pass
+    if not folder_ok:
+        logging.error("Output folder test not passed. Please check the error messages in the logs.")
+        exit(1)
 
     logging.info("Evaluating predictions...")
     # Metrics are calculated in FeTS-CLI

@@ -4,13 +4,14 @@ from the FeTS-CLI (which does the metric calculations).
 """
 
 import argparse
+import logging
 import os
 from pathlib import Path
 import shlex
 import subprocess
 import time
 
-# TODO use logging instead of prints -> how to sensibly combine with FeTS-CLI?
+
 def run_container(sif, in_dir, out_dir, timeout_case):
     num_cases = len(list(in_dir.iterdir()))
 
@@ -38,10 +39,10 @@ def run_container(sif, in_dir, out_dir, timeout_case):
     assert "_seg.nii.gz" not in bind_str, "Container should not have access to segmentation files!"
     
     bind_str += f"{out_dir}:/{container_out_dir}:rw"
-    print(f"The bind path string is in total {len(bind_str)} characters long.")
+    logging.debug(f"The bind path string is in total {len(bind_str)} characters long.")
     os.environ["SINGULARITY_BINDPATH"] = bind_str
 
-    print("\nRunning container...")
+    logging.info("\nRunning container...")
 
     ret = ""
     try:
@@ -52,7 +53,7 @@ def run_container(sif, in_dir, out_dir, timeout_case):
             f" {sif} -i {container_in_dir} -o {container_out_dir}"
         )
         
-        print(singularity_str)
+        logging.info(singularity_str)
         ret = subprocess.run(
             shlex.split(singularity_str),
             timeout=timeout_case * num_cases,
@@ -60,19 +61,21 @@ def run_container(sif, in_dir, out_dir, timeout_case):
         )
         end_time = time.monotonic()
     except subprocess.TimeoutExpired:
-        print(f"Timeout of {timeout_case * num_cases} reached (for {num_cases} cases)."
-              f" Aborting...")
+        logging.error(f"Timeout of {timeout_case * num_cases} reached (for {num_cases} cases)."
+                      f" Aborting...")
         exit(1)
     except subprocess.CalledProcessError as e:
-        print(f"Running container failed:")
+        logging.error(f"Running container failed:")
         raise e
         # I re-raise exceptions here, because they would indicate that something is wrong with the submission
-    print(f"Execution time of the container: {end_time - start_time:0.2f} s")
+
+    logging.info(f"Execution time of the container: {end_time - start_time:0.2f} s")
+    return end_time - start_time
 
 
 if __name__ == "__main__":
 
-    print("Testing FeTS singularity image...")
+    logging.info("Testing FeTS singularity image...")
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
