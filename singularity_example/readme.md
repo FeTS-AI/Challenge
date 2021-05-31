@@ -22,7 +22,8 @@ where `container_simple` should be replaced with your corresponding file names. 
 Tip for debugging: use the `--sandbox` option, as described [here](https://singularity-tutorial.github.io/03-building/).
 
 ## Running a container
-Once you have successfully built your container, it's time to test it on some data. This is the command that will be executed at test-time (see also [`run_submission.py`](../scripts/run_submission.py)):
+Once you have successfully built your container, it's time to test it on some data. This is the command that will be executed at test-time:
+<!-- (see also [`run_submission.py`](../scripts/run_submission.py)) -->
 ```
 DATA_DIR=/path/to/test/data/dir
 OUT_DIR=/path/to/output/dir

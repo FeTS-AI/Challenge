@@ -39,7 +39,7 @@ data/ # this should be passed for inference
 ```
 Furthermore, predictions for test cases should be placed in an output directory and named like this: `<case-identifier>_seg.nii.gz`
 
-## Test your own container
+<!-- ## Test your own container
 
 Once you have built your container, you can run the testing script as follows:
 
@@ -51,4 +51,4 @@ This will run the container on the data in the input folder (`-i`) and (optional
 
 To compute the segmentation metrics as it is done during the testing phase, the [CaPTk CLI](https://cbica.github.io/CaPTk/BraTS_Metrics.html) can be used. Please refer to their website for installation and usage instructions.
 
-**Note** The current version of this script is preliminary. It will be updated soon.
+**Note** The current version of this script is preliminary. It will be updated soon. -->
