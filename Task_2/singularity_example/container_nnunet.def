@@ -12,9 +12,10 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     # Copy model files (including model weights and metadata files, test script)
     # When trying this example, please make sure you installed nnunet (https://github.com/MIC-DKFZ/nnUNet#installation)
     # Pretrained models can be downloaded via nnunet (https://github.com/MIC-DKFZ/nnUNet#how-to-run-inference-with-pretrained-models);
-    # here I use models trained on the brain data from the medical segmentation decathlon (http://medicaldecathlon.com)
-    $RESULTS_FOLDER/nnUNet/2d/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/2d
-    $RESULTS_FOLDER/nnUNet/3d_fullres/Task001_BrainTumour/nnUNetTrainerV2__nnUNetPlansv2.1 /params/3d_fullres
+    # the BraTS 2020 models are only available when installing nnunet from the master branch.
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5
 
 %post
     # Commands in this block are executed after the files have been copied in %files
@@ -31,7 +32,7 @@ From: nvcr.io/nvidia/pytorch:20.08-py3
     # -o: path to output folder
 
     # special for nnunet
-    # [ignore; if these are set and the container is run with -c option, this causes an error]
+    # [ignore; if container is run with access to host environment, this causes an error]
     unset nnUNet_raw_data_base
     unset nnUNet_preprocessed
     unset RESULTS_FOLDER
