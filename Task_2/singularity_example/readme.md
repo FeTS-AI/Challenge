@@ -1,11 +1,13 @@
 # Guide for singularity containers
 
-This repository contains examples for how to prepare a container submission for task 2:
+This folder contains examples for how to prepare a container submission for task 2:
 - A simplistic example using a dummy prediction algorithm (`_simple`)
-- An example using nnUNet-models to make predictions (`_nnunet`)
+- A baseline that uses nnUNet to make predictions (`_nnunet`)
 Each features a definition file (`.def`), which is used to *build* the container, and a python script that performs the actual prediction (`prediction_*.py`) when the container is *run*.
 
-Instructions on how to build and run a singularity container are given below. For a comprehensive introduction to singularity, [this tutorial](https://singularity-tutorial.github.io/) (external resource) is recommended. Note that singularity has to be installed [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps). You can build and run an example from above to check that your installation is working. If you want to try the nnunet example, you also have to install [nnunet](https://github.com/MIC-DKFZ/nnUNet#installation) and download pretrained models.
+Instructions on how to build and run a singularity container are given below. For a comprehensive introduction to singularity, [this tutorial](https://singularity-tutorial.github.io/) (external resource) is recommended. Note that singularity has to be installed [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps). You can build and run an example from above to check that your installation is working. If you want to build the nnUNet container yourself, you have to install [nnunet](https://github.com/MIC-DKFZ/nnUNet#installation) and download the pretrained models.
+
+A ready-to-use nnUNet container, which was trained on the BraTS 2020 data (without taking into account the partitioning), can be downloaded from [here](https://cloud.sylabs.io/library/mzenk/fets/nnunet-brats2020)
 
 ## Building a container
 A definition file is required to build a container. You can start from the example `.def`-files provided in this repo to create your own and then run

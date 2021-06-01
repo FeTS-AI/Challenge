@@ -7,9 +7,9 @@ _Copyright © German Cancer Research Center (DKFZ), Division of Medical Image Co
 
 This tasks focuses on how segmentation methods can learn from multi-institutional datasets how to be robust to distribution shifts at test-time, effectively solving a domain generalization problem. In this repository, you can find information on the container submission and ranking for task 2 of the FeTS challenge 2021. It is structured as follows:
 
-- [`singularity_example`](singularity_example/readme.md): Guide how to build the container submission with examples
-- [`scripts`](scripts/readme.md): Scripts for running containers, both in the participant's environment and in the federated testing environment
-- [`ranking`](ranking/readme.md): Code for performing the final ranking
+- [`singularity_example`](singularity_example): Guide how to build the container submission with examples
+- [`scripts`](scripts): Scripts for running containers, both in the participant's environment and in the federated testing environment
+- [`ranking`](ranking): Code for performing the final ranking
 
 In the FeTS challenge task 2, participants can submit their solution in the form of a [singularity container](https://sylabs.io/guides/3.7/user-guide/index.html). Note that we do not impose restrictions on the participants how they train their model nor how they perform inference, as long as the resulting algorithm can be built into a singularity container with the simple interface described in `singularity_example`. Hence, after training a model, the following steps are required to submit it:
 
@@ -17,7 +17,7 @@ In the FeTS challenge task 2, participants can submit their solution in the form
 2. Build a singularity container for inference using above files and the final model weights.
 3. Upload the container to the submission platform.
 
-Details for steps 1 and 2 are given in the guide in the [singularity_example](singularity_example/readme.md). Instructions for step 3 will follow soon.
+Details for steps 1 and 2 are given in the guide in the [singularity_example](singularity_example). Instructions for step 3 will follow soon.
 
 ## Requirements
 Singularity has to be installed to create a container submission [(instructions)](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps).
