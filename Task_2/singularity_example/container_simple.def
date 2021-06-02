@@ -1,0 +1,47 @@
+# For more information on container definition files,
+# visit https://sylabs.io/guides/3.7/user-guide/definition_files.html
+
+Bootstrap: docker
+# this basically provides pytorch and OS
+From: nvcr.io/nvidia/pytorch:20.08-py3
+# we don't use pytorch in this example, so you can also get a smaller container
+# by using the following base image instead: (uncomment below and comment above)
+# From: python:slim
+
+%files
+    # Specify here what should be copied to the container when it is built
+    # copy prediction script (and other code if necessary)
+    ./predict_simple.py /code/predict.py
+
+    # Copy model files (in particular model weights) [not used here], .e.g
+    # /path/to/checkpoints/model.ckpt /params/model.ckpt
+
+    # and maybe other stuff
+    ./requirements_simple.txt /code/requirements.txt
+
+%post
+    # Commands in this block are executed after the files have been copied in %files
+    # Install ubuntu packages
+    apt update && apt upgrade -y
+    # Install your python requirements
+    pip install -r /code/requirements.txt
+
+%runscript
+    # This is executed inside the container when it is run
+    # The following arguments will be passed:
+    # -i: path to input folder
+    # -o: path to output folder
+    echo "Starting prediction..."
+    python /code/predict.py "$@"
+
+%labels
+    # Please add these fields
+    Author "Maximilian Zenk"
+    Team "Organizer"
+    Institution "German cancer research center (DKFZ)"
+    Email "m.zenk@dkfz-heidelberg.de"
+
+%help
+    # optional
+    This singularity container predicts segmentations on the images in the input folder (-i)
+    and saves them to the output folder (-o). This example uses a dummy prediction algorithm.

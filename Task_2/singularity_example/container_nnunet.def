@@ -1,0 +1,54 @@
+# For more information on container definition files,
+# visit https://sylabs.io/guides/3.7/user-guide/definition_files.html
+
+Bootstrap: docker
+# this basically provides pytorch and OS
+From: nvcr.io/nvidia/pytorch:20.08-py3
+
+%files
+    # copy prediction script
+    ./predict_nnunet.py /code/predict.py
+
+    # Copy model files (including model weights and metadata files, test script)
+    # When trying this example, please make sure you installed nnunet (https://github.com/MIC-DKFZ/nnUNet#installation)
+    # Pretrained models can be downloaded via nnunet (https://github.com/MIC-DKFZ/nnUNet#how-to-run-inference-with-pretrained-models);
+    # the BraTS 2020 models are only available when installing nnunet from the master branch.
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA4_BN__nnUNetPlansv2.1_bs5
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA4_BN_BD__nnUNetPlansv2.1_bs5
+    $RESULTS_FOLDER/nnUNet/3d_fullres/Task082_BraTS2020/nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5 /params/nnUNetTrainerV2BraTSRegions_DA3_BN_BD__nnUNetPlansv2.1_bs5
+
+%post
+    # Commands in this block are executed after the files have been copied in %files
+    # Install ubuntu packages
+    apt update && apt upgrade -y
+    apt install -y git
+    # Install your python requirements
+    python -m pip install git+https://github.com/MIC-DKFZ/nnUNet.git
+
+%runscript
+    # This block is executed inside the container when it is run
+    # The following arguments will be passed:
+    # -i: path to input folder
+    # -o: path to output folder
+
+    # special for nnunet
+    # [ignore; if container is run with access to host environment, this causes an error]
+    unset nnUNet_raw_data_base
+    unset nnUNet_preprocessed
+    unset RESULTS_FOLDER
+
+    # run the inference script
+    echo "Starting prediction..."
+    python /code/predict.py "$@" -p /params
+
+%labels
+    # Please add these fields
+    Author "Maximilian Zenk"
+    Team "Organizer"
+    Institution "German cancer research center (DKFZ)"
+    Email "m.zenk@dkfz-heidelberg.de"
+
+%help
+    # optional
+    This singularity container predicts segmentations on the images in the input folder (first argument)
+    and saves them to the output folder (second argument). It uses a pretrained nnUNet model.
