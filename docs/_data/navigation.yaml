@@ -1,0 +1,10 @@
+- name: Tasks
+  link: /tasks/
+- name: Data
+  link: /data/
+- name: Participation Summary
+  link: /participate/
+- name: Forum
+  link: https://github.com/FETS-AI/Challenge/discussions
+- name: Results
+  link: /results/

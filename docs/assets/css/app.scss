@@ -1,0 +1,11 @@
+---
+---
+$primary: #011F5B;   // this is the color from the CBICA Website.
+// $family-primary: "Fira Sans";
+// Font options (some don't display; maybe because they're not installed locally?)
+// BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif
+// Import Main CSS file from theme
+@import "main";
+// customizations are possible here. Compare 
+// http://versions.bulma.io/0.7.0/documentation/overview/variables/#derived-variables
+// (I don't know how pre-defined variables can be used, such as $pink)
