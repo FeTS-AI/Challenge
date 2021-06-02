@@ -76,6 +76,6 @@ In addition, if there are no restrictions imposed from the journal/conference yo
 
 ## Where can I ask more questions?
 
-You can get answers via the following mechanisms:
+You can get in touch with the organizers via the following mechanisms:
 - Either use the [discussion forum](https://github.com/FETS-AI/Challenge/discussions), where you can get help from the organizers and other participants.
 - If you do not want to discuss your issue publicly, send us an email to: [challenge@fets.ai](mailto:challenge@fets.ai).
