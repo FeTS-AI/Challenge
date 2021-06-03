@@ -1,7 +1,7 @@
 # Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
 
 # Contributing Authors (alphabetical):
-# Micah Sheller (Intel)
+# Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
 import warnings
@@ -17,6 +17,7 @@ import openfl.native as fx
 
 from .gandlf_csv_adapter import construct_fedsim_csv
 from .custom_aggregation_wrapper import CustomAggregationWrapper
+from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
 # one week
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
@@ -216,11 +217,13 @@ def run_challenge_experiment(aggregation_function,
                              brats_training_data_parent_dir,
                              db_store_rounds=5,
                              rounds_to_train=5,
-                             device='cpu'):
+                             device='cpu',
+                             save_checkpoints=True,
+                             restore_from_checkpoint_folder=None):
 
     fx.init('fets_challenge_workspace')
     
-    from sys import path
+    from sys import path, exit
 
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
@@ -278,6 +281,9 @@ def run_challenge_experiment(aggregation_function,
     # get the aggregator, now that we have the initial weights file set up
     logger.info('Creating aggregator...')
     aggregator = plan.get_aggregator()
+    # manually override the aggregator UUID (for checkpoint resume when rounds change)
+    aggregator.uuid = 'aggregator'
+    aggregator._load_initial_tensors()
 
     # create our collaborators
     logger.info('Creating collaborators...')
@@ -294,7 +300,42 @@ def run_challenge_experiment(aggregation_function,
     best_dice = -1.0
     best_dice_over_time_auc = 0
 
-    for round_num in range(rounds_to_train):
+    if restore_from_checkpoint_folder is None and save_checkpoints:
+        checkpoint_folder = setup_checkpoint_folder()
+        logger.info(f'\nCreated checkpoint folder {checkpoint_folder}...')
+        starting_round_num = 0
+    else:
+        if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
+            logger.warning(f'Could not find provided checkpoint folder: {restore_from_checkpoint_folder}. Exiting...')
+            exit(1)
+        else:
+            logger.info(f'Attempting to load last completed round from {restore_from_checkpoint_folder}')
+            state = load_checkpoint(restore_from_checkpoint_folder)
+            checkpoint_folder = restore_from_checkpoint_folder
+
+            [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
+             total_simulated_time, best_dice, best_dice_over_time_auc, 
+             collaborators_chosen_each_round, collaborator_times_per_round, 
+             summary, agg_tensor_db, col_tensor_dbs] = state
+
+            if loaded_collaborator_names != collaborator_names:
+                logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
+                             f'do not match provided collaborators ({collaborator_names})')
+                exit(1)
+
+            for col in loaded_collaborator_names:
+                collaborators[col].tensor_db.tensor_db = col_tensor_dbs[col]
+
+            logger.info(f'Previous summary for round {starting_round_num}')
+            logger.info(summary)
+
+            starting_round_num += 1
+            aggregator.tensor_db.tensor_db = agg_tensor_db
+            aggregator.round_number = starting_round_num
+
+
+
+    for round_num in range(starting_round_num, rounds_to_train):
         # pick collaborators to train for the round
         training_collaborators = choose_training_collaborators(collaborator_names,
                                                                aggregator.tensor_db._iterate(),
@@ -422,4 +463,17 @@ def run_challenge_experiment(aggregation_function,
         summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
         logger.info(summary)
-        
+
+        if save_checkpoints:
+            logger.info(f'Saving checkpoint for round {round_num}')
+            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{checkpoint_folder}\'')
+            save_checkpoint(checkpoint_folder, aggregator, 
+                            collaborator_names, collaborators,
+                            round_num, collaborator_time_stats, 
+                            total_simulated_time, best_dice, 
+                            best_dice_over_time_auc, 
+                            collaborators_chosen_each_round, 
+                            collaborator_times_per_round,
+                            summary)
+
+
