@@ -28,7 +28,7 @@ conda activate ./venv
 8. All lower-level details are in the [FeTS Challenge notebook](./FeTS_Challenge.ipynb)
 
 ## Time to Convergence Metric (formerly "communication cost")
-Along with the typical DICE and Hausdorff metrics, we include a "time to convergence metric" intended to encourage solutions that converge to good scores quickly in terms of time. We simulate the time taken to run each round so that competitors don't need to be concerned with runtime optimizations such as compiled vs. interpreted code. This simulated time is computed in the experiment.py file and provided in the metrics output of the experiment execution.
+Along with the typical DICE and Hausdorff metrics, we include a "time to convergence metric" intended to encourage solutions that converge to good scores quickly in terms of time. We simulate the time taken to run each round so that competitors don't need to be concerned with runtime optimizations such as compiled vs. interpreted code, and so that final scoring will not depend on the hardware used. This simulated time is computed in the experiment.py file and provided in the metrics output of the experiment execution.
 
 The time to convergence metric will be computed as the area under the validation learning curve over 1 week of simulated time where the horizontal axis measures simulated runtime and the vertical axis measures the current best score, computed as the average of enhancing tumor, tumor core, and whole tumor DICE scores over the validation split of the training data.
 
