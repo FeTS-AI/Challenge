@@ -21,7 +21,7 @@ from .custom_aggregation_wrapper import CustomAggregationWrapper
 # one week
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
 
-## COLLABORATOR TIMING DISTIBUTIONS
+## COLLABORATOR TIMING DISTRIBUTIONS
 # These data are derived from the actual timing information in the real-world FeTS information
 # They reflect a subset of the institutions involved.
 # Tuples are (mean, stddev) in seconds
