@@ -35,11 +35,11 @@ The time to convergence metric will be computed as the area under the validation
 The simulated time is stochastic, and computed per collaborator, per round, with the round time equaling the greatest round time of all collaborators in the round.
  
 A given collaborator's round time is computed as the sum of:
-•	The simulated time taken to download the shared model
-•	The simulated time taken to validate the shared model
-•	The simulated time taken to train the model (if training)
-•	The simulated time taken to validate that collaborator's trained model (if training)
-•	The simulated time taken to upload that collaborator's model update (if training)
+- The simulated time taken to download the shared model
+- The simulated time taken to validate the shared model
+- The simulated time taken to train the model (if training)
+- The simulated time taken to validate that collaborator's trained model (if training)
+- The simulated time taken to upload that collaborator's model update (if training)
  
 Each of these simulated times will be computed by drawing from normal distributions created using timing information collected across the 50 participants in the May FeTS initiative training of this same model. For each collaborator, we generate a normal distribution for:
 1. The mean and stdev seconds to download the model
