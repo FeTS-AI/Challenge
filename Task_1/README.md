@@ -41,7 +41,7 @@ A given collaborator's round time is computed as the sum of:
 - The simulated time taken to validate that collaborator's trained model (if training)
 - The simulated time taken to upload that collaborator's model update (if training)
  
-Each of these simulated times will be computed by drawing from normal distributions created using timing information collected across the 50 participants in the May FeTS initiative training of this same model. For each collaborator, we generate a normal distribution for:
+Each of these simulated times will be computed by drawing from normal distributions created using timing information collected from a subset of the 50+ participants in the May FeTS initiative training of this same model. For each collaborator, we generate a normal distribution for:
 1. The mean and stdev seconds to download the model
 2. The mean and stdev seconds to train a batch
 3. The mean and stdev seconds to validate a batch
