@@ -41,7 +41,13 @@ A given collaborator's round time is computed as the sum of:
 - The simulated time taken to validate that collaborator's trained model (if training)
 - The simulated time taken to upload that collaborator's model update (if training)
  
-During the experiment, to generate these simulated times, we first assign each collaborator a normal distrubition representing network speed, and a normal distribution representing compute speed. We then draw from the appropriate compute or network distribution when generating one of the times listed above (at each round).
+During the experiment, to generate these simulated times, we first assign each collaborator four normal distrubitions representing:
+1. download speed
+2. upload speed
+3. training speed
+4. validation speed
+
+We then draw from the appropriate distribution when generating one of the times listed above (at each round).
 
 We assign these network and compute distributions by drawing randomly & uniformly from lists of normal distributions created using timing information collected from a subset of the 50+ participants in the May FeTS initiative training of this same model. In this way, the statistics used to simulate timing information come from timing information collected over an actual federation of hospitals that trained this exact model. In particular, for each actual hospital in our subset, we collected:
 1. The mean and stdev seconds to download the model
