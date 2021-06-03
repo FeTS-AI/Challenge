@@ -21,6 +21,7 @@ from .custom_aggregation_wrapper import CustomAggregationWrapper
 # one week
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
 
+## COLLABORATOR TIMING DISTRIBUTIONS
 # These data are derived from the actual timing information in the real-world FeTS information
 # They reflect a subset of the institutions involved.
 # Tuples are (mean, stddev) in seconds
@@ -402,11 +403,13 @@ def run_challenge_experiment(aggregation_function,
         # update best score
         if best_dice < round_dice:
             best_dice = round_dice
-        
+
+        ## CONVERGENCE METRIC COMPUTATION
         # update the auc score
         best_dice_over_time_auc += best_dice * round_time
 
         # project the auc score as remaining time * best dice
+        # this projection assumes that the current best score is carried forward for the entire week
         projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
         projected_auc /= MAX_SIMULATION_TIME
 
