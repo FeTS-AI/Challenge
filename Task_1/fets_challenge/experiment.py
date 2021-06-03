@@ -19,6 +19,10 @@ from .gandlf_csv_adapter import construct_fedsim_csv
 from .custom_aggregation_wrapper import CustomAggregationWrapper
 
 # one week
+# MINUTE = 60
+# HOUR = 60 * MINUTE
+# DAY = 24 * HOUR
+# WEEK = 7 * DAY
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
 
 ## COLLABORATOR TIMING DISTRIBUTIONS
@@ -425,4 +429,11 @@ def run_challenge_experiment(aggregation_function,
         summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
         logger.info(summary)
+
+        # if the total_simulated_time has exceeded the maximum time, we break
+        # in practice, this means that the previous round's model is the last model scored,
+        # so a long final round should not actually benefit the competitor, since that final
+        # model is never globally validated
+        if total_simulated_time > MAX_SIMULATION_TIME:
+            break
         
