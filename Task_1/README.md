@@ -47,9 +47,9 @@ Each of these simulated times will be computed by drawing from normal distributi
 3. The mean and stdev seconds to validate a batch
 4. The mean and stdev seconds to upload the model.
 
-For a given collaborator, this distribution is constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTIBUTIONS), as well as the random seed used to ensure reproducibility.
+For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTIBUTIONS), as well as the random seed used to ensure reproducibility.
 
-Thus the final metric is computed as the normalized sum of the histogram representing the best scores at each round as computed by best score over time. You can find this code in the experiment.py file (search for ## CONVERGENCE METRIC COMPUTATION).
+You can find the code for the "time to convergence metric" in the experiment.py file by searching for ## CONVERGENCE METRIC COMPUTATION.
 
 ## Data Partitioning and Sharding
 The FeTS 2021 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS21_Training_###`, and two CSV files: 
