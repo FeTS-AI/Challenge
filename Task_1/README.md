@@ -32,6 +32,9 @@ Along with the typical DICE and Hausdorff metrics, we include a "time to converg
 
 The time to convergence metric will be computed as the area under the validation learning curve over 1 week of simulated time where the horizontal axis measures simulated runtime and the vertical axis measures the current best score, computed as the average of enhancing tumor, tumor core, and whole tumor DICE scores over the validation split of the training data.
 
+You can find the code for the "time to convergence metric" in the experiment.py file by searching for ## CONVERGENCE METRIC COMPUTATION.
+
+### How Simulated Time is computed
 The simulated time is stochastic, and computed per collaborator, per round, with the round time equaling the greatest round time of all collaborators in the round.
  
 A given collaborator's round time is computed as the sum of:
@@ -56,8 +59,6 @@ We assign these network and compute distributions by drawing uniform-randomly fr
 4. The mean and stdev seconds to upload the model.
 
 For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
-
-You can find the code for the "time to convergence metric" in the experiment.py file by searching for ## CONVERGENCE METRIC COMPUTATION.
 
 ## Data Partitioning and Sharding
 The FeTS 2021 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS21_Training_###`, and two CSV files: 
