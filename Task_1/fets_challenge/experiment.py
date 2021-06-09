@@ -11,6 +11,7 @@ from logging import getLogger
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
@@ -19,8 +20,13 @@ from .gandlf_csv_adapter import construct_fedsim_csv
 from .custom_aggregation_wrapper import CustomAggregationWrapper
 
 # one week
+# MINUTE = 60
+# HOUR = 60 * MINUTE
+# DAY = 24 * HOUR
+# WEEK = 7 * DAY
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
 
+## COLLABORATOR TIMING DISTRIBUTIONS
 # These data are derived from the actual timing information in the real-world FeTS information
 # They reflect a subset of the institutions involved.
 # Tuples are (mean, stddev) in seconds
@@ -193,6 +199,13 @@ def compute_times_per_collaborator(collaborator_names,
                 data_size *= epochs_per_round
             time += data_size * training_time_per
             
+            # if training, we also validate the locally updated model 
+            data_size = data.get_valid_data_size()
+            validation_time_per = np.random.normal(loc=stats.validation_mean,
+                                                   scale=stats.validation_std)
+            validation_time_per = max(1, validation_time_per)
+            time += data_size * validation_time_per
+
             # upload time
             upload_time = np.random.normal(loc=stats.upload_speed_mean,
                                            scale=stats.upload_speed_std)
@@ -293,6 +306,19 @@ def run_challenge_experiment(aggregation_function,
     total_simulated_time = 0
     best_dice = -1.0
     best_dice_over_time_auc = 0
+
+    # results dataframe data
+    experiment_results = {
+        'round':[],
+        'time': [],
+        'convergence_score': [],
+        'binary_dice_wt': [],
+        'binary_dice_et': [],
+        'binary_dice_tc': [],
+        'hausdorff95_wt': [],
+        'hausdorff95_et': [],
+        'hausdorff95_tc': [],
+    }
 
     for round_num in range(rounds_to_train):
         # pick collaborators to train for the round
@@ -402,18 +428,20 @@ def run_challenge_experiment(aggregation_function,
         # update best score
         if best_dice < round_dice:
             best_dice = round_dice
-        
+
+        ## CONVERGENCE METRIC COMPUTATION
         # update the auc score
         best_dice_over_time_auc += best_dice * round_time
 
         # project the auc score as remaining time * best dice
+        # this projection assumes that the current best score is carried forward for the entire week
         projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
         projected_auc /= MAX_SIMULATION_TIME
 
         # End of round summary
         summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
         summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-        summary += "\n\tProjected Convergence Score: {}".format(projected_auc)
+        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
         summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
         summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
         summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
@@ -421,5 +449,24 @@ def run_challenge_experiment(aggregation_function,
         summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
         summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
+        experiment_results['round'].append(round_num)
+        experiment_results['time'].append(total_simulated_time)
+        experiment_results['convergence_score'].append(projected_auc)
+        experiment_results['binary_dice_wt'].append(binary_dice_wt)
+        experiment_results['binary_dice_et'].append(binary_dice_et)
+        experiment_results['binary_dice_tc'].append(binary_dice_tc)
+        experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
+        experiment_results['hausdorff95_et'].append(hausdorff95_et)
+        experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
+
         logger.info(summary)
-        
+
+        # if the total_simulated_time has exceeded the maximum time, we break
+        # in practice, this means that the previous round's model is the last model scored,
+        # so a long final round should not actually benefit the competitor, since that final
+        # model is never globally validated
+        if total_simulated_time > MAX_SIMULATION_TIME:
+            logger.info("Simulation time exceeded. Ending Experiment")
+            break
+
+    return pd.DataFrame.from_dict(experiment_results)
