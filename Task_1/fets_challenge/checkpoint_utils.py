@@ -28,6 +28,7 @@ def save_checkpoint(checkpoint_folder, aggregator,
                     best_dice_over_time_auc, 
                     collaborators_chosen_each_round, 
                     collaborator_times_per_round,
+                    experiment_results,
                     summary):
     """
     Save latest checkpoint
@@ -39,7 +40,7 @@ def save_checkpoint(checkpoint_folder, aggregator,
     with open(f'checkpoint/{checkpoint_folder}/state.pkl', 'wb') as f:
         pickle.dump([collaborator_names, round_num, collaborator_time_stats, total_simulated_time, 
                      best_dice, best_dice_over_time_auc, collaborators_chosen_each_round, 
-                     collaborator_times_per_round, summary], f)
+                     collaborator_times_per_round, experiment_results, summary], f)
 
 def load_checkpoint(checkpoint_folder):
     """

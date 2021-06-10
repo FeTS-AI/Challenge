@@ -1,6 +1,8 @@
 # FeTS 2021 Challenge Task 1
 Task 1 (**"Federated Training"**) aims at effective weight aggregation methods for the creation of a consensus model given a pre-defined segmentation algorithm for training, while also (optionally) accounting for network outages.
 
+Please ask any additional questions in our discussion pages on our github site and we will try to update this README.md as we identify confusions/gaps in our explanations and instructions.
+
 ## Getting started
 
 ### System requirements
@@ -24,6 +26,39 @@ conda activate ./venv
 6. ```pip install .```
 7. ```jupyter notebook```
 8. All lower-level details are in the [FeTS Challenge notebook](./FeTS_Challenge.ipynb)
+
+## Time to Convergence Metric (formerly "communication cost")
+Along with the typical DICE and Hausdorff metrics, we include a "time to convergence metric" intended to encourage solutions that converge to good scores quickly in terms of time. We simulate the time taken to run each round so that competitors don't need to be concerned with runtime optimizations such as compiled vs. interpreted code, and so that final scoring will not depend on the hardware used. This simulated time is computed in the experiment.py file and provided in the metrics output of the experiment execution.
+
+The time to convergence metric will be computed as the area under the validation learning curve over 1 week of simulated time where the horizontal axis measures simulated runtime and the vertical axis measures the current best score, computed as the average of enhancing tumor, tumor core, and whole tumor DICE scores over the validation split of the training data.
+
+You can find the code for the "time to convergence metric" in the experiment.py file by searching for ## CONVERGENCE METRIC COMPUTATION.
+
+### How Simulated Time is computed
+The simulated time is stochastic, and computed per collaborator, per round, with the round time equaling the greatest round time of all collaborators in the round.
+ 
+A given collaborator's round time is computed as the sum of:
+- The simulated time taken to download the shared model
+- The simulated time taken to validate the shared model
+- The simulated time taken to train the model (if training)
+- The simulated time taken to validate that collaborator's trained model (if training)
+- The simulated time taken to upload that collaborator's model update (if training)
+ 
+During the experiment, to generate these simulated times, we first assign each collaborator four normal distrubitions representing:
+1. download speed
+2. upload speed
+3. training speed
+4. validation speed
+
+We then draw from the appropriate distribution when generating one of the times listed above (at each round).
+
+We assign these network and compute distributions by drawing uniform-randomly from lists of normal distributions created using timing information collected from a subset of the 50+ participants in the May FeTS initiative training of this same model. In this way, the statistics used to simulate timing information come from timing information collected over an actual federation of hospitals that trained this exact model. In particular, for each actual hospital in our subset, we collected:
+1. The mean and stdev seconds to download the model
+2. The mean and stdev seconds to train a batch
+3. The mean and stdev seconds to validate a batch
+4. The mean and stdev seconds to upload the model.
+
+For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
 
 ## Data Partitioning and Sharding
 The FeTS 2021 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS21_Training_###`, and two CSV files: 
