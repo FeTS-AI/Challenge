@@ -51,12 +51,14 @@ Description coming soon...
 
 To provide high implementation flexibility to the participants while also facilitating the federated evaluation on different computation infrastructures, algorithm submissions for this task have to be [singularity containers](https://sylabs.io/singularity/). The container application should be able to produce segmentations for a list of test cases. Details on the interface and examples for how to build such a container are given in the [challenge repository](https://github.com/FETS-AI/Challenge/tree/main/Task_2).
 
-<!-- 1. registration at e.g. gitlab (tbd)
-2. upload of singularity container
-3. (optionally) requesting functionality test (only X trials)
-4. Submission form and short paper in IPP -->
+Each participating team will be provided a gitlab project where they can upload their submission. To make a submission to task 2:
 
-To make sure that the containers submitted by the participants also run successfully on the remote institutions in the FeTS federation, we are working on a functionality test on toy cases. More details coming soon!
+1. Register for the challenge as described [above](#registration-and-data-access) (if not already done).
+2. Sign up at [https://gitlab.hzdr.de/](https://gitlab.hzdr.de/) by either clicking *Helmholtz AAI* (login via your institutional email) or via your github login. Both buttons are in the lower box on the right.
+3. Send an email to [challenge@fets.ai](mailto:challenge@fets.ai), asking for a Task 2-gitlab project and stating your gitlab handle (@your-handle) and team name. We will create a project for you and invite you to it within a day.
+4. Follow the instructions in the newly created project to make a submission.
+
+To make sure that the containers submitted by the participants also run successfully on the remote institutions in the FeTS federation, we offer functionality tests on toy cases. Details are provided in the gitlab project.
 
 ## Evaluation
 
@@ -76,7 +78,7 @@ Description coming soon...
 
 #### Code Review
 
-To make sure that the submitted containers are functional and to prevent misconduct, we are going to review each submission manually before the actual federated evaluation. Regarding functionality, we intend to check the validity of the algorithm output and measure the execution time of the container on a pre-defined dataset and hardware setup. Regarding security, we will inspect the code being executed by the container and discuss any unclear points with the participants. Details will follow soon...
+To make sure that the submitted containers are functional and to prevent misconduct, we are going to review each submission manually before the actual federated evaluation. Regarding functionality, we intend to check the validity of the algorithm output and measure the execution time of the container on a small dataset using a pre-defined GPU setup (RTX 2080 Ti). Regarding security, we will inspect the code being executed by the container and discuss any unclear points with the participants.
 
 #### Federated Evaluation Process
 
@@ -84,8 +86,8 @@ Participants have to adhere to the challenge rules described [above](#participat
 
 - Only submissions that include a complete short paper will be considered for evaluation.
 - Only submissions that pass the code review will be considered for evaluation.
-- Each algorithm is given 180 seconds per test case to produce a prediction. Algorithms that fail to stay in this time budget during the code review phase will not be considered for evaluation.
-- Algorithms will be evaluated on the test set in the chronological order they were submitted in (sorted by date-time of last container upload). This means the later an algorithm is submitted, the higher the risk it cannot be evaluated on the test set before the ranking is computed. Note that this is a worst-case rule and we will work hard to include every single valid submission in the ranking. In case of very high participation numbers, however, we reserve the right to limit the number of participants in the final MICCAI ranking this way.
+- Each submitted container is given 180 seconds per case in the code review phase to produce a prediction. Submissions that fail to stay in this time budget will not be considered for the federated evaluation.
+- Algorithms will be evaluated on the test set in the chronological order they were submitted in (sorted by date-time of last container upload). This means the later an algorithm is submitted, the higher is the risk it cannot be evaluated on all federated test sets before the end of the testing phase. Note that this is a worst-case rule and we will work hard to include every single valid submission in the ranking. In case of very high participation numbers, however, we reserve the right to limit the number of participants in the final MICCAI ranking this way.
 
 <!-- - MAYBE Short papers will be checked for completeness (i.e. are all parts of the template present and described sufficiently) and those with missing parts/insufficient qualitites will receive lower priority for evaluation. -->
 <!-- - MAYBE Challenge results will be updated after MICCAI if necessary, after all submission have been evaluated. -->
