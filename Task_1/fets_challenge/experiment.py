@@ -522,19 +522,6 @@ def run_challenge_experiment(aggregation_function,
                             experiment_results,
                             summary)
 
-        if save_checkpoints:
-            logger.info(f'Saving checkpoint for round {round_num}')
-            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{checkpoint_folder}\'')
-            save_checkpoint(checkpoint_folder, aggregator, 
-                            collaborator_names, collaborators,
-                            round_num, collaborator_time_stats, 
-                            total_simulated_time, best_dice, 
-                            best_dice_over_time_auc, 
-                            collaborators_chosen_each_round, 
-                            collaborator_times_per_round,
-                            experiment_results,
-                            summary)
-
         # if the total_simulated_time has exceeded the maximum time, we break
         # in practice, this means that the previous round's model is the last model scored,
         # so a long final round should not actually benefit the competitor, since that final
