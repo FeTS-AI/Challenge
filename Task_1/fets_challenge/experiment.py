@@ -231,6 +231,7 @@ def run_challenge_experiment(aggregation_function,
                              db_store_rounds=5,
                              rounds_to_train=5,
                              device='cpu',
+                             challenge_metrics_validation_interval=2,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None):
 
@@ -278,6 +279,7 @@ def run_challenge_experiment(aggregation_function,
 
     # get the task runner, passing the first data loader
     task_runner = copy(plan).get_task_runner(list(collaborator_data_loaders.values())[0])
+    task_runner.challenge_metrics_validation_interval = challenge_metrics_validation_interval
 
     tensor_pipe = plan.get_tensor_pipe()
 
@@ -454,52 +456,58 @@ def run_challenge_experiment(aggregation_function,
         round_time = max([t for t, _ in times_list])
         total_simulated_time += round_time
 
-        # get the dice scores for the round
-        binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
-        binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
-        binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
-        hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
-        hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
-        hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
+        if round_num % challenge_metrics_validation_interval == 0:
+            # get the dice scores for the round
+            binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
+            binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
+            binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
+            hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
+            hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
+            hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
 
-        # compute the mean dice value
-        round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
+            # compute the mean dice value
+            round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
 
-        # update best score
-        if best_dice < round_dice:
-            best_dice = round_dice
+            # update best score
+            if best_dice < round_dice:
+                best_dice = round_dice
 
-        ## CONVERGENCE METRIC COMPUTATION
-        # update the auc score
-        best_dice_over_time_auc += best_dice * round_time
+            ## CONVERGENCE METRIC COMPUTATION
+            # update the auc score
+            best_dice_over_time_auc += best_dice * round_time
 
-        # project the auc score as remaining time * best dice
-        # this projection assumes that the current best score is carried forward for the entire week
-        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
-        projected_auc /= MAX_SIMULATION_TIME
+            # project the auc score as remaining time * best dice
+            # this projection assumes that the current best score is carried forward for the entire week
+            projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
+            projected_auc /= MAX_SIMULATION_TIME
 
-        # End of round summary
-        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
-        summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
-        summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
-        summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
-        summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
-        summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
-        summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
+            # End of round summary
+            summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
+            summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
+            summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
+            summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
+            summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
+            summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
+            summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
+            summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
+            summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
-        experiment_results['round'].append(round_num)
-        experiment_results['time'].append(total_simulated_time)
-        experiment_results['convergence_score'].append(projected_auc)
-        experiment_results['binary_dice_wt'].append(binary_dice_wt)
-        experiment_results['binary_dice_et'].append(binary_dice_et)
-        experiment_results['binary_dice_tc'].append(binary_dice_tc)
-        experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
-        experiment_results['hausdorff95_et'].append(hausdorff95_et)
-        experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
+            experiment_results['round'].append(round_num)
+            experiment_results['time'].append(total_simulated_time)
+            experiment_results['convergence_score'].append(projected_auc)
+            experiment_results['binary_dice_wt'].append(binary_dice_wt)
+            experiment_results['binary_dice_et'].append(binary_dice_et)
+            experiment_results['binary_dice_tc'].append(binary_dice_tc)
+            experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
+            experiment_results['hausdorff95_et'].append(hausdorff95_et)
+            experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
 
-        logger.info(summary)
+            logger.info(summary)
+        else:
+            # update the auc score
+            best_dice_over_time_auc += best_dice * round_time
+            summary = f'Skipped challenge validation metrics for round {round_num}'
+            logger.info(summary)
 
         if save_checkpoints:
             logger.info(f'Saving checkpoint for round {round_num}')
