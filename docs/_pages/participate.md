@@ -53,7 +53,7 @@ To provide high implementation flexibility to the participants while also facili
 Each participating team will be provided a gitlab project where they can upload their submission. To make a submission to task 2:
 
 1. Register for the challenge as described [above](#registration-and-data-access) (if not already done).
-2. Sign up at [https://gitlab.hzdr.de/](https://gitlab.hzdr.de/) by either clicking *Helmholtz AAI* (login via your institutional email) or via your github login. Both buttons are in the lower box on the right.
+2. Sign up at [https://gitlab.hzdr.de/](https://gitlab.hzdr.de/) **using the same email address as in step 1** by either clicking *Helmholtz AAI* (login via your institutional email) or via your github login. Both buttons are in the lower box on the right.
 3. Send an email to [challenge@fets.ai](mailto:challenge@fets.ai), asking for a Task 2-gitlab project and stating your gitlab handle (@your-handle) and team name. We will create a project for you and invite you to it within a day.
 4. Follow the instructions in the newly created project to make a submission.
 
