@@ -4,6 +4,7 @@
 * [What is the main website for the challenge?](#what-is-the-main-website-for-the-challenge)
 * [How do I register for the challenge?](#how-do-i-register-for-the-challenge)
 * [How do I obtain the data for the challenge?](#how-do-i-obtain-the-data-for-the-challenge)
+* [Why am I facing issues when using NVIDIA Ampere cards?](#why-am-i-facing-issues-when-using-nvidia-ampere-cards)
 * [What is the data citation?](#what-is-the-data-citation)
 
 ## What is the main website for the challenge?
