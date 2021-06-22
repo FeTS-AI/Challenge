@@ -90,8 +90,8 @@ Participants have to adhere to the challenge rules described [above](#participat
 
 - Only submissions that include a complete short paper will be considered for evaluation.
 - Only submissions that pass the code review will be considered for evaluation.
-- Each submitted container is given 180 seconds per case in the code review phase to produce a prediction. Submissions that fail to stay in this time budget will not be considered for the federated evaluation.
-- If the number of participants is extremely high, we reserve the right to limit the number of participants in the final MICCAI ranking in the following way: Algorithms will be evaluated on the federated test set in the chronological order they were submitted in. This means the later an algorithm is submitted, the higher is the risk it cannot be evaluated on all federated test sets before the end of the testing phase. Note that this is a worst-case rule and we will work hard to include every single valid submission in the ranking.
+- Each submitted container is given 180 seconds per case in the code review phase (we will check only the total runtime for all cases, though). Submissions that fail to predict all cases within this time budget will not be included in the federated evaluation.
+- If the number of participants is extremely high, we reserve the right to limit the number of participants in the final MICCAI ranking in the following way: Algorithms will be evaluated on the federated test set in the chronological order they were submitted in (last submission of each team counts). This means the later an algorithm is submitted, the higher is the risk it cannot be evaluated on all federated test sets before the end of the testing phase. Note that this is a worst-case rule and we will work hard to include every single valid submission in the ranking.
 
 #### Ranking
 
