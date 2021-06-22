@@ -23,6 +23,10 @@ To register and request the training and the validation data of the FeTS 2021 ch
 
 Please see [above](#how-do-i-register-for-the-challenge).
 
+## Why am I facing issues when using NVIDIA Ampere cards?
+
+Please use PyTorch installation which is specific [to CUDA 11](https://pytorch.org/get-started/locally/). See [this issue](https://github.com/FETS-AI/Challenge/issues/42) for details.
+
 ## What is the data citation?
 
 Please cite [this paper](https://arxiv.org/abs/2105.05874) when using data from this challenge:
