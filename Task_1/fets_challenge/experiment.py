@@ -1,7 +1,7 @@
 # Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
 
 # Contributing Authors (alphabetical):
-# Micah Sheller (Intel)
+# Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
 import warnings
@@ -18,6 +18,7 @@ import openfl.native as fx
 
 from .gandlf_csv_adapter import construct_fedsim_csv
 from .custom_aggregation_wrapper import CustomAggregationWrapper
+from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
 # one week
 # MINUTE = 60
@@ -229,11 +230,14 @@ def run_challenge_experiment(aggregation_function,
                              brats_training_data_parent_dir,
                              db_store_rounds=5,
                              rounds_to_train=5,
-                             device='cpu'):
+                             device='cpu',
+                             challenge_metrics_validation_interval=2,
+                             save_checkpoints=True,
+                             restore_from_checkpoint_folder=None):
 
     fx.init('fets_challenge_workspace')
     
-    from sys import path
+    from sys import path, exit
 
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
@@ -275,6 +279,7 @@ def run_challenge_experiment(aggregation_function,
 
     # get the task runner, passing the first data loader
     task_runner = copy(plan).get_task_runner(list(collaborator_data_loaders.values())[0])
+    task_runner.challenge_metrics_validation_interval = challenge_metrics_validation_interval
 
     tensor_pipe = plan.get_tensor_pipe()
 
@@ -291,6 +296,9 @@ def run_challenge_experiment(aggregation_function,
     # get the aggregator, now that we have the initial weights file set up
     logger.info('Creating aggregator...')
     aggregator = plan.get_aggregator()
+    # manually override the aggregator UUID (for checkpoint resume when rounds change)
+    aggregator.uuid = 'aggregator'
+    aggregator._load_initial_tensors()
 
     # create our collaborators
     logger.info('Creating collaborators...')
@@ -320,7 +328,41 @@ def run_challenge_experiment(aggregation_function,
         'hausdorff95_tc': [],
     }
 
-    for round_num in range(rounds_to_train):
+    if restore_from_checkpoint_folder is None and save_checkpoints:
+        checkpoint_folder = setup_checkpoint_folder()
+        logger.info(f'\nCreated checkpoint folder {checkpoint_folder}...')
+        starting_round_num = 0
+    else:
+        if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
+            logger.warning(f'Could not find provided checkpoint folder: {restore_from_checkpoint_folder}. Exiting...')
+            exit(1)
+        else:
+            logger.info(f'Attempting to load last completed round from {restore_from_checkpoint_folder}')
+            state = load_checkpoint(restore_from_checkpoint_folder)
+            checkpoint_folder = restore_from_checkpoint_folder
+
+            [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
+             total_simulated_time, best_dice, best_dice_over_time_auc, 
+             collaborators_chosen_each_round, collaborator_times_per_round, 
+             experiment_results, summary, agg_tensor_db, col_tensor_dbs] = state
+
+            if loaded_collaborator_names != collaborator_names:
+                logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
+                             f'do not match provided collaborators ({collaborator_names})')
+                exit(1)
+
+            for col in loaded_collaborator_names:
+                collaborators[col].tensor_db.tensor_db = col_tensor_dbs[col]
+
+            logger.info(f'Previous summary for round {starting_round_num}')
+            logger.info(summary)
+
+            starting_round_num += 1
+            aggregator.tensor_db.tensor_db = agg_tensor_db
+            aggregator.round_number = starting_round_num
+
+
+    for round_num in range(starting_round_num, rounds_to_train):
         # pick collaborators to train for the round
         training_collaborators = choose_training_collaborators(collaborator_names,
                                                                aggregator.tensor_db._iterate(),
@@ -414,52 +456,71 @@ def run_challenge_experiment(aggregation_function,
         round_time = max([t for t, _ in times_list])
         total_simulated_time += round_time
 
-        # get the dice scores for the round
-        binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
-        binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
-        binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
-        hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
-        hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
-        hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
+        if round_num % challenge_metrics_validation_interval == 0:
+            # get the dice scores for the round
+            binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
+            binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
+            binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
+            hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
+            hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
+            hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
 
-        # compute the mean dice value
-        round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
+            # compute the mean dice value
+            round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
 
-        # update best score
-        if best_dice < round_dice:
-            best_dice = round_dice
+            # update best score
+            if best_dice < round_dice:
+                best_dice = round_dice
 
-        ## CONVERGENCE METRIC COMPUTATION
-        # update the auc score
-        best_dice_over_time_auc += best_dice * round_time
+            ## CONVERGENCE METRIC COMPUTATION
+            # update the auc score
+            best_dice_over_time_auc += best_dice * round_time
 
-        # project the auc score as remaining time * best dice
-        # this projection assumes that the current best score is carried forward for the entire week
-        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
-        projected_auc /= MAX_SIMULATION_TIME
+            # project the auc score as remaining time * best dice
+            # this projection assumes that the current best score is carried forward for the entire week
+            projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
+            projected_auc /= MAX_SIMULATION_TIME
 
-        # End of round summary
-        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
-        summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
-        summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
-        summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
-        summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
-        summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
-        summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
+            # End of round summary
+            summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
+            summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
+            summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
+            summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
+            summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
+            summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
+            summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
+            summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
+            summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
-        experiment_results['round'].append(round_num)
-        experiment_results['time'].append(total_simulated_time)
-        experiment_results['convergence_score'].append(projected_auc)
-        experiment_results['binary_dice_wt'].append(binary_dice_wt)
-        experiment_results['binary_dice_et'].append(binary_dice_et)
-        experiment_results['binary_dice_tc'].append(binary_dice_tc)
-        experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
-        experiment_results['hausdorff95_et'].append(hausdorff95_et)
-        experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
+            experiment_results['round'].append(round_num)
+            experiment_results['time'].append(total_simulated_time)
+            experiment_results['convergence_score'].append(projected_auc)
+            experiment_results['binary_dice_wt'].append(binary_dice_wt)
+            experiment_results['binary_dice_et'].append(binary_dice_et)
+            experiment_results['binary_dice_tc'].append(binary_dice_tc)
+            experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
+            experiment_results['hausdorff95_et'].append(hausdorff95_et)
+            experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
 
-        logger.info(summary)
+            logger.info(summary)
+        else:
+            # update the auc score
+            best_dice_over_time_auc += best_dice * round_time
+            summary = f'Skipped challenge validation metrics for round {round_num}'
+            logger.info(summary)
+
+        if save_checkpoints:
+            logger.info(f'Saving checkpoint for round {round_num}')
+            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{checkpoint_folder}\'')
+            save_checkpoint(checkpoint_folder, aggregator, 
+                            collaborator_names, collaborators,
+                            round_num, collaborator_time_stats, 
+                            total_simulated_time, best_dice, 
+                            best_dice_over_time_auc, 
+                            collaborators_chosen_each_round, 
+                            collaborator_times_per_round,
+                            experiment_results,
+                            summary)
 
         # if the total_simulated_time has exceeded the maximum time, we break
         # in practice, this means that the previous round's model is the last model scored,

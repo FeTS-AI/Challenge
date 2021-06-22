@@ -630,18 +630,19 @@ class FeTSChallengeModel(PyTorchTaskRunner):
             if output.shape != mask.shape:
                 raise ValueError('Model output and ground truth mask are not the same shape.')
 
-            # FIXME: Create a more general losses.py module (with composability and aggregation)
-            current_valscore = self.validation_function(output=output, 
-                                                        target=mask, 
-                                                        class_list=self.data.class_list, 
-                                                        fine_grained=self.validate_with_fine_grained_dice, 
-                                                        **self.validation_function_kwargs)
-            for key, value in current_valscore.items():
-                nan_check(tensor=torch.Tensor([value]), tensor_description='validation result with key {}'.format(key))
+            if round_num % self.challenge_metrics_validation_interval == 0:
+                # FIXME: Create a more general losses.py module (with composability and aggregation)
+                current_valscore = self.validation_function(output=output, 
+                                                            target=mask, 
+                                                            class_list=self.data.class_list, 
+                                                            fine_grained=self.validate_with_fine_grained_dice, 
+                                                            **self.validation_function_kwargs)
+                for key, value in current_valscore.items():
+                    nan_check(tensor=torch.Tensor([value]), tensor_description='validation result with key {}'.format(key))
 
-            # the dice results here are dictionaries (sum up the totals)
-            for key in self.validation_output_keys:
-                valscores[key].append(current_valscore[key])
+                # the dice results here are dictionaries (sum up the totals)
+                for key in self.validation_output_keys:
+                    valscores[key].append(current_valscore[key])
 
             # FeTS Challenge addition:
             # now we call the additional validation functions from the competitor
@@ -657,9 +658,10 @@ class FeTSChallengeModel(PyTorchTaskRunner):
             for key in val_dict.keys():
                 val_dict[key] /= total_samples
 
-        # silly adaptation from brainmage logic to fets challenge logic
-        for key, scores_list in valscores.items():
-            val_dict['performance_evaluation_metric_' + key] = np.mean(scores_list)
+        if round_num % self.challenge_metrics_validation_interval == 0:
+            # silly adaptation from brainmage logic to fets challenge logic
+            for key, scores_list in valscores.items():
+                val_dict['performance_evaluation_metric_' + key] = np.mean(scores_list)
 
         origin = col_name
         suffix = 'validate'
