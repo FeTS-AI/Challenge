@@ -9,6 +9,7 @@ permalink: /faq/
 * [How do I obtain the data for the challenge?](#how-do-i-obtain-the-data-for-the-challenge)
 * [Can I use additional data for model development?](#can-i-use-additional-data-for-model-development?)
 * [What is the data citation?](#what-is-the-data-citation)
+* [Why am I facing issues when using NVIDIA Ampere cards?](#why-am-i-facing-issues-when-using-nvidia-ampere-cards)
 * [Where can I ask more questions?](#where-can-I-ask-more-questions)
 
 ## What is the main website for the challenge?
@@ -26,6 +27,10 @@ This is described on the [participation page](participate.md/#registration-and-d
 ## Can I use additional data for model development?
 
 No. Participants are NOT allowed to use additional public and/or private data (from their own institutions) for extending the provided data. Similarly, using models that were pretrained on such datasets is NOT allowed. This is due to our intentions to provide a fair comparison among the participating methods.
+
+## Why am I facing issues when using NVIDIA Ampere cards?
+
+Please use PyTorch installation which is specific [to CUDA 11](https://pytorch.org/get-started/locally/). See [this issue](https://github.com/FETS-AI/Challenge/issues/42) for details.
 
 ## What is the data citation?
 
