@@ -267,12 +267,17 @@ class FeTSChallengeModel(PyTorchTaskRunner):
         # I try to track this with self.validation_output_keys (below)
         if self.which_validation == 'fets_phase2_validation':
             self.validation_function = fets_phase2_validation
-            self.validation_output_keys = ['binary_DICE_ET', 
-                                           'binary_DICE_TC', 
-                                           'binary_DICE_WT', 
-                                           'binary_Hausdorff95_ET', 
-                                           'binary_Hausdorff95_TC', 
-                                           'binary_Hausdorff95_WT']
+            if self.validation_function_kwargs.get('challenge_remove_hausdorff', False):
+                self.validation_output_keys = ['binary_DICE_ET', 
+                                               'binary_DICE_TC', 
+                                               'binary_DICE_WT']
+            else:
+                self.validation_output_keys = ['binary_DICE_ET', 
+                                               'binary_DICE_TC', 
+                                               'binary_DICE_WT', 
+                                               'binary_Hausdorff95_ET', 
+                                               'binary_Hausdorff95_TC', 
+                                               'binary_Hausdorff95_WT']
         else:
             raise ValueError('The validation function {} is not currently supported'.format(self.which_validation))
 
