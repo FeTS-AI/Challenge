@@ -233,7 +233,8 @@ def run_challenge_experiment(aggregation_function,
                              device='cpu',
                              challenge_metrics_validation_interval=2,
                              save_checkpoints=True,
-                             restore_from_checkpoint_folder=None):
+                             restore_from_checkpoint_folder=None, 
+                             include_validation_with_hausdorff=True):
 
     fx.init('fets_challenge_workspace')
     
@@ -264,6 +265,12 @@ def run_challenge_experiment(aggregation_function,
         'task_runner.settings.validation_functions': validation_functions,
         'data_loader.settings.federated_simulation_train_val_csv_path': os.path.join(work, 'gandlf_paths.csv'),
     }
+
+    if not include_validation_with_hausdorff:
+        overrides.update({'task_runner.settings.validation_function_kwargs':
+          {'challenge_reduced_output': True, 
+           'challenge_remove_hausdorff': True
+          }})
 
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
@@ -317,16 +324,20 @@ def run_challenge_experiment(aggregation_function,
 
     # results dataframe data
     experiment_results = {
-        'round':[],
-        'time': [],
-        'convergence_score': [],
-        'binary_dice_wt': [],
-        'binary_dice_et': [],
-        'binary_dice_tc': [],
-        'hausdorff95_wt': [],
-        'hausdorff95_et': [],
-        'hausdorff95_tc': [],
-    }
+            'round':[],
+            'time': [],
+            'convergence_score': [],
+            'binary_dice_wt': [],
+            'binary_dice_et': [],
+            'binary_dice_tc': [],
+        }
+    if include_validation_with_hausdorff:
+        experiment_results.update({
+            'hausdorff95_wt': [],
+            'hausdorff95_et': [],
+            'hausdorff95_tc': [],
+            })
+        
 
     if restore_from_checkpoint_folder is None and save_checkpoints:
         checkpoint_folder = setup_checkpoint_folder()
@@ -456,14 +467,16 @@ def run_challenge_experiment(aggregation_function,
         round_time = max([t for t, _ in times_list])
         total_simulated_time += round_time
 
-        if round_num % challenge_metrics_validation_interval == 0:
-            # get the dice scores for the round
+        if round_num % challenge_metrics_validation_interval == 0:  
+            # get the performace validation scores for the round
             binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
             binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
             binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
-            hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
-            hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
-            hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
+            if include_validation_with_hausdorff:
+                hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
+                hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
+                hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
+        
 
             # compute the mean dice value
             round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
@@ -488,9 +501,10 @@ def run_challenge_experiment(aggregation_function,
             summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
             summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
             summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
-            summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
-            summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
-            summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
+            if include_validation_with_hausdorff:
+                summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
+                summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
+                summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
 
             experiment_results['round'].append(round_num)
             experiment_results['time'].append(total_simulated_time)
@@ -498,10 +512,10 @@ def run_challenge_experiment(aggregation_function,
             experiment_results['binary_dice_wt'].append(binary_dice_wt)
             experiment_results['binary_dice_et'].append(binary_dice_et)
             experiment_results['binary_dice_tc'].append(binary_dice_tc)
-            experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
-            experiment_results['hausdorff95_et'].append(hausdorff95_et)
-            experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
-
+            if include_validation_with_hausdorff:
+                experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
+                experiment_results['hausdorff95_et'].append(hausdorff95_et)
+                experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
             logger.info(summary)
         else:
             # update the auc score
