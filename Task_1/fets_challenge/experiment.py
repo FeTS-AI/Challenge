@@ -339,9 +339,9 @@ def run_challenge_experiment(aggregation_function,
             })
         
 
-    if restore_from_checkpoint_folder is None and save_checkpoints:
+    if restore_from_checkpoint_folder is None:
         checkpoint_folder = setup_checkpoint_folder()
-        logger.info(f'\nCreated checkpoint folder {checkpoint_folder}...')
+        logger.info(f'\nCreated experiment folder {checkpoint_folder}...')
         starting_round_num = 0
     else:
         if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
@@ -543,5 +543,11 @@ def run_challenge_experiment(aggregation_function,
         if total_simulated_time > MAX_SIMULATION_TIME:
             logger.info("Simulation time exceeded. Ending Experiment")
             break
+
+    # Set the weights for the final model
+    task_runner.rebuild_model(
+        rounds_to_train - 1, aggregator.best_tensor_dict, validation=True)
+    task_runner.save_native(f'checkpoint/{checkpoint_folder}/best_model.pkl')
+    logger.info(f'Saved best model to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
     return pd.DataFrame.from_dict(experiment_results)
