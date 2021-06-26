@@ -4,3 +4,4 @@
 # Micah Sheller (Intel)
 
 from .experiment import run_challenge_experiment
+from .inference import model_outputs_to_disc

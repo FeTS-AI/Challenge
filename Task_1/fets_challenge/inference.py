@@ -15,20 +15,12 @@ import torch, torchio
 
 import openfl.native as fx
 
+logger = getLogger(__name__)
+
 # some hard coded variables
 channel_keys = ['1', '2', '3', '4']
 class_label_map = {0:0, 1:1, 2:2, 4:4}
 class_list = list(np.sort(list(class_label_map.values())))
-
-print('\nSTILL HAVE A TODO !!!!\n')
-# TODO: Replace this with an actual log
-class MyLogger(object):
-    
-    def __init__(self):
-        return
-    
-    def info(self, message):
-        print('-- FAKE LOGGER OUTPUT--: ', message)
 
 def nan_check(tensor, tensor_description):
     tensor = tensor.cpu()
@@ -196,8 +188,8 @@ def convert_to_original_labels(array, threshold=0.5, initialization_value=999):
     return original_labels.astype(np.uint8)
 
 
-def model_outputs_to_disc(inference_parent_directory_path, 
-                          output_parent_dirpath, 
+def model_outputs_to_disc(data_path, 
+                          output_path, 
                           native_model_path,
                           outputtag='',
                           device='cpu'):
@@ -206,10 +198,6 @@ def model_outputs_to_disc(inference_parent_directory_path,
     
     from sys import path, exit
     
-    print('\nSTILL HAVE A TODO !!!!\n')
-    # TODO: replace below with an actual logger
-    logger = MyLogger()
-
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
@@ -227,7 +215,7 @@ def model_outputs_to_disc(inference_parent_directory_path,
     plan = fx.update_plan(overrides)
 
     # overwrite datapath value for a single 'InferenceCol' collaborator
-    plan.cols_data_paths['InferenceCol'] = inference_parent_directory_path
+    plan.cols_data_paths['InferenceCol'] = data_path
     
     # get the inference data loader
     data_loader = copy(plan).get_data_loader('InferenceCol')
@@ -242,7 +230,7 @@ def model_outputs_to_disc(inference_parent_directory_path,
 
     
     
-    logger.info('Starting inference using data from {}\n'.format(inference_parent_directory_path))
+    logger.info('Starting inference using data from {}\n'.format(data_path))
     
     inference_loader = data_loader.get_inference_loader()
     
@@ -251,10 +239,10 @@ def model_outputs_to_disc(inference_parent_directory_path,
         subfolder = subject['subject_id'][0]
         
         #prep the path for the output file
-        if not os.path.exists(output_parent_dirpath):
-            os.mkdir(output_parent_dirpath)
+        if not os.path.exists(output_path):
+            os.mkdir(output_path)
          
-        inference_outpath = os.path.join(output_parent_dirpath, subfolder + outputtag + '_seg.nii.gz')
+        inference_outpath = os.path.join(output_path, subfolder + outputtag + '_seg.nii.gz')
         
         logger.info("Validating with subject: {}".format(subfolder))
         features = torch.cat([subject[key][torchio.DATA] for key in channel_keys], dim=1).float()
@@ -271,6 +259,18 @@ def model_outputs_to_disc(inference_parent_directory_path,
 
         # GANDLFData loader produces transposed output from what sitk gets from file, so transposing here.
         output = np.transpose(output)
+
+        print("STILL HAVE A TODO (keeping sigmoid for extra tests)")
+        ################
+        # convert array to SimpleITK image 
+        sig_image = sitk.GetImageFromArray(output)
+        sig_inference_outpath = os.path.join(output_path, subfolder + outputtag + '_sig_seg.nii.gz')
+        logger.info("\nWriting sig inference NIfTI image of shape {} to {}".format(output.shape, sig_inference_outpath))
+        sitk.WriteImage(sig_image, sig_inference_outpath)
+
+
+
+        # TODO delete above
         
         # process float sigmoid outputs (three channel corresponding to ET, TC, and WT)
         # into original label output (no channels, but values in 0, 1, 2, 4)
