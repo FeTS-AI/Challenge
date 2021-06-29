@@ -1,7 +1,7 @@
 # Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
 
 # Contributing Authors (alphabetical):
-# Brandon Edwars (Intel), Patrick Foley (Intel), Micah Sheller (Intel)
+# Brandon Edwards (Intel), Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
 from copy import copy
