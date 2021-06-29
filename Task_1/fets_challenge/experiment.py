@@ -484,6 +484,11 @@ def run_challenge_experiment(aggregation_function,
             # update best score
             if best_dice < round_dice:
                 best_dice = round_dice
+                # Set the weights for the final model
+                task_runner.rebuild_model(
+                    rounds_to_train - 1, aggregator.last_tensor_dict, validation=True)
+                task_runner.save_native(f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                logger.info(f'Saved model with so far best average binary DICE of {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
             ## CONVERGENCE METRIC COMPUTATION
             # update the auc score
@@ -543,11 +548,5 @@ def run_challenge_experiment(aggregation_function,
         if total_simulated_time > MAX_SIMULATION_TIME:
             logger.info("Simulation time exceeded. Ending Experiment")
             break
-
-    # Set the weights for the final model
-    task_runner.rebuild_model(
-        rounds_to_train - 1, aggregator.best_tensor_dict, validation=True)
-    task_runner.save_native(f'checkpoint/{checkpoint_folder}/best_model.pkl')
-    logger.info(f'Saved best model to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
     return pd.DataFrame.from_dict(experiment_results)
