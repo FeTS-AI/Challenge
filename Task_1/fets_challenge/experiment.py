@@ -488,14 +488,13 @@ def run_challenge_experiment(aggregation_function,
                 # Set the weights for the final model
                 if round_num == 0:
                     # here the initial model was validated (temp model does not exist)
-                    task_runner.rebuild_model(round_num, aggregator.init_tensor_dict, validation=True)
-                    task_runner.save_native(f'checkpoint/{checkpoint_folder}/best_model.pkl')
-                    logger.info(f'Saved model with so far best average binary DICE of {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
                 elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
                     raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
                 else:
                     # here the temp model was the one validated
                     shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
             ## CONVERGENCE METRIC COMPUTATION
             # update the auc score
