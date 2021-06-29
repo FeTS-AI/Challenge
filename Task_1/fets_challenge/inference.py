@@ -260,18 +260,6 @@ def model_outputs_to_disc(data_path,
         # GANDLFData loader produces transposed output from what sitk gets from file, so transposing here.
         output = np.transpose(output)
 
-        print("STILL HAVE A TODO (keeping sigmoid for extra tests)")
-        ################
-        # convert array to SimpleITK image 
-        sig_image = sitk.GetImageFromArray(output)
-        sig_inference_outpath = os.path.join(output_path, subfolder + outputtag + '_sig_seg.nii.gz')
-        logger.info("\nWriting sig inference NIfTI image of shape {} to {}".format(output.shape, sig_inference_outpath))
-        sitk.WriteImage(sig_image, sig_inference_outpath)
-
-
-
-        # TODO delete above
-        
         # process float sigmoid outputs (three channel corresponding to ET, TC, and WT)
         # into original label output (no channels, but values in 0, 1, 2, 4)
         output = convert_to_original_labels(output)
