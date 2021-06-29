@@ -253,8 +253,7 @@ def model_outputs_to_disc(data_path,
                                                               features=features)
         nan_check(tensor=output, tensor_description='model output tensor')
         task_runner.sanity_check_val_output_shape(output)
-        
-        
+          
         output = np.squeeze(output.cpu().numpy())
 
         # GANDLFData loader produces transposed output from what sitk gets from file, so transposing here.
