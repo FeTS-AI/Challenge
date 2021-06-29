@@ -266,8 +266,8 @@ def model_outputs_to_disc(data_path,
         # convert array to SimpleITK image 
         image = sitk.GetImageFromArray(output)
 
-        # get the image information such as affine orientation from the label
-        image.CopyInformation(sitk.ReadImage(subject['label']['path'][0]))
+        # get the image information such as affine orientation from the first feature layer
+        image.CopyInformation(sitk.ReadImage(subject['1']['path'][0]))
 
         logger.info("\nWriting inference NIfTI image of shape {} to {}".format(output.shape, inference_outpath))
         sitk.WriteImage(image, inference_outpath)
