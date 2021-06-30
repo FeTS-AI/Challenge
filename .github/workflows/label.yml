@@ -20,7 +20,6 @@ jobs:
     - uses: actions/labeler@v2
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-
         run: |
           gh pr edit ${{ github.event.pull_request.html_url }} \
               --add-reviewer yourorg/core
