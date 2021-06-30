@@ -44,7 +44,7 @@ You are free to use and/or refer to the FeTS datasets in your own research, prov
 
 \[1\] [S. Pati, U. Baid, M. Zenk, B. Edwards, M. J. Sheller, G. A. Reina, et al., "The Federated Tumor Segmentation (FeTS) Challenge", arXiv preprint arXiv:2105.05874 (2021)](https://arxiv.org/abs/2105.05874)
 
-\[2\] [M. J. Sheller, B. Edwards, G. A. Reina, J. Martin, S. Pati, A. Kotrotsou, et al., "Federated learning in medicine: facilitating multi-institutional collaborations without sharing patient data", Nature Scientific Reports, 10:12598 (2020)   DOI: 10.1038/s41598-020-69250-1](https://www.nature.com/articles/s41598-020-69250-1)
+\[2\] [G.A.Reina, A.Gruzdev, P.Foley, O.Perepelkina, M.Sharma, I.Davidyuk, et al., “OpenFL: An open-source framework for Federated Learning”, arXiv preprint arXiv:2105.06413 (2021)](https://arxiv.org/abs/2105.06413)
 
 \[3\] [S. Bakas, H. Akbari, A. Sotiras, M. Bilello, M. Rozycki, J.S. Kirby, et al., "Advancing The Cancer Genome Atlas glioma MRI collections with expert segmentation labels and radiomic features", Nature Scientific Data, 4:170117 (2017) DOI: 10.1038/sdata.2017.117](https://www.ncbi.nlm.nih.gov/pubmed/28872634)
 
