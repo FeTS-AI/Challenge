@@ -3,7 +3,7 @@ title: Participation Details
 permalink: /participate/
 ---
 
-## Timeline
+## Participation Timeline
 
 For the exact dates and deadlines, please see the schedule on the [challenge schedule](index.md/#important-dates).
 
