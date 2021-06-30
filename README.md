@@ -3,7 +3,7 @@
 
 # Federated Tumor Segmentation Challenge
 
-The repo for the FeTS Challenge.
+The repo for the FeTS Challenge: The 1st Computational Competition on Federated Learning.
 
 ## Welcome message
 
