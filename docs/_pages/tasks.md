@@ -19,9 +19,13 @@ These tasks are described in more detail below. Participants are free to choose 
 
 The clinical relevance and importance of the FeTS challenge is that it addresses challenges related to privacy, legal, bureaucratic, and ownership concerns raised in the current paradigm of multi-site collaborations through data sharing. The official challenge design document can be found [here](https://zenodo.org/record/4573128#.YJKcEcCSk4s) and the accompanying arXiv-manuscript [here](https://arxiv.org/abs/2105.05874).
 
+
+
 **License Conformance for Participants' code**
 
 By participating and submitting your contribution to the FeTS 2021 challenge, for review and evaluation during the testing/ranking phase, you confirm that your code follows a license conforming to one of the standards: Apache 2.0, BSD-style, or MIT.
+
+
 
 ### Task 1: Federated Training (FL Weight Aggregation Methods) {#task1-description}
 
@@ -49,6 +53,7 @@ The evaluation metrics considered for this task are:
 - Communication cost, during model training, i.e., Budget time (product of bytes sent/received * number of federated rounds)
 - Sensitivity (this will not be used for ranking purposes)
 - Specificity (this will not be used for ranking purposes)
+
 
 ### Task 2: Federated Evaluation (Generalization “In The Wild”) {#task2-description}
 
