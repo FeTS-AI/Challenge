@@ -7,6 +7,7 @@ import os
 import warnings
 from collections import namedtuple
 from copy import copy
+import shutil
 from logging import getLogger
 from pathlib import Path
 
@@ -339,9 +340,9 @@ def run_challenge_experiment(aggregation_function,
             })
         
 
-    if restore_from_checkpoint_folder is None and save_checkpoints:
+    if restore_from_checkpoint_folder is None:
         checkpoint_folder = setup_checkpoint_folder()
-        logger.info(f'\nCreated checkpoint folder {checkpoint_folder}...')
+        logger.info(f'\nCreated experiment folder {checkpoint_folder}...')
         starting_round_num = 0
     else:
         if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
@@ -484,6 +485,16 @@ def run_challenge_experiment(aggregation_function,
             # update best score
             if best_dice < round_dice:
                 best_dice = round_dice
+                # Set the weights for the final model
+                if round_num == 0:
+                    # here the initial model was validated (temp model does not exist)
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+                else:
+                    # here the temp model was the one validated
+                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
             ## CONVERGENCE METRIC COMPUTATION
             # update the auc score
@@ -543,5 +554,12 @@ def run_challenge_experiment(aggregation_function,
         if total_simulated_time > MAX_SIMULATION_TIME:
             logger.info("Simulation time exceeded. Ending Experiment")
             break
+
+        # save the most recent aggregated model in native format to be copied over as best when appropriate
+        # (note this model has not been validated by the collaborators yet)
+        task_runner.rebuild_model(round_num, aggregator.last_tensor_dict, validation=True)
+        task_runner.save_native(f'checkpoint/{checkpoint_folder}/temp_model.pkl')
+        
+            
 
     return pd.DataFrame.from_dict(experiment_results)
