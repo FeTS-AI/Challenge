@@ -86,17 +86,20 @@ Please follow these instructions [[ref](https://gist.github.com/sarthakpati/73c8
 ```python
 import SimpleITK as sitk
 
-# read image
+# read image from where information is to be copied
 inputImage = sitk.ReadImage('/path/to/input.nii.gz')
 
 # get result in the form of a numpy array
-npa_res = my_algorithm(sitk.GetArrayFromImage(inputImage)) # my_algorithm does something fancy
+npa_res = my_algorithm( # my_algorithm does something fancy with a numpy array
+                  sitk.GetArrayFromImage(inputImage) # get array from image
+            ) 
 
-# Converting back to SimpleITK (assumes we didn't move the image in space as we copy the information from the original)
+# Converting back to SimpleITK 
+# (assumes we didn't move the image in space as we copy the information from the original)
 result_image = sitk.GetImageFromArray(npa_res)
 result_image.CopyInformation(inputImage)
 
-# write the image
+# write the image, and this will have same information as inputImage
 sitk.WriteImage(result_image, '/path/to/result.nii.gz')
 ```
 
