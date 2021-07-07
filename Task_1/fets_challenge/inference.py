@@ -242,7 +242,7 @@ def model_outputs_to_disc(data_path,
         if not os.path.exists(output_path):
             os.mkdir(output_path)
          
-        inference_outpath = os.path.join(output_path, subfolder + outputtag + '_seg.nii.gz')
+        inference_outpath = os.path.join(output_path, subfolder + outputtag + '.nii.gz') # the evaluation app requires the format "${subject_id}.nii.gz"
         
         logger.info("Validating with subject: {}".format(subfolder))
         features = torch.cat([subject[key][torchio.DATA] for key in channel_keys], dim=1).float()
