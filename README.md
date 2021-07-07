@@ -25,7 +25,7 @@ Please see https://fets-ai.github.io/Challenge/
 
 ## Frequently asked questions
 
-Please see [FAQ](./docs/_pages/FAQ.md).
+Please see [FAQ](https://fets-ai.github.io/Challenge/faq/).
 
 ## Citation
 
