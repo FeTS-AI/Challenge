@@ -10,6 +10,7 @@ permalink: /faq/
 * [Can I use additional data for model development?](#can-i-use-additional-data-for-model-development?)
 * [What is the data citation?](#what-is-the-data-citation)
 * [Why am I facing issues when using NVIDIA Ampere cards?](#why-am-i-facing-issues-when-using-nvidia-ampere-cards)
+* [How can I ensure the predictions are in the same space as the input?](#how-can-I-ensure-the-predictions-are-in-the-same-space-as-the-input)
 * [Where can I ask more questions?](#where-can-I-ask-more-questions)
 
 ## What is the main website for the challenge?
@@ -77,6 +78,26 @@ In addition, if there are no restrictions imposed from the journal/conference yo
   volume={286},
   year={2017}
 }
+```
+
+## How can I ensure the predictions are in the same space as the input?
+
+Please follow these instructions [[ref](https://gist.github.com/sarthakpati/73c8ffd7586e715680f3679a791bbec3)]:
+```python
+import SimpleITK as sitk
+
+# read image
+inputImage = sitk.ReadImage('/path/to/input.nii.gz')
+
+# get result in the form of a numpy array
+npa_res = my_algorithm(sitk.GetArrayFromImage(inputImage)) # my_algorithm does something fancy
+
+# Converting back to SimpleITK (assumes we didn't move the image in space as we copy the information from the original)
+result_image = sitk.GetImageFromArray(npa_res)
+result_image.CopyInformation(inputImage)
+
+# write the image
+sitk.WriteImage(result_image, '/path/to/result.nii.gz')
 ```
 
 ## Where can I ask more questions?
