@@ -10,7 +10,7 @@ permalink: /faq/
 * [Can I use additional data for model development?](#can-i-use-additional-data-for-model-development?)
 * [What is the data citation?](#what-is-the-data-citation)
 * [Why am I facing issues when using NVIDIA Ampere cards?](#why-am-i-facing-issues-when-using-nvidia-ampere-cards)
-* [How can I ensure the predictions are in the same space as the input?](#how-can-I-ensure-the-predictions-are-in-the-same-space-as-the-input)
+* [How can I ensure the predictions are in the same space as the input?](#how-can-i-ensure-the-predictions-are-in-the-same-space-as-the-input)
 * [Where can I ask more questions?](#where-can-I-ask-more-questions)
 
 ## What is the main website for the challenge?
