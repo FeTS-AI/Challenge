@@ -96,3 +96,9 @@ Participants have to adhere to the challenge rules described [above](#participat
 #### Ranking
 
 Only the external FeTS testing institutions (that are not part of the training data) are used for the ranking. First, on institution `k`, algorithms are ranked on all `N_k` test cases, three regions and two metrics, yielding `N_k * 3 * 2` ranks for each algorithm. Averaging these produces a score equivalent to a per-institution rank for each algorithm (rank-then-aggregate approach). The final rank of an algorithm is computed from the average of its per-institution ranks. Ties are resolved by assigning the minimum rank.
+
+## Awards
+
+The top-ranked participating teams will receive monetary prizes of total value of $5,000 - sponsored by Intel.
+
+![logo](https://github.com/FETS-AI/Challenge/raw/main/docs/img/intel_logo.png "Sponsor of FeTS Challenge: Intel")
