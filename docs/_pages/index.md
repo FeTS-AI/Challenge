@@ -37,7 +37,7 @@ All deadlines are for **23:59 Eastern Time**
 | **21 May** | Training phase (Release of training data + associated ground truth). |
 | **14 Jun** | Validation phase (Release of validation data. Hidden ground truth). |
 | **19 Jul** | Initial paper submission on the [CMT system](https://cmt3.research.microsoft.com/BrainLes2021) |
-| **26 Jul** | Final submission of short paper and prediction algorithm (incl. model weights).|
+| **26 Jul** | Final submission of short paper and prediction algorithm (incl. all required task-specific uploads.|
 | **20 Jul-27 Aug** | Testing phase (Evaluation by organizers, only for methods with submitted papers) |
 | **3 Sep** | Contacting top-ranked methods to prepare their oral presentation at MICCAI |
 | **1 Oct (PM)** | Announcement of top 3 ranked teams at MICCAI FeTS 2021. |
