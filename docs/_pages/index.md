@@ -37,11 +37,12 @@ All deadlines are for **23:59 Eastern Time**
 | **21 May** | Training phase (Release of training data + associated ground truth). |
 | **14 Jun** | Validation phase (Release of validation data. Hidden ground truth). |
 | **19 Jul** | Initial short paper submission on the [CMT system](https://cmt3.research.microsoft.com/BrainLes2021) |
-| **26 Jul** | Final submission of short paper and prediction algorithm (incl. all required task-specific uploads.|
-| **20 Jul-27 Aug** | Testing phase (Evaluation by organizers, only for methods with submitted papers) |
-| **3 Sep** | Contacting top-ranked methods to prepare their oral presentation at MICCAI |
-| **1 Oct (PM)** | Announcement of top 3 ranked teams at MICCAI FeTS 2021. |
-| **10 Oct** | Submission deadline for extended LNCS papers (12-14 pages) |
+| **26 Jul** | Submission of prediction algorithm (incl. all required task-specific uploads). |
+| **02 Aug** | Final submission of short paper (both tasks) and parameters of prediction algorithm (task-1; no algorithmic changes permitted). |
+| **26 Jul-27 Aug** | Testing phase (Evaluation by organizers, only for methods with submitted papers). |
+| **03 Sep** | Contacting top-ranked methods to prepare their oral presentation at MICCAI. |
+| **01 Oct (PM)** | Announcement of top 3 ranked teams at MICCAI FeTS 2021. |
+| **10 Oct** | Submission deadline for extended LNCS papers (12-14 pages). |
 | **24 Oct** | Reviewers' feedback. |
 | **10 Nov** | Camera-ready paper submission. |
 | **15 Dec** | Summarizing meta-analysis manuscript. |
