@@ -18,6 +18,7 @@
 
 # Contributing Authors (alphabetical):
 # Brandon Edwards (Intel)
+# Patrick Foley (Intel)
 # Sarthak Pati (University of Pennsylvania)
 # Micah Sheller (Intel)
 
@@ -215,6 +216,18 @@ class FeTSChallengeModel(PyTorchTaskRunner):
             os.environ["KMP_AFFINITY"] = "granularity=fine,verbose,compact,1,0"
                  
         self.device = device
+
+        # For experiment reproducability
+        seed = 42
+        np.random.seed(seed)
+        random.seed(42)
+        torch.use_deterministic_algorithms(True)
+        torch.manual_seed(seed)
+        if self.device != 'cpu':
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+
 
         # FIXME: this puts priority for these values on data object over flplan. Is this correct?
         if hasattr(data, 'n_classes') and data.n_classes is not None:
