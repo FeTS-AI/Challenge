@@ -46,7 +46,8 @@ To register and request the training and the validation data of the FeTS 2021 ch
 
 As of 2021/July/19, each participant that has opened an initial entry in the [CMT submission system](https://cmt3.research.microsoft.com/BrainLes2021) would have received a unique upload link. Using that link, each participant would need to upload the following items:
 - The edited [challenge notebook](https://github.com/FETS-AI/Challenge/blob/main/Task_1/FeTS_Challenge.ipynb) with **as many comments** as possible.
-- An accompanying README providing any additional details that participants would like to convey to the organizers
+- An accompanying README providing any additional details that participants would like to convey to the organizers.
+- [OPTIONAL] Scores reported by notebook on your own runs. This will be useful for organizers to double-check the re-training process.
 
 To ensure that all participants are working off of a common baseline, we will be performing the re-training of each submitted method on our hardware.
 
