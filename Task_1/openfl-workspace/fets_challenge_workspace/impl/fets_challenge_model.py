@@ -221,7 +221,7 @@ class FeTSChallengeModel(PyTorchTaskRunner):
         seed = 42
         np.random.seed(seed)
         random.seed(42)
-        torch.use_deterministic_algorithms(True)
+        torch.use_deterministic_algorithms(False)
         torch.manual_seed(seed)
         if self.device != 'cpu':
             torch.cuda.manual_seed_all(seed)
