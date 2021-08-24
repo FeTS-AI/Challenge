@@ -1,0 +1,62 @@
+0:
+  deepmedic:
+    WT:
+      Dice: 0.5
+      Hausdorff95: 8
+    TC:
+      Dice: 0.7
+      Hausdorff95: 2
+    ET:
+      Dice: 0.54
+      Hausdorff95: 14
+  deepscan:
+    WT:
+      Dice: 0.45
+      Hausdorff95: 12
+    TC:
+      Dice: 0.85
+      Hausdorff95: 5
+    ET:
+      Dice: 0.2
+      Hausdorff95: 22
+  nnunet:
+    WT:
+      Dice: 0.4
+      Hausdorff95: 9
+    TC:
+      Dice: 0.7
+      Hausdorff95: 6
+    ET:
+      Dice: 0.12
+      Hausdorff95: 16
+1:
+  deepmedic:
+    WT:
+      Dice: 0.98
+      Hausdorff95: 2
+    TC:
+      Dice: 0.31
+      Hausdorff95: 5
+    ET:
+      Dice: 0.45
+      Hausdorff95: 1
+  deepscan:
+    WT:
+      Dice: 0.63
+      Hausdorff95: 6.1
+    TC:
+      Dice: 0.23
+      Hausdorff95: 4.2
+    ET:
+      Dice: 0.65
+      Hausdorff95: 9.1
+  nnunet:
+    WT:
+      Dice: 0.31
+      Hausdorff95: 6
+    TC:
+      Dice: 0.56
+      Hausdorff95: 11
+    ET:
+      Dice: 0.98
+      Hausdorff95: 1
