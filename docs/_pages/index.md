@@ -67,5 +67,6 @@ All deadlines are for **23:59 Eastern Time**
     - [Submission process](participate.md/#submission-process)
     - [Evaluation](participate.md/#evaluation)
 - [Results](results.md)
+- [MICCAI event](miccai.md)
 - [People](people.md)
 - [FAQ](faq.md)
