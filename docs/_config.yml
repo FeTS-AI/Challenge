@@ -36,6 +36,7 @@ kramdown:
 # plugins: ['jekyll-twitter-plugin']   # I followed  https://gist.github.com/abhisheknaik96/26ce79ac7a307eb836dcf02a52f87cf2 to make it work on github.
 plugins:
   - jekyll-relative-links
+  - jemoji
 
 relative_links:
   enabled:     true

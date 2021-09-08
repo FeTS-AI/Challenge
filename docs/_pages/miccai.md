@@ -1,5 +1,5 @@
 ---
-title: MICCAI 2021 sattelite event
+title: MICCAI 2021 satellite event
 permalink: /miccai/
 ---
 

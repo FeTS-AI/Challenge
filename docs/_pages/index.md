@@ -28,6 +28,9 @@ Best wishes,
 
 The FeTS 2021 organizing committee.
 
+## News
+**Sep 8th:** Two exciting keynote speakers confirmed for our MICCAI satellite event :blush: More information [here](miccai.md)!
+
 ## Important Dates
 
 All deadlines are for **23:59 Eastern Time**
