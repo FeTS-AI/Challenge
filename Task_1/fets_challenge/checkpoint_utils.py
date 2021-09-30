@@ -35,8 +35,6 @@ def save_checkpoint(checkpoint_folder, aggregator,
     """
     # Save aggregator tensor_db
     aggregator.tensor_db.tensor_db.to_pickle(f'checkpoint/{checkpoint_folder}/aggregator_tensor_db.pkl')
-    for col in collaborator_names:
-        collaborators[col].tensor_db.tensor_db.to_pickle(f'checkpoint/{checkpoint_folder}/{col}_tensor_db.pkl')
     with open(f'checkpoint/{checkpoint_folder}/state.pkl', 'wb') as f:
         pickle.dump([collaborator_names, round_num, collaborator_time_stats, total_simulated_time, 
                      best_dice, best_dice_over_time_auc, collaborators_chosen_each_round, 
@@ -50,10 +48,4 @@ def load_checkpoint(checkpoint_folder):
     with open(f'checkpoint/{checkpoint_folder}/state.pkl', 'rb') as f:
          state = pickle.load(f)
 
-    # load each collaborator tensor_db
-    collaborator_names = state[0]
-    collaborator_tensor_dbs = {}
-    for col in collaborator_names:
-        collaborator_tensor_dbs[col] = pd.read_pickle(f'checkpoint/{checkpoint_folder}/{col}_tensor_db.pkl')
-    
-    return state + [aggregator_tensor_db] + [collaborator_tensor_dbs]
+    return state + [aggregator_tensor_db]

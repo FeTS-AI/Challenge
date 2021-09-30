@@ -18,11 +18,10 @@ menubar_toc: false
 - Patrick Foley,    Intel, USA
 - Alexey Gruzdev,    Intel, USA
 - [Fabian Isensee, Ph.D.](https://www.helmholtz-imaging.de/our_services/helpdesk/),    HIP Applied Computer Vision Lab, Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany
-- [Jens Kleesiek, M.D., Ph.D.](https://www.ikim.uk-essen.de/tio),    Translational Image-guided Oncology, Institute for AI in Medicine (IKIM), - University Hospital Essen, Germany
+- [Jens Kleesiek, M.D., Ph.D.](https://www.ikim.uk-essen.de/tio),    Translational Image-guided Oncology, Institute for AI in Medicine (IKIM), University Hospital Essen, Germany
 - [Klaus Maier-Hein, Ph.D.](https://www.dkfz.de/en/mic/index.php),    MIC, DKFZ, Heidelberg, Germany
 - [Lena Maier-Hein, Ph.D.](https://www.dkfz.de/en/cami/index.php),    Div. Computer Assisted Medical Interventions (CAMI), DKFZ, Heidelberg, Germany
 - Jason Martin,    Intel, USA
-- [Bjoern Menze, Ph.D.](https://www.dqbm.uzh.ch/en/research/groups/menze.html),    University of Zurich, Switzerland
 - [Sarthak Pati](https://www.med.upenn.edu/cbica/aibil/spati.html),    CBICA, UPenn, Philadelphia, PA, USA
 - Annika Reinke,    Div. Computer Assisted Medical Interventions (CAMI), DKFZ, Heidelberg, Germany
 - [Micah J Sheller](https://www.intel.com/content/www/us/en/artificial-intelligence/bios/micah-j-sheller.html),    Intel, USA
@@ -31,15 +30,16 @@ menubar_toc: false
 
 ## Data Contributors
 
-- [John B. Freymann](https://imaging.cancer.gov/about_cip/staff_directory.htm) & [Justin S. Kirby](https://imaging.cancer.gov/about_cip/staff_directory.htm) - on behalf of [The Cancer Imaging Archive (TCIA)](http://www.cancerimagingarchive.net/),    Cancer Imaging Program, - NCI, National Institutes of Health (NIH), USA
+- [John B. Freymann](https://imaging.cancer.gov/about_cip/staff_directory.htm) & [Justin S. Kirby](https://imaging.cancer.gov/about_cip/staff_directory.htm) - on behalf of [The Cancer Imaging Archive (TCIA)](http://www.cancerimagingarchive.net/),    Cancer Imaging Program - NCI, National Institutes of Health (NIH), USA
 - [Christos Davatzikos, Ph.D.](https://www.med.upenn.edu/cbica/christos/),    CBICA, UPenn, Philadelphia, PA, USA
 - [Rivka R. Colen, M.D.](https://faculty.mdanderson.org/profiles/rivkah_colen.html), & [Aikaterini Kotrotsou, Ph.D.](https://www.mdanderson.org/research/departments-labs-institutes/labs/colen-laboratory/lab-members.html),    MD Anderson Cancer Center, TX, USA
-- [Daniel Marcus, Ph.D.](https://www.mir.wustl.edu/research/research-support-facilities/neuroimaging-informatics-analysis-center-niac/our-staff/niac-staff-dan-marcus), & [Mikhail Milchenko, Ph.D.](http://nrg.wustl.edu/about/people/), & [Arash Nazeri, M.D.](https://www.mir.wustl.edu/education/residency-programs/diagnostic-radiology-residency/our-residents/arash-nazeri),    Washington University School of - Medicine in St. Louis, MO, USA
+- [Daniel Marcus, Ph.D.](https://www.mir.wustl.edu/research/research-support-facilities/neuroimaging-informatics-analysis-center-niac/our-staff/niac-staff-dan-marcus), & [Mikhail Milchenko, Ph.D.](http://nrg.wustl.edu/about/people/), & [Arash Nazeri, M.D.](https://www.mir.wustl.edu/education/residency-programs/diagnostic-radiology-residency/our-residents/arash-nazeri),    Washington University School of Medicine in St. Louis, MO, USA
 - [Hassan Fathallah-Shaykh, M.D., Ph.D.](http://apps.medicine.uab.edu/facultyDirectory/FacultyData.asp?FID=52363),    University of Alabama at Birmingham, AL, USA
 - [Roland Wiest, M.D.](http://www.neuroscience.unibe.ch/about_us/personen/prof_dr_med_wiest_roland),    University of Bern, Switzerland
 - [Andras Jakab, M.D., Ph.D.](https://www.cir.meduniwien.ac.at/team/andras-jakab/),    University of Debrecen, Hungary
 - [Marc-Andre Weber, M.D.](https://www.klinikum.uni-heidelberg.de/PD-Marc-Andre-Weber.111166.0.html?&L=5),    Heidelberg University, Germany
-- Abhishek Mahajan, M.D., & Ujjwal Baid, Ph.D.,    Tata Memorial Centre, Mumbai, India, & SGGS Institute of - Engineering and Technology, Nanded, India
+- [Bjoern Menze, Ph.D.](https://www.dqbm.uzh.ch/en/research/groups/menze.html),    University of Zurich, Switzerland
+- Abhishek Mahajan, M.D., & Ujjwal Baid, Ph.D.,    Tata Memorial Centre, Mumbai, India, & SGGS Institute of Engineering and Technology, Nanded, India
 
 ## Clinical Evaluators and Annotation Approvers
 

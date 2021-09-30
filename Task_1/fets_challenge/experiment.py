@@ -356,15 +356,12 @@ def run_challenge_experiment(aggregation_function,
             [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
              total_simulated_time, best_dice, best_dice_over_time_auc, 
              collaborators_chosen_each_round, collaborator_times_per_round, 
-             experiment_results, summary, agg_tensor_db, col_tensor_dbs] = state
+             experiment_results, summary, agg_tensor_db] = state
 
             if loaded_collaborator_names != collaborator_names:
                 logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
                              f'do not match provided collaborators ({collaborator_names})')
                 exit(1)
-
-            for col in loaded_collaborator_names:
-                collaborators[col].tensor_db.tensor_db = col_tensor_dbs[col]
 
             logger.info(f'Previous summary for round {starting_round_num}')
             logger.info(summary)
@@ -457,7 +454,7 @@ def run_challenge_experiment(aggregation_function,
         # FIXME: this doesn't break up each task. We need this if we're doing straggler handling
         for t, col in times_list:
             # set the task_runner data loader
-            task_runner.data_loader = collaborator_data_loaders[col]
+            task_runner.data = collaborator_data_loaders[col]
 
             # run the collaborator
             collaborators[col].run_simulation()

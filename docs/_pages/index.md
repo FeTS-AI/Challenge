@@ -28,6 +28,9 @@ Best wishes,
 
 The FeTS 2021 organizing committee.
 
+## News
+**Sep 8th:** Two exciting keynote speakers confirmed for our MICCAI satellite event :blush: More information [here](miccai.md)!
+
 ## Important Dates
 
 All deadlines are for **23:59 Eastern Time**
@@ -40,10 +43,13 @@ All deadlines are for **23:59 Eastern Time**
 | **26 Jul** | Submission of prediction algorithm (incl. all required task-specific uploads). |
 | **02 Aug** | Final submission of short paper (both tasks) and parameters of prediction algorithm (task-1; no algorithmic changes permitted). |
 | **26 Jul-27 Aug** | Testing phase (Evaluation by organizers, only for methods with submitted papers). |
-| **03 Sep** | Contacting top-ranked methods to prepare their oral presentation at MICCAI. |
-| **01 Oct (PM)** | Announcement of top 3 ranked teams at MICCAI FeTS 2021. |
-| **10 Oct** | Submission deadline for extended LNCS papers (12-14 pages). |
-| **24 Oct** | Reviewers' feedback. |
+| **03 Sep** | Contacting top-ranked methods (Leaderboard 1) to prepare their oral presentation for MICCAI. |
+| **13 Sep** | Second evaluation phase deadline (Leaderboard 2)
+| **14 Sep-27 Sep** | Second testing phase (Evaluation by organizers). |
+| **29 Sep** | Contacting top-ranked methods of Leaderboard 2, to prepare their oral presentation for MICCAI. |
+| **01 Oct** | FeTS Challenge at MICCAI: Announcement of top ranked teams. |
+| **24 Oct** | Submission deadline for extended LNCS papers (12-14 pages). |
+| **03 Nov** | Reviewers' feedback. |
 | **10 Nov** | Camera-ready paper submission. |
 | **15 Dec** | Summarizing meta-analysis manuscript. |
 
@@ -64,5 +70,6 @@ All deadlines are for **23:59 Eastern Time**
     - [Submission process](participate.md/#submission-process)
     - [Evaluation](participate.md/#evaluation)
 - [Results](results.md)
+- [MICCAI event](miccai.md)
 - [People](people.md)
 - [FAQ](faq.md)
