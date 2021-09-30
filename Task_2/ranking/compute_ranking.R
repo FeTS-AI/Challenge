@@ -15,23 +15,47 @@ library(magrittr)
 #' @param data The underlying dataset used to calculate the ranking (data.frame)
 #' @param metric_variant Either "Dice" or "Hausdorff95" (str)  
 #' @param institution_name Name of the institution (used in title) (str)
+#' @param ranking_method Ranking method, choose from 
+#' (rankThenMean, rankThenMedian, aggregateThenMean, aggregateThenMedian, testBased)
 #' @param title_name_ending Ending of the title string (str)
 #' @param file_name_ending Ending of the file name string (str)
 #'
 #' @return A ranking list
 
-calculate_sub_ranking <- function(data, metric_variant, institution_name, 
+calculate_sub_ranking <- function(data, metric_variant, institution_name, ranking_method,
                                   title_name_ending, file_name_ending, report_dir = NULL) {
   
   smallBetter_order <- FALSE
+  isna <- 0
   if(metric_variant == "Hausdorff95") {
     smallBetter_order <- TRUE
+    isna <- 1000
   }
   
-  challenge <- as.challenge(data, algorithm = "algorithm", case = "case", value = "metric_value", 
-                            smallBetter = smallBetter_order)
+  if(sum(is.na(data$metric_value))>0) {
+    challenge <- as.challenge(data, algorithm = "algorithm", case = "case", value = "metric_value", 
+                              smallBetter = smallBetter_order, na.treat = isna)
+  } else {
+    challenge <- as.challenge(data, algorithm = "algorithm", case = "case", value = "metric_value", 
+                              smallBetter = smallBetter_order)
+  }
   
-  ranking <- challenge%>%rankThenAggregate(FUN = mean, ties.method = "min")
+  if(ranking_method == "rankThenMean") {
+    ranking <- challenge%>%rankThenAggregate(FUN = mean, ties.method = "min")
+  } else if(ranking_method == "rankThenMedian") {
+    ranking <- challenge%>%rankThenAggregate(FUN = median, ties.method = "min")
+  } else if(ranking_method == "aggregateThenMean") {
+    ranking <- challenge%>%aggregateThenRank(FUN = mean, na.treat = isna, ties.method = "min")  
+  } else if(ranking_method == "aggregateThenMedian") {
+    ranking <- challenge%>%aggregateThenRank(FUN = median, na.treat = isna, ties.method = "min")  
+  } else if(ranking_method == "testBased") {
+    ranking <- challenge%>%testThenRank(alpha = 0.05, 
+                                        p.adjust.method = "none", 
+                                        na.treat = isna, ties.method = "min")  
+  } else {
+    warning("Please specify valid ranking scheme")
+  }
+ 
   
   if (!is.null(report_dir)){
     # Bootstrapping analysis
@@ -60,10 +84,12 @@ calculate_sub_ranking <- function(data, metric_variant, institution_name,
 #'
 #' @param data The underlying dataset used to calculate the ranking (data.frame)
 #' @param institution_name Name of the institution (used in title) (str)
+#' @param ranking_method Ranking method, choose from 
+#' (rankThenMean, rankThenMedian, aggregateThenMean, aggregateThenMedian, testBased)
 #'
 #' @return A list of the 6 ranking lists
 
-calculate_all_rankings_per_institute <- function(data, institution_name, report_dir = NULL) {
+calculate_all_rankings_per_institute <- function(data, institution_name, ranking_method, report_dir = NULL) {
   
   ## Enhancing tumor (ET) ##
   data_et <- subset(data, region == "ET")
@@ -73,7 +99,8 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   
   data_et_dice <- subset(data_et, metric == "Dice")
   ranking_et_dice <- calculate_sub_ranking(data_et_dice, "Dice", 
-                                           institution_name, "ET Dice", "ET_Dice",
+                                           institution_name, ranking_method, 
+                                           "ET Dice", "ET_Dice",
                                            report_dir)
   
   # Compute ET ranking for the HD95 metric
@@ -81,7 +108,8 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   
   data_et_hd95 <- subset(data_et, metric == "Hausdorff95")
   ranking_et_hd95 <- calculate_sub_ranking(data_et_hd95, "Hausdorff95", 
-                                           institution_name, "ET HD95", "ET_HD95",
+                                           institution_name, ranking_method,
+                                           "ET HD95", "ET_HD95",
                                            report_dir)
   
   ## Tumor core (TC) ##
@@ -92,7 +120,8 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   
   data_tc_dice <- subset(data_tc, metric == "Dice")
   ranking_tc_dice <- calculate_sub_ranking(data_tc_dice, "Dice", 
-                                           institution_name, "TC Dice", "TC_Dice",
+                                           institution_name, ranking_method,
+                                           "TC Dice", "TC_Dice",
                                            report_dir)
   
   # Compute TC ranking for the HD95 metric
@@ -100,7 +129,8 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   
   data_tc_hd95 <- subset(data_tc, metric == "Hausdorff95")
   ranking_tc_hd95 <- calculate_sub_ranking(data_tc_hd95, "Hausdorff95", 
-                                           institution_name, "TC HD95", "TC_HD95",
+                                           institution_name, ranking_method,
+                                           "TC HD95", "TC_HD95",
                                            report_dir)
   
   ## Whole tumor (WT) ##
@@ -110,7 +140,8 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   print("... calculate WT Dice ranking ...")
   data_wt_dice <- subset(data_wt, metric == "Dice")
   ranking_wt_dice <- calculate_sub_ranking(data_wt_dice, "Dice", 
-                                           institution_name, "WT Dice", "WT_Dice",
+                                           institution_name, ranking_method,
+                                           "WT Dice", "WT_Dice",
                                            report_dir)
   
   # Compute WT ranking for the HD95 metric
@@ -118,20 +149,47 @@ calculate_all_rankings_per_institute <- function(data, institution_name, report_
   
   data_wt_hd95 <- subset(data_wt, metric == "Hausdorff95")
   ranking_wt_hd95 <- calculate_sub_ranking(data_wt_hd95, "Hausdorff95", 
-                                           institution_name, "WT HD95", "WT_HD95",
+                                           institution_name, ranking_method,
+                                           "WT HD95", "WT_HD95",
                                            report_dir)
   
   # Store all rankings in a list
-  rankings <- vector(mode = "list", length = 6)
-  
-  rankings[1] <- ranking_et_dice
-  rankings[2] <- ranking_et_hd95
-  rankings[3] <- ranking_tc_dice
-  rankings[4] <- ranking_tc_hd95
-  rankings[5] <- ranking_wt_dice
-  rankings[6] <- ranking_wt_hd95
+  rankings <- list(ranking_et_dice, ranking_et_hd95, ranking_tc_dice, 
+                   ranking_tc_hd95, ranking_wt_dice, ranking_wt_hd95)
   
   return(rankings)
+}
+
+# Function to calculate the number of significant superiorities per ranking --------
+
+#' Overall function to calculate the number of significant superiorities per ranking
+#'
+#' @param rankings All sub-rankings per institute (list of ranking objects)
+#' @param dataSignCounts Data frame to store significance counts
+#'
+#' @return Updated dataSignCount
+
+calculate_significance_one_institute <- function(rankings, dataSignCounts) {
+  print("... calculating significance counts ...")
+  alpha=0.05
+  p.adjust.method="holm"
+  order=FALSE
+  
+  signMatrix = NULL
+  for (ranking in rankings) {
+    currSignMatrix = ranking$data%>%decision.challenge(na.treat=ranking$call[[1]][[1]]$na.treat,
+                                                   alpha=alpha,
+                                                   p.adjust.method=p.adjust.method)
+    if (is.null(signMatrix)){
+      signMatrix <- currSignMatrix
+    }
+    else {
+      assertthat::are_equal(rownames(signMatrix$dummyTask), rownames(currSignMatrix$dummyTask))
+      signMatrix$dummyTask <- signMatrix$dummyTask + currSignMatrix$dummyTask
+    }
+  }
+  
+  return(signMatrix)
 }
 
 
@@ -148,6 +206,8 @@ load_data <- function(path) {
   
   # Load data from yaml file and convert to data frame
   yaml_data <- yaml.load_file(path)
+  # need to replace nulls from yaml, as these indicate missing values
+  yaml_data <- replace_nulls_in_list(yaml_data)
   yaml_data_df <- data.frame(melt(yaml_data))
   
   data <- data.frame(case = yaml_data_df$L1, 
@@ -157,6 +217,22 @@ load_data <- function(path) {
                           metric_value = yaml_data_df$value)
   
   return(data)
+}
+
+
+# couldn't find a function from the library that does this
+replace_nulls_in_list <- function(x) {
+  for (i in seq_along(x)) {
+    value <- x[[i]]
+    if (is.list(value)) {
+      x[[i]] <- replace_nulls_in_list(value)
+    } else {
+      if (is.null(value)) {
+        x[[i]] <- NA
+      }
+    }
+  }
+  x
 }
 
 
@@ -170,14 +246,7 @@ load_data <- function(path) {
 #'
 #' @return Mean ranks for each algorithm (data.frame)
 
-calculate_mean_ranks_one_institute <- function(data, institution_name, report_dir = NULL) {
-  
-  # Calculate the rankings for the ET, TC and WT
-  # For each region, the ranking is computed for the Dice and Hausdorff95 metrics
-  # Resulting in 6 rankings
-  print("... calculate rankings ... ...")
-  
-  rankings <- calculate_all_rankings_per_institute(data, institution_name, report_dir)
+calculate_mean_ranks_one_institute <- function(rankings, data, institution_name, report_dir = NULL) {
   
   ## Bring all ranks together for each algorithm
   print("... compute mean ranks per algorithm ...")
@@ -191,7 +260,7 @@ calculate_mean_ranks_one_institute <- function(data, institution_name, report_di
     
     # Extract ranks from each of the 6 rankings for each algorithm
     for(ranking in rankings) {
-      alg_rank <- ranking$dummyTask[c(alg),c("rank")]
+      alg_rank <- ranking[[1]]$dummyTask[c(alg),c("rank")]
       alg_ranks <- rbind(alg_ranks, alg_rank)
     }
     
@@ -252,21 +321,56 @@ if (length(args) == 0) {
   report_dir = args[2]
 }
 data_path <- args[1]
+output_dir <- "ranking_output"
+if (! dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
 
 # get list of all institution files
 data_files <- list.files(data_path, pattern = '.*\\.(yaml|yml)$', full.names = TRUE)
 
+# select ranking method
+ranking_method <- "rankThenMean"
+# ranking_method <- "rankThenMedian"
+# ranking_method <- "aggregateThenMean"
+# ranking_method <- "aggregateThenMedian"
+# ranking_method <- "testBased"
+
 mean_ranks_all_institutions <- NULL
 all_institution_names <- NULL
 all_data <- list()
+
+dataSignCounts <- data.frame("91263" = numeric(), "91061" = numeric(), "91425" = numeric())
+dataSignMatrices <- list()
+names(dataSignCounts) <- sub("^X", "", names(dataSignCounts))
+
 for (path in data_files) {
   # Institution i ----------------------------------------------------------
   print(path)
   institution_name <- unlist(strsplit(tail(unlist(strsplit(path, "/")), 1), "[.]"))[1]
   data_fets_inst <- load_data(path)
   
+  # plot dots- and boxplots
+  p_dice <- generate_dot_boxplots_per_institute(subset(data_fets_inst, metric=="Dice"), "Dice",
+                                                institution_name)
+  p_hd95 <- generate_dot_boxplots_per_institute(subset(data_fets_inst, metric=="Hausdorff95"), "HD95",
+                                                institution_name)
+
+  dice_name <- paste("boxplot", institution_name, "Dice", sep="_")
+  hd95_name <- paste("boxplot", institution_name, "HD95", sep="_")
+  
+  ggsave(paste(output_dir, paste(dice_name, ".png", sep=""), sep="/"), p_dice)
+  ggsave(paste(output_dir, paste(hd95_name, ".png", sep=""), sep="/"), p_hd95)
+
+  # Calculate the rankings for the ET, TC and WT
+  # For each region, the ranking is computed for the Dice and Hausdorff95 metrics
+  # Resulting in 6 rankings
+  print("... calculate rankings ... ...")
+  rankings <- calculate_all_rankings_per_institute(data_fets_inst, institution_name, ranking_method)
+  
   # Compute mean rank per algorithm for each institution --------------------
-  mean_rank_df <- calculate_mean_ranks_one_institute(data_fets_inst, institution_name, report_dir)
+  mean_rank_df <- calculate_mean_ranks_one_institute(rankings, data_fets_inst, institution_name)
+  
   # Make sure that data frames have same ordering
   mean_rank_df %>% select(sort(names(.)))
   
@@ -281,6 +385,10 @@ for (path in data_files) {
     all_institution_names <- c(all_institution_names, institution_name)
   }
   all_data[[institution_name]] <- data_fets_inst
+  
+  # Calculate number of significantly superior rankings per algorithm
+  dataSignMatrices[[length(dataSignMatrices) + 1]] <- calculate_significance_one_institute(rankings, dataSignCounts)
+  dataSignCounts[nrow(dataSignCounts)+1,] <- rowSums(dataSignMatrices[[length(dataSignMatrices)]]$dummyTask[])[names(dataSignCounts)]
 }
 rownames(mean_ranks_all_institutions) <- all_institution_names
 
@@ -298,3 +406,27 @@ final_ranks_df_print <-
 
 print("The final ranking is: ")
 print_screen(final_ranks_df_print)
+file_name_final_ranks <- paste("final_ranks", ranking_method, sep="_")
+file_name_mean_ranks <- paste("per_institute_ranks", ranking_method, sep="_")
+write.csv(final_ranks_df, file = paste(output_dir, paste(file_name_final_ranks, ".csv",sep=""), sep="/"))
+write.csv(mean_ranks_all_institutions, file = paste(output_dir, paste(file_name_mean_ranks, ".csv",sep=""), sep="/"))
+
+# Calculate number of significantly superiorities ------------------------
+countSign <- colSums(dataSignCounts)
+print("Counting how often algorithms are significantly superior to the others: ")
+print(countSign)
+file_name_significant_counts <- paste("significant_counts", ranking_method, sep="_")
+write.csv(countSign, file = paste(output_dir, paste(file_name_significant_counts, ".csv",sep=""), sep="/"))
+
+# also sum up significance matrices
+total_sign_matrix <- NULL
+for (s in dataSignMatrices) {
+  if (is_null(total_sign_matrix)){
+    total_sign_matrix <- s
+  } else {
+    assertthat::are_equal(rownames(total_sign_matrix$dummyTask), rownames(s$dummyTask))
+    total_sign_matrix$dummyTask <- total_sign_matrix$dummyTask + s$dummyTask
+  }
+}
+file_name <- paste("significant_matrix", ranking_method, sep="_")
+write.csv(total_sign_matrix$dummyTask, file = paste(output_dir, paste(file_name, ".csv",sep=""), sep="/"))
