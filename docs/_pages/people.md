@@ -11,7 +11,6 @@ menubar_toc: false
 
 - [Spyridon (Spyros) Bakas, Ph.D.](https://www.med.upenn.edu/cbica/sbakas/) *--- [Task 1 Lead Organizer]*,  [Center for Biomedical Image Computing and  Analytics (CBICA)](https://www.med.upenn.edu/cbica/), UPenn, Philadelphia, PA, USA
 - Maximilian Zenk   *--- [Task 2 Lead Organizer]*,    [Div. Medical Image Computing (MIC)](https://www.dkfz.de/en/mic/index.php), German Cancer Research - Center (DKFZ), Heidelberg, Germany
-- [Shadi Albarqouni, Ph.D.](https://albarqouni.github.io/),    Technical University of Munich, Germany
 - [Ujjwal Baid, Ph.D.](https://www.med.upenn.edu/cbica/ujjwalbaid.html),    CBICA, UPenn, Philadelphia, PA, USA
 - [Yong Chen, Ph.D.](https://www.dbei.med.upenn.edu/bio/yong-chen-phd),    UPenn, Philadelphia, PA, USA
 - [Brandon Edwards, Ph.D.](https://www.intel.com/content/www/us/en/artificial-intelligence/bios/brandon-edwards.html),    Intel, USA
