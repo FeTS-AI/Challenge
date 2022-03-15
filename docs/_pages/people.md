@@ -10,19 +10,19 @@ menubar_toc: false
 (in alphabetical order, except lead organizers)
 
 - [Spyridon (Spyros) Bakas, Ph.D.](https://www.med.upenn.edu/cbica/sbakas/) *--- [Task 1 Lead Organizer]*,  [Center for Biomedical Image Computing and  Analytics (CBICA)](https://www.med.upenn.edu/cbica/), UPenn, Philadelphia, PA, USA
-- Maximilian Zenk   *--- [Task 2 Lead Organizer]*,    [Div. Medical Image Computing (MIC)](https://www.dkfz.de/en/mic/index.php), German Cancer Research - Center (DKFZ), Heidelberg, Germany
+- Maximilian Zenk   *--- [Task 2 Lead Organizer]*,    [Division of Medical Image Computing (MIC)](https://www.dkfz.de/en/mic/index.php), German Cancer Research Center (DKFZ), Heidelberg, Germany
 - [Ujjwal Baid, Ph.D.](https://www.med.upenn.edu/cbica/ujjwalbaid.html),    CBICA, UPenn, Philadelphia, PA, USA
 - [Yong Chen, Ph.D.](https://www.dbei.med.upenn.edu/bio/yong-chen-phd),    UPenn, Philadelphia, PA, USA
 - [Brandon Edwards, Ph.D.](https://www.intel.com/content/www/us/en/artificial-intelligence/bios/brandon-edwards.html),    Intel, USA
 - Patrick Foley,    Intel, USA
 - Alexey Gruzdev,    Intel, USA
-- [Fabian Isensee, Ph.D.](https://www.helmholtz-imaging.de/our_services/helpdesk/),    HIP Applied Computer Vision Lab, Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany
+- [Fabian Isensee, Ph.D.](https://www.helmholtz-imaging.de/our_services/helpdesk/),    HIP Applied Computer Vision Lab, MIC, DKFZ, Heidelberg, Germany
 - [Jens Kleesiek, M.D., Ph.D.](https://www.ikim.uk-essen.de/tio),    Translational Image-guided Oncology, Institute for AI in Medicine (IKIM), University Hospital Essen, Germany
 - [Klaus Maier-Hein, Ph.D.](https://www.dkfz.de/en/mic/index.php),    MIC, DKFZ, Heidelberg, Germany
-- [Lena Maier-Hein, Ph.D.](https://www.dkfz.de/en/cami/index.php),    Div. Computer Assisted Medical Interventions (CAMI), DKFZ, Heidelberg, Germany
+- [Lena Maier-Hein, Ph.D.](https://www.dkfz.de/en/cami/index.php),    Division of Computer Assisted Medical Interventions (CAMI), DKFZ, Heidelberg, Germany
 - Jason Martin,    Intel, USA
 - [Sarthak Pati](https://www.med.upenn.edu/cbica/aibil/spati.html),    CBICA, UPenn, Philadelphia, PA, USA
-- Annika Reinke,    Div. Computer Assisted Medical Interventions (CAMI), DKFZ, Heidelberg, Germany
+- Annika Reinke,   CAMI, DKFZ, Heidelberg, Germany
 - [Micah J Sheller](https://www.intel.com/content/www/us/en/artificial-intelligence/bios/micah-j-sheller.html),    Intel, USA
 - [Russell Taki Shinohara, Ph.D.](https://www.med.upenn.edu/apps/faculty/index.php/g275/p8574254),    UPenn, Philadelphia, PA, USA
 - David Zimmerer,    MIC, DKFZ, Heidelberg, Germany
