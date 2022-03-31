@@ -7,8 +7,11 @@ title: Federated Tumor Segmentation Challenge 2021
 # callouts: home_callouts
 hide_hero: false
 hero_height: is-medium
+# hero_link: "https://miccai2022.fets.ai"
+# hero_link_text: Go to FeTS 2022 pages
 menubar_toc: false
 show_sidebar: true
+callouts: callouts
 ---
 
 **Welcome to the FeTS 2021 Challenge!**

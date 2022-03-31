@@ -1,0 +1,10 @@
+style: is-light
+height: is-small
+items:
+  - title: FeTS challenge returns in 2022
+    # subtitle: Example subtitle 1
+    icon: fa-bullhorn
+    description: >
+      Training data will be released at April 8, stay tuned!
+    call_to_action_name: Visit website (online by April 8)
+    call_to_action_link: "https://miccai2022.fets.ai"
