@@ -3,7 +3,7 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 permalink: /
-title: Federated Tumor Segmentation Challenge 2021
+title: Federated Tumor Segmentation Challenge
 # callouts: home_callouts
 hide_hero: false
 hero_height: is-medium
