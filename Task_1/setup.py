@@ -28,8 +28,9 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        'openfl @ git+https://github.com/intel/openfl.git@fets',
-        'GANDLF @ git+https://github.com/CBICA/GaNDLF.git@57fa18ef04d8dd5a7ac38f61f01550b5b1e465a3',
+        'openfl',
+        #'openfl @ git+https://github.com/intel/openfl.git@fets',
+        'GANDLF @ git+https://github.com/CBICA/GaNDLF.git',
         'fets @ git+https://github.com/FETS-AI/Algorithms.git@fets_challenge',
     ],
     python_requires='>=3.6, <3.9',

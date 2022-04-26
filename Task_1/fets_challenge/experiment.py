@@ -235,9 +235,10 @@ def run_challenge_experiment(aggregation_function,
                              challenge_metrics_validation_interval=2,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
-                             include_validation_with_hausdorff=True):
+                             include_validation_with_hausdorff=True,
+                             use_pretrained_model=True):
 
-    fx.init('fets_challenge_workspace')
+    fx.init('fets_challenge_seg_test')
     
     from sys import path, exit
 
