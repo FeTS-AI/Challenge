@@ -23,9 +23,10 @@ conda create -p ./venv python=3.7 -y
 conda activate ./venv
 ```
 5. ```pip install --upgrade pip```
-6. ```pip install .```
-7. ```jupyter notebook```
-8. All lower-level details are in the [FeTS Challenge notebook](./FeTS_Challenge.ipynb)
+6. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
+7. ```pip install .```
+8. ```jupyter notebook```
+9. All lower-level details are in the [FeTS Challenge notebook](./FeTS_Challenge.ipynb)
 
 ## Time to Convergence Metric (formerly "communication cost")
 Along with the typical DICE and Hausdorff metrics, we include a "time to convergence metric" intended to encourage solutions that converge to good scores quickly in terms of time. We simulate the time taken to run each round so that competitors don't need to be concerned with runtime optimizations such as compiled vs. interpreted code, and so that final scoring will not depend on the hardware used. This simulated time is computed in the experiment.py file and provided in the metrics output of the experiment execution.

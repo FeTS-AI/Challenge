@@ -531,7 +531,8 @@ include_validation_with_hausdorff=True
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
-institution_split_csv_filename = 'partitioning_1.csv'
+#institution_split_csv_filename = 'partitioning_1.csv'
+institution_split_csv_filename = '/home/pfoley1/Challenge/Task_1/small_split.csv'
 
 # change this to point to the parent directory of the data
 brats_training_data_parent_dir = '/raid/datasets/FeTS21/MICCAI_FeTS2021_TrainingData'
@@ -541,7 +542,7 @@ brats_training_data_parent_dir = '/raid/datasets/FeTS21/MICCAI_FeTS2021_Training
 db_store_rounds = 5
 
 # this is passed to PyTorch, so set it accordingly for your system
-device = 'cuda'
+device = 'cpu'
 
 # you'll want to increase this most likely. You can set it as high as you like, 
 # however, the experiment will exit once the simulated time exceeds one week. 
@@ -603,7 +604,8 @@ home = str(Path.home())
 # you will need to specify the correct experiment folder and the parent directory for
 # the data you want to run inference over
 checkpoint_folder='experiment_1'
-data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
+#data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
+data_path = '/home/brats/MICCAI_FeTS2021_TrainingData'
 
 # you can keep these the same if you wish
 best_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')

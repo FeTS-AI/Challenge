@@ -17,7 +17,7 @@ from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
 
-from .gandlf_csv_adapter import construct_fedsim_csv
+from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
 from .custom_aggregation_wrapper import CustomAggregationWrapper
 from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
@@ -238,7 +238,7 @@ def run_challenge_experiment(aggregation_function,
                              include_validation_with_hausdorff=True,
                              use_pretrained_model=True):
 
-    fx.init('fets_challenge_seg_test')
+    fx.init('fets_challenge_workspace')
     
     from sys import path, exit
 
@@ -265,7 +265,6 @@ def run_challenge_experiment(aggregation_function,
         'tasks.train.aggregation_type': aggregation_wrapper,
         'task_runner.settings.device': device,
         'task_runner.settings.validation_functions': validation_functions,
-        'data_loader.settings.federated_simulation_train_val_csv_path': os.path.join(work, 'gandlf_paths.csv'),
     }
 
     if not include_validation_with_hausdorff:
@@ -286,8 +285,13 @@ def run_challenge_experiment(aggregation_function,
     # get the data loaders for each collaborator
     collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
 
+    transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
     # get the task runner, passing the first data loader
-    task_runner = copy(plan).get_task_runner(list(collaborator_data_loaders.values())[0])
+    for col in collaborator_data_loaders:
+        #Insert logic to serialize train / val CSVs here
+        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
+        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
+        task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
     task_runner.challenge_metrics_validation_interval = challenge_metrics_validation_interval
 
     tensor_pipe = plan.get_tensor_pipe()
@@ -455,7 +459,9 @@ def run_challenge_experiment(aggregation_function,
         # FIXME: this doesn't break up each task. We need this if we're doing straggler handling
         for t, col in times_list:
             # set the task_runner data loader
-            task_runner.data = collaborator_data_loaders[col]
+            task_runner.data_loader = collaborator_data_loaders[col]
+            ### DELETE THIS LINE ###
+            print(f'Collaborator {col} training data count = {task_runner.data_loader.get_train_data_size()}')
 
             # run the collaborator
             collaborators[col].run_simulation()

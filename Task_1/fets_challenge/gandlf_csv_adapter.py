@@ -2,6 +2,7 @@
 
 # Contributing Authors (alphabetical):
 # Brandon Edwards (Intel)
+# Patrick Foley (Intel)
 # Micah Sheller (Intel)
 
 import os
@@ -133,3 +134,21 @@ def construct_fedsim_csv(pardir,
     
     df.to_csv(federated_simulation_train_val_csv_path, index=False)
     return list(sorted(df.Partition_ID.unique()))
+
+def extract_csv_partitions(csv_path):
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
+                       '2': 'Channel_1', '3': 'Channel_2', 
+                       '4': 'Channel_3', '5': 'Label'})
+    cols = df['Partition_ID'].unique()
+    transformed_csv_dict = {}
+
+    for col in cols:
+        transformed_csv_dict[str(col)] = {}
+        transformed_csv_dict[str(col)]['train'] = \
+                df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'train')].drop(columns=['TrainOrVal','Partition_ID'])
+        transformed_csv_dict[str(col)]['val'] = \
+                df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'val')].drop(columns=['TrainOrVal','Partition_ID'])
+
+    return transformed_csv_dict
+
