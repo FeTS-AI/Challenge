@@ -347,6 +347,7 @@ def run_challenge_experiment(aggregation_function,
             'round':[],
             'time': [],
             'convergence_score': [],
+            'round_dice': [],
             'dice_label_0': [],
             'dice_label_1': [],
             'dice_label_2': [],
@@ -546,10 +547,10 @@ def run_challenge_experiment(aggregation_function,
             experiment_results['time'].append(total_simulated_time)
             experiment_results['convergence_score'].append(projected_auc)
             experiment_results['round_dice'].append(round_dice)
-            experiment_results['dice_label_0'].append(valid_dice_per_label_0)
-            experiment_results['dice_label_1'].append(valid_dice_per_label_1)
-            experiment_results['dice_label_2'].append(valid_dice_per_label_2)
-            experiment_results['dice_label_4'].append(valid_dice_per_label_4)
+            experiment_results['dice_label_0'].append(dice_label_0)
+            experiment_results['dice_label_1'].append(dice_label_1)
+            experiment_results['dice_label_2'].append(dice_label_2)
+            experiment_results['dice_label_4'].append(dice_label_4)
             if include_validation_with_hausdorff:
                 experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
                 experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
