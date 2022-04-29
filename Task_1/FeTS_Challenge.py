@@ -532,7 +532,7 @@ include_validation_with_hausdorff=True
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
 #institution_split_csv_filename = 'partitioning_1.csv'
-institution_split_csv_filename = '/home/pfoley1/Challenge/Task_1/small_split.csv'
+institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
 brats_training_data_parent_dir = '/raid/datasets/FeTS21/MICCAI_FeTS2021_TrainingData'

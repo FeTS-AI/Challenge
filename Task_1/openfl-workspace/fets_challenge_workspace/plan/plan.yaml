@@ -26,7 +26,7 @@ data_loader :
     feature_shape : [32, 32, 32]
 
 task_runner :
-  template : openfl.federated.task.runner_fets_challenge.FeTSChallengeTaskRunner
+  template : src.fets_challenge_model.FeTSChallengeModel
   settings :
     train_csv           : seg_test_train.csv
     val_csv             : seg_test_val.csv
@@ -51,6 +51,7 @@ task_runner :
       metrics:
       - dice
       - dice_per_label
+      - hd95_per_label
       model:
         amp: true
         architecture: resunet        

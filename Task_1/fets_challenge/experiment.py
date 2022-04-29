@@ -16,6 +16,7 @@ import pandas as pd
 from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
+import torch
 
 from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
 from .custom_aggregation_wrapper import CustomAggregationWrapper
@@ -219,7 +220,7 @@ def compute_times_per_collaborator(collaborator_names,
 
 
 def get_metric(metric, fl_round, tensor_db):
-    metric_name = 'performance_evaluation_metric_' + metric
+    metric_name = metric
     target_tags = ('metric', 'validate_agg')
     return float(tensor_db.tensor_db.query("tensor_name == @metric_name and round == @fl_round and tags == @target_tags").nparray)
 
@@ -244,6 +245,7 @@ def run_challenge_experiment(aggregation_function,
 
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
+    print(f'root = {root}')
     work = Path.cwd().resolve()
 
     path.append(str(root))
@@ -292,6 +294,18 @@ def run_challenge_experiment(aggregation_function,
         transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
         transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
         task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
+
+    if use_pretrained_model:
+        print('Loading pretrained model...')
+        if device == 'cpu':
+            checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth',map_location=torch.device('cpu'))
+            task_runner.model.load_state_dict(checkpoint['model_state_dict'])
+            task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        else:
+            checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth')
+            task_runner.model.load_state_dict(checkpoint['model_state_dict'])
+            task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
     task_runner.challenge_metrics_validation_interval = challenge_metrics_validation_interval
 
     tensor_pipe = plan.get_tensor_pipe()
@@ -333,15 +347,17 @@ def run_challenge_experiment(aggregation_function,
             'round':[],
             'time': [],
             'convergence_score': [],
-            'binary_dice_wt': [],
-            'binary_dice_et': [],
-            'binary_dice_tc': [],
+            'dice_label_0': [],
+            'dice_label_1': [],
+            'dice_label_2': [],
+            'dice_label_4': [],
         }
     if include_validation_with_hausdorff:
         experiment_results.update({
-            'hausdorff95_wt': [],
-            'hausdorff95_et': [],
-            'hausdorff95_tc': [],
+            'hausdorff95_label_0': [],
+            'hausdorff95_label_1': [],
+            'hausdorff95_label_2': [],
+            'hausdorff95_label_4': [],
             })
         
 
@@ -474,17 +490,19 @@ def run_challenge_experiment(aggregation_function,
 
         if round_num % challenge_metrics_validation_interval == 0:  
             # get the performace validation scores for the round
-            binary_dice_wt = get_metric('binary_DICE_WT', round_num, aggregator.tensor_db)
-            binary_dice_et = get_metric('binary_DICE_ET', round_num, aggregator.tensor_db)
-            binary_dice_tc = get_metric('binary_DICE_TC', round_num, aggregator.tensor_db)
+            round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
+            dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
+            dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
+            dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
+            dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
             if include_validation_with_hausdorff:
-                hausdorff95_wt = get_metric('binary_Hausdorff95_WT', round_num, aggregator.tensor_db)
-                hausdorff95_et = get_metric('binary_Hausdorff95_ET', round_num, aggregator.tensor_db)
-                hausdorff95_tc = get_metric('binary_Hausdorff95_TC', round_num, aggregator.tensor_db)
-        
+                hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
+                hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
+                hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
+                hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
             # compute the mean dice value
-            round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
+            #round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
 
             # update best score
             if best_dice < round_dice:
@@ -513,24 +531,30 @@ def run_challenge_experiment(aggregation_function,
             summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
             summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
             summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-            summary += "\n\tBinary DICE WT: {}".format(binary_dice_wt)
-            summary += "\n\tBinary DICE ET: {}".format(binary_dice_et)
-            summary += "\n\tBinary DICE TC: {}".format(binary_dice_tc)
+            summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+            summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+            summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+            summary += "\n\tDICE Label 4: {}".format(dice_label_4)
             if include_validation_with_hausdorff:
-                summary += "\n\tHausdorff95 WT: {}".format(hausdorff95_wt)
-                summary += "\n\tHausdorff95 ET: {}".format(hausdorff95_et)
-                summary += "\n\tHausdorff95 TC: {}".format(hausdorff95_tc)
+                summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+                summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+                summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+                summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+
 
             experiment_results['round'].append(round_num)
             experiment_results['time'].append(total_simulated_time)
             experiment_results['convergence_score'].append(projected_auc)
-            experiment_results['binary_dice_wt'].append(binary_dice_wt)
-            experiment_results['binary_dice_et'].append(binary_dice_et)
-            experiment_results['binary_dice_tc'].append(binary_dice_tc)
+            experiment_results['round_dice'].append(round_dice)
+            experiment_results['dice_label_0'].append(valid_dice_per_label_0)
+            experiment_results['dice_label_1'].append(valid_dice_per_label_1)
+            experiment_results['dice_label_2'].append(valid_dice_per_label_2)
+            experiment_results['dice_label_4'].append(valid_dice_per_label_4)
             if include_validation_with_hausdorff:
-                experiment_results['hausdorff95_wt'].append(hausdorff95_wt)
-                experiment_results['hausdorff95_et'].append(hausdorff95_et)
-                experiment_results['hausdorff95_tc'].append(hausdorff95_tc)
+                experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+                experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+                experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+                experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
             logger.info(summary)
         else:
             # update the auc score
