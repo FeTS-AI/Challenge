@@ -1,4 +1,4 @@
-# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
+# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2022
 
 # Contributing Authors (alphabetical):
 # Patrick Foley (Intel), Micah Sheller (Intel)
@@ -232,7 +232,6 @@ def run_challenge_experiment(aggregation_function,
                              db_store_rounds=5,
                              rounds_to_train=5,
                              device='cpu',
-                             challenge_metrics_validation_interval=2,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
                              include_validation_with_hausdorff=True,
@@ -266,15 +265,12 @@ def run_challenge_experiment(aggregation_function,
         'task_runner.settings.device': device,
     }
 
-    if not include_validation_with_hausdorff:
-        overrides.update({'task_runner.settings.validation_function_kwargs':
-          {'challenge_reduced_output': True, 
-           'challenge_remove_hausdorff': True
-          }})
 
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
-    print(plan.config)
+
+    if not include_validation_with_hausdorff:
+        plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
 
     # Overwrite collaborator names
     plan.authorized_cols = collaborator_names
@@ -303,8 +299,6 @@ def run_challenge_experiment(aggregation_function,
             checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth')
             task_runner.model.load_state_dict(checkpoint['model_state_dict'])
             task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-    task_runner.challenge_metrics_validation_interval = challenge_metrics_validation_interval
 
     tensor_pipe = plan.get_tensor_pipe()
 
@@ -475,8 +469,6 @@ def run_challenge_experiment(aggregation_function,
         for t, col in times_list:
             # set the task_runner data loader
             task_runner.data_loader = collaborator_data_loaders[col]
-            ### DELETE THIS LINE ###
-            print(f'Collaborator {col} training data count = {task_runner.data_loader.get_train_data_size()}')
 
             # run the collaborator
             collaborators[col].run_simulation()
@@ -487,87 +479,82 @@ def run_challenge_experiment(aggregation_function,
         round_time = max([t for t, _ in times_list])
         total_simulated_time += round_time
 
-        if round_num % challenge_metrics_validation_interval == 0:  
-            # get the performace validation scores for the round
-            round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
-            dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
-            dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
-            dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
-            dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
-            if include_validation_with_hausdorff:
-                hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
-                hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
-                hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
-                hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
+       
+        # get the performace validation scores for the round
+        round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
+        dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
+        dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
+        dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
+        dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
+        if include_validation_with_hausdorff:
+            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
+            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
+            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
+            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
-            # update best score
-            if best_dice < round_dice:
-                best_dice = round_dice
-                # Set the weights for the final model
-                if round_num == 0:
-                    # here the initial model was validated (temp model does not exist)
-                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
-                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
-                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
-                else:
-                    # here the temp model was the one validated
-                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
-                    logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+        # update best score
+        if best_dice < round_dice:
+            best_dice = round_dice
+            # Set the weights for the final model
+            if round_num == 0:
+                # here the initial model was validated (temp model does not exist)
+                logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+            elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+            else:
+                # here the temp model was the one validated
+                shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
 
-            ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
-            # set the task_runner data loader
-            # task_runner.data_loader = collaborator_data_loaders[col]
-            ### DELETE THIS LINE ###
-            # print(f'Collaborator {col} training data count = {task_runner.data_loader.get_train_data_size()}')
+        ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
+        # set the task_runner data loader
+        # task_runner.data_loader = collaborator_data_loaders[col]
+        ### DELETE THIS LINE ###
+        # print(f'Collaborator {col} training data count = {task_runner.data_loader.get_train_data_size()}')
 
-            # run the collaborator
-            #collaborators[col].run_simulation()
-
-
-
-            ## CONVERGENCE METRIC COMPUTATION
-            # update the auc score
-            best_dice_over_time_auc += best_dice * round_time
-
-            # project the auc score as remaining time * best dice
-            # this projection assumes that the current best score is carried forward for the entire week
-            projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
-            projected_auc /= MAX_SIMULATION_TIME
-
-            # End of round summary
-            summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
-            summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-            summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-            summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-            summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-            summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-            summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-            if include_validation_with_hausdorff:
-                summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-                summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-                summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-                summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+        # run the collaborator
+        #collaborators[col].run_simulation()
 
 
-            experiment_results['round'].append(round_num)
-            experiment_results['time'].append(total_simulated_time)
-            experiment_results['convergence_score'].append(projected_auc)
-            experiment_results['round_dice'].append(round_dice)
-            experiment_results['dice_label_0'].append(dice_label_0)
-            experiment_results['dice_label_1'].append(dice_label_1)
-            experiment_results['dice_label_2'].append(dice_label_2)
-            experiment_results['dice_label_4'].append(dice_label_4)
-            if include_validation_with_hausdorff:
-                experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-                experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-                experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-                experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
-            logger.info(summary)
-        else:
-            # update the auc score
-            best_dice_over_time_auc += best_dice * round_time
-            summary = f'Skipped challenge validation metrics for round {round_num}'
-            logger.info(summary)
+
+        ## CONVERGENCE METRIC COMPUTATION
+        # update the auc score
+        best_dice_over_time_auc += best_dice * round_time
+
+        # project the auc score as remaining time * best dice
+        # this projection assumes that the current best score is carried forward for the entire week
+        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
+        projected_auc /= MAX_SIMULATION_TIME
+
+        # End of round summary
+        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
+        summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
+        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
+        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
+        if include_validation_with_hausdorff:
+            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+
+
+        experiment_results['round'].append(round_num)
+        experiment_results['time'].append(total_simulated_time)
+        experiment_results['convergence_score'].append(projected_auc)
+        experiment_results['round_dice'].append(round_dice)
+        experiment_results['dice_label_0'].append(dice_label_0)
+        experiment_results['dice_label_1'].append(dice_label_1)
+        experiment_results['dice_label_2'].append(dice_label_2)
+        experiment_results['dice_label_4'].append(dice_label_4)
+        if include_validation_with_hausdorff:
+            experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+            experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+            experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+            experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+        logger.info(summary)
 
         if save_checkpoints:
             logger.info(f'Saving checkpoint for round {round_num}')
@@ -597,4 +584,4 @@ def run_challenge_experiment(aggregation_function,
         
             
 
-    return pd.DataFrame.from_dict(experiment_results)
+    return pd.DataFrame.from_dict(experiment_results), checkpoint_folder

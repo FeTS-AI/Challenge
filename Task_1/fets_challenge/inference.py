@@ -1,4 +1,4 @@
-# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
+# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2022
 
 # Contributing Authors (alphabetical):
 # Brandon Edwards (Intel), Patrick Foley (Intel), Micah Sheller (Intel)
@@ -229,6 +229,7 @@ def model_outputs_to_disc(data_path,
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
     plan.config['task_runner']['settings']['fets_config_dict']['save_output'] = True
+    plan.config['task_runner']['settings']['fets_config_dict']['output_dir'] = output_path
 
     # overwrite datapath value for a single 'InferenceCol' collaborator
     plan.cols_data_paths['InferenceCol'] = data_path
@@ -261,7 +262,7 @@ def model_outputs_to_disc(data_path,
         
         logger.info("Validating with subject: {}".format(subfolder))
         task_runner.inference('aggregator',-1,task_runner.get_tensor_dict(),apply='global')
-        logger.info(f"\nFinished generating predictions to output folder {work}")
+        logger.info(f"\nFinished generating predictions to output folder {output_path}")
         
         
                           

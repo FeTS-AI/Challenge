@@ -1,4 +1,4 @@
-# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
+# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2022
 
 # Contributing Authors (alphabetical):
 # Brandon Edwards (Intel)

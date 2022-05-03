@@ -413,12 +413,6 @@ device = 'cpu'
 # however, the experiment will exit once the simulated time exceeds one week. 
 rounds_to_train = 5
 
-# challenge_metrics_validation_interval is parameter that determines how often the
-# challenge metrics should be computed. Some of the metrics, like Hausdorff distance,
-# take a long time to compute, so increasing this value will speed up your total training
-# quite significantly. The default is to compute challenge metrics every other round (round_num % 2)
-challenge_metrics_validation_interval = 2
-
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
 save_checkpoints = True
@@ -432,7 +426,7 @@ restore_from_checkpoint_folder = None
 
 
 # the scores are returned in a Pandas dataframe
-scores_dataframe = run_challenge_experiment(
+scores_dataframe, checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
     training_hyper_parameters_for_round=training_hyper_parameters_for_round,
@@ -442,7 +436,6 @@ scores_dataframe = run_challenge_experiment(
     db_store_rounds=db_store_rounds,
     rounds_to_train=rounds_to_train,
     device=device,
-    challenge_metrics_validation_interval=challenge_metrics_validation_interval,
     save_checkpoints=save_checkpoints,
     restore_from_checkpoint_folder = restore_from_checkpoint_folder)
 
@@ -466,14 +459,20 @@ from pathlib import Path
 home = str(Path.home())
 
 # you will need to specify the correct experiment folder and the parent directory for
-# the data you want to run inference over
-checkpoint_folder='experiment_1'
+# the data you want to run inference over (assumed to be the experiment that just completed)
+
+#checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
 data_path = '/home/brats/MICCAI_FeTS2022_ValidationData'
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
-best_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
+final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
+
+# If the experiment is only run for a single round, use the temp model instead
+if not Path(final_model_path).exists():
+   final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'temp_model.pkl')
+
 outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'model_outputs')
 
 
@@ -483,6 +482,6 @@ outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_fold
 model_outputs_to_disc(data_path=data_path, 
                       validation_csv=validation_csv_filename,
                       output_path=outputs_path, 
-                      native_model_path=best_model_path,
+                      native_model_path=final_model_path,
                       outputtag='',
                       device=device)
