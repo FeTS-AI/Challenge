@@ -364,6 +364,124 @@ def clipped_aggregation(local_tensors,
     # return the weighted average of the clipped tensors
     return np.average(clipped_tensors, weights=weights, axis=0)
 
+# Adapted from FeTS Challenge 2021
+# Federated Brain Tumor Segmentation:Multi-Institutional Privacy-Preserving Collaborative Learning
+# Ece Isik-Polat, Gorkem Polat,Altan Kocyigit1, and Alptekin Temizel1
+def FedAvgM_Selection(local_tensors,
+                      tensor_db,
+                      tensor_name,
+                      fl_round,
+                      collaborators_chosen_each_round,
+                      collaborator_times_per_round):
+    
+        """Aggregate tensors.
+
+        Args:
+            local_tensors(list[openfl.utilities.LocalTensor]): List of local tensors to aggregate.
+            tensor_db: Aggregator's TensorDB [writable]. Columns:
+                - 'tensor_name': name of the tensor.
+                    Examples for `torch.nn.Module`s: 'conv1.weight', 'fc2.bias'.
+                - 'round': 0-based number of round corresponding to this tensor.
+                - 'tags': tuple of tensor tags. Tags that can appear:
+                    - 'model' indicates that the tensor is a model parameter.
+                    - 'trained' indicates that tensor is a part of a training result.
+                        These tensors are passed to the aggregator node after local learning.
+                    - 'aggregated' indicates that tensor is a result of aggregation.
+                        These tensors are sent to collaborators for the next round.
+                    - 'delta' indicates that value is a difference between rounds
+                        for a specific tensor.
+                    also one of the tags is a collaborator name
+                    if it corresponds to a result of a local task.
+
+                - 'nparray': value of the tensor.
+            tensor_name: name of the tensor
+            fl_round: round number
+        Returns:
+            np.ndarray: aggregated tensor
+        """
+        #momentum
+        tensor_db.store(tensor_name='momentum',nparray=0.9,overwrite=False)
+        #aggregator_lr
+        tensor_db.store(tensor_name='aggregator_lr',nparray=1.0,overwrite=False)
+
+        if fl_round == 0:
+            # Just apply FedAvg
+
+            tensor_values = [t.tensor for t in local_tensors]
+            weight_values = [t.weight for t in local_tensors]               
+            new_tensor_weight =  np.average(tensor_values, weights=weight_values, axis=0)        
+
+            #if not (tensor_name in weight_speeds):
+            if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
+                #weight_speeds[tensor_name] = np.zeros_like(local_tensors[0].tensor) # weight_speeds[tensor_name] = np.zeros(local_tensors[0].tensor.shape)
+                tensor_db.store(
+                    tensor_name=tensor_name, 
+                    tags=('weight_speeds',), 
+                    nparray=np.zeros_like(local_tensors[0].tensor),
+                )
+            return new_tensor_weight        
+        else:
+            if tensor_name.endswith("weight") or tensor_name.endswith("bias"):
+                # Calculate aggregator's last value
+                previous_tensor_value = None
+                for _, record in tensor_db.iterrows():
+                    if (record['round'] == fl_round 
+                        and record["tensor_name"] == tensor_name
+                        and record["tags"] == ("aggregated",)): 
+                        previous_tensor_value = record['nparray']
+                        break
+
+                if previous_tensor_value is None:
+                    logger.warning("Error in fedAvgM: previous_tensor_value is None")
+                    logger.warning("Tensor: " + tensor_name)
+
+                    # Just apply FedAvg       
+                    tensor_values = [t.tensor for t in local_tensors]
+                    weight_values = [t.weight for t in local_tensors]               
+                    new_tensor_weight =  np.average(tensor_values, weights=weight_values, axis=0)        
+                    
+                    if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
+                        tensor_db.store(
+                            tensor_name=tensor_name, 
+                            tags=('weight_speeds',), 
+                            nparray=np.zeros_like(local_tensors[0].tensor),
+                        )
+
+                    return new_tensor_weight
+                else:
+                    # compute the average delta for that layer
+                    deltas = [previous_tensor_value - t.tensor for t in local_tensors]
+                    weight_values = [t.weight for t in local_tensors]
+                    average_deltas = np.average(deltas, weights=weight_values, axis=0) 
+
+                    # V_(t+1) = momentum*V_t + Average_Delta_t
+                    tensor_weight_speed = tensor_db.retrieve(
+                        tensor_name=tensor_name,
+                        tags=('weight_speeds',)
+                    )
+                    
+                    momentum = float(tensor_db.retrieve(tensor_name='momentum'))
+                    aggregator_lr = float(tensor_db.retrieve(tensor_name='aggregator_lr'))
+                    
+                    new_tensor_weight_speed = momentum * tensor_weight_speed + average_deltas # fix delete (1-momentum)
+                    
+                    tensor_db.store(
+                        tensor_name=tensor_name, 
+                        tags=('weight_speeds',), 
+                        nparray=new_tensor_weight_speed
+                    )
+                    # W_(t+1) = W_t-lr*V_(t+1)
+                    new_tensor_weight = previous_tensor_value - aggregator_lr*new_tensor_weight_speed
+
+                    return new_tensor_weight
+            else:
+                # Just apply FedAvg       
+                tensor_values = [t.tensor for t in local_tensors]
+                weight_values = [t.weight for t in local_tensors]               
+                new_tensor_weight =  np.average(tensor_values, weights=weight_values, axis=0)
+
+                return new_tensor_weight
+
 
 # # Running the Experiment
 # 
