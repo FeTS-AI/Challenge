@@ -67,6 +67,54 @@ class FeTSChallengeModel(FeTSChallengeTaskRunner):
 
         return output_tensor_dict, {}
 
+    def inference(self, col_name, round_num, input_tensor_dict,
+                 use_tqdm=False, **kwargs):
+        """Inference.
+        Run inference of the model on the local data (used for final validation)
+        Args:
+            col_name:            Name of the collaborator
+            round_num:           What round is it
+            input_tensor_dict:   Required input tensors (for model)
+            use_tqdm (bool):     Use tqdm to print a progress bar (Default=True)
+            kwargs:              Key word arguments passed to GaNDLF main_run
+        Returns:
+            global_output_dict:   Tensors to send back to the aggregator
+            local_output_dict:   Tensors to maintain in the local TensorDB
+        """
+        self.rebuild_model(round_num, input_tensor_dict, validation=True)
+        self.model.eval()
+        # self.model.to(self.device)
+
+        epoch_valid_loss, epoch_valid_metric = validate_network(self.model,
+                                                                self.data_loader.val_dataloader,
+                                                                self.scheduler,
+                                                                self.params,
+                                                                round_num,
+                                                                mode="inference")
+
+        self.logger.info(epoch_valid_loss)
+        self.logger.info(epoch_valid_metric)
+
+        origin = col_name
+        suffix = 'validate'
+        if kwargs['apply'] == 'local':
+            suffix += '_local'
+        else:
+            suffix += '_agg'
+        tags = ('metric', suffix)
+
+        output_tensor_dict = {}
+        output_tensor_dict[TensorKey('valid_loss', origin, round_num, True, tags)] = np.array(epoch_valid_loss)
+        for k, v in epoch_valid_metric.items():
+            if np.array(v).size == 1:
+                output_tensor_dict[TensorKey(f'valid_{k}', origin, round_num, True, tags)] = np.array(v)
+            else:
+                for idx,label in enumerate([0,1,2,4]):
+                    output_tensor_dict[TensorKey(f'valid_{k}_{label}', origin, round_num, True, tags)] = np.array(v[idx])
+
+        return output_tensor_dict, {}
+
+
     def train(self, col_name, round_num, input_tensor_dict, use_tqdm=False, epochs=1, **kwargs):
         """Train batches.
         Train the model on the requested number of batches.

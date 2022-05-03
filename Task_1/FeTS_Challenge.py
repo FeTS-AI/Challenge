@@ -23,7 +23,6 @@ from fets_challenge import run_challenge_experiment
 # # Adding custom functionality to the experiment
 # Within this notebook there are **four** functional areas that you can adjust to improve upon the challenge reference code:
 # 
-# - [Validation functions](#Custom-Validation-Functions)
 # - [Custom aggregation logic](#Custom-Aggregation-Functions)
 # - [Selection of training hyperparameters by round](#Custom-hyperparameters-for-training)
 # - [Collaborator training selection by round](#Custom-Collaborator-Training-Selection)
@@ -33,138 +32,6 @@ from fets_challenge import run_challenge_experiment
 # The following import allows you to use the same logger used by the experiment framework. This lets you include logging in your functions.
 
 from fets_challenge.experiment import logger
-
-# # Custom Validation Functions
-
-# A list of validation function tuples (string_identifier, function_object) should be provided to the validation_functions argument of  run_challenge_experiment to specify the validation functions to perform in addition to the core performance evaluation metric functions to be run. The string identifier that you included in the 0-index of the tuples providing your additional validation functions will be the assigned name for that metric when it is stored in the aggregator's database. More information about how to use this information for custom aggregation can be found [here](#Using-validation-metrics-for-filtering)
-# 
-# Default core validation consists of six scores per validation sample: enhancing tumor DICE, tumor core DICE, whole tumor DICE, enhancing tumor hausdorff distance, tumor core hausdorff distance, and whole tumor hausdorff distance. If the parameter to run_challenge_experiment 'include_validation_with_hausdorff' is set to True, only the three DICE scores will be produced as core metrics instead of the full six (this can be done to speed up experiments, as hausdorff is expensive to compute). In order to avoid name collision, we have prepended 'performance_evaluation_metric' to each of the string identifiers used for the core permformance metric functions. 
-# 
-# Any of the standard PyTorch [validation metrics](https://torchmetrics.readthedocs.io/en/latest/references/modules.html#classification-metrics) can be used to evaluate the model. Any user defined validation functions should conform to the following interface:
-# 
-#     def validation_fun_interface(targets, predictions):
-#         """validation function interface
-#     
-#         Args:
-#             Targets: numpy array of target values
-#             Predictions: numpy array of predicted values by the model
-#         Returns:
-#             val_score : float
-#         
-#         return val_score
-#         
-#         
-# To add custom metrics to validation that don't conform to the ```(targets, predictions)``` interface, [functool's partial function](https://docs.python.org/3/library/functools.html#functools.partial) can be used to fix a certain number of arguments of a function and generate a new function. For example, we could use [F1 score](https://en.wikipedia.org/wiki/F-score) as a custom metric using the partial function in addition to the exisiting sklearn F1-score metric as follows:
-# ```
-#     from functools import partial
-#     from sklearn.metrics import f1_score
-#     validation_functions=[('acc', accuracy), ('f1_score', partial(f1_score, average='macro'))]
-# ```
-#         
-# 
-# Sensitivity and Specificity are defined below as reference implementations, each performing an average over the enhancing tumor(ET), tumor core(TC), and whole tumor(WT) regions. We utilize a function that takes the float multi-channel model output and multi-label mask and returns binary outputs and masks for each of ET, TC,and WT.  
-# 
-
-from fets_challenge.spec_sens_code import brats_labels
-
-
-def channel_sensitivity(output, target):
-    # computes TP/P for a single channel 
-
-    true_positives = np.sum(output * target)
-    total_positives = np.sum(target)
-
-    if total_positives == 0:
-        score = 1.0
-    else:
-        score = true_positives / total_positives
-    
-    return score
-
-
-def channel_specificity(output, target):
-    # computes TN/N for a single channel
-
-    true_negatives = np.sum((1 - output) * (1 - target))
-    total_negatives = np.sum(1 - target)
-
-    if total_negatives == 0:
-        score = 1.0
-    else:
-        score = true_negatives / total_negatives
-        
-    return score
-   
-    
-def sensitivity(output, target):
-    """"
-    Calculates the average sensitivity across all of ET, TC, and WT.
-    Args:
-        Targets: numpy array of target values
-        Predictions: numpy array of predicted values by the model
-    """        
- 
-    # parsing model output and target into each of ET, TC, and WT arrays
-    brats_val_data = brats_labels(output=output, target=target)
-    
-    outputs = brats_val_data['outputs']
-    targets = brats_val_data['targets']
-    
-    output_enhancing = outputs['ET'] 
-    target_enhancing = targets['ET']
-
-    output_core = outputs['TC'] 
-    target_core = targets['TC'] 
-
-    output_whole = outputs['WT'] 
-    target_whole = targets['WT']
-
-    sensitivity_for_enhancing = channel_sensitivity(output=output_enhancing, 
-                                                    target=target_enhancing)
-
-    sensitivity_for_core = channel_sensitivity(output=output_core, 
-                                               target=target_core)
-
-    sensitivity_for_whole = channel_sensitivity(output=output_whole, 
-                                                target=target_whole)
-
-    return (sensitivity_for_enhancing + sensitivity_for_core + sensitivity_for_whole) / 3.0
-    
-    
-def specificity(output, target):
-    """"
-    Calculates the average sensitivity across all of ET, TC, and WT.
-    Args:
-        Targets: numpy array of target values
-        Predictions: numpy array of predicted values by the model
-    """  
-        
-    # parsing model output and target into each of ET, TC, and WT arrays
-    brats_val_data = brats_labels(output=output, target=target)
-    
-    outputs = brats_val_data['outputs']
-    targets = brats_val_data['targets']
-
-    
-    output_enhancing = outputs['ET'] 
-    target_enhancing = targets['ET']
-
-    output_core = outputs['TC'] 
-    target_core = targets['TC'] 
-
-    output_whole = outputs['WT'] 
-    target_whole = targets['WT']
-
-    specificity_for_enhancing = channel_specificity(output=output_enhancing, 
-                                                    target=target_enhancing)
-
-    specificity_for_core = channel_specificity(output=output_core, 
-                                               target=target_core)
-
-    specificity_for_whole = channel_specificity(output=output_whole, 
-                                                target=target_whole)
-
-    return (specificity_for_enhancing + specificity_for_core + specificity_for_whole) / 3
 
 
 # # Getting access to historical weights, metrics, and more
@@ -502,9 +369,8 @@ def clipped_aggregation(local_tensors,
 # 
 # ```run_challenge_experiment``` is singular interface where your custom methods can be passed.
 # 
-# - ```aggregation_function```, ```choose_training_collaborators```, ```training_hyper_parameters_for_round```, and ```validation_functions``` correspond to the [this list](#Custom-hyperparameters-for-training) of configurable functions 
+# - ```aggregation_function```, ```choose_training_collaborators```, and ```training_hyper_parameters_for_round``` correspond to the [this list](#Custom-hyperparameters-for-training) of configurable functions 
 # described within this notebook.
-# - ```validation_functions``` should be a list of tuples, enabling you add multiple additional validation functions. The tuples should be `(name, function)`, where `name` is the string that will be associated with the metric in the `tensor_db`, and `function` is the python function you implemented above. It can be an empty list if you do not wish to add additional validation functions.
 # - ```institution_split_csv_filename``` : Describes how the data should be split between all collaborators. Extended documentation about configuring the splits in the ```institution_split_csv_filename``` parameter can be found in the [README.md](https://github.com/FETS-AI/Challenge/blob/main/Task_1/README.md). 
 # - ```db_store_rounds``` : This parameter determines how long metrics and weights should be stored by the aggregator before being deleted. Providing a value of `-1` will result in all historical data being retained, but memory usage will likely increase.
 # - ```rounds_to_train``` : Defines how many rounds will occur in the experiment
@@ -520,7 +386,6 @@ def clipped_aggregation(local_tensors,
 aggregation_function = weighted_average_aggregation
 choose_training_collaborators = all_collaborators_train
 training_hyper_parameters_for_round = constant_hyper_parameters
-validation_functions = [('sensitivity', sensitivity), ('specificity', specificity)]
 
 # As mentioned in the 'Custom Aggregation Functions' section (above), six 
 # perfomance evaluation metrics are included by default for validation outputs in addition 
@@ -535,7 +400,7 @@ include_validation_with_hausdorff=True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/raid/datasets/FeTS21/MICCAI_FeTS2021_TrainingData'
+brats_training_data_parent_dir = '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -571,7 +436,6 @@ scores_dataframe = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
     training_hyper_parameters_for_round=training_hyper_parameters_for_round,
-    validation_functions=validation_functions,
     include_validation_with_hausdorff=include_validation_with_hausdorff,
     institution_split_csv_filename=institution_split_csv_filename,
     brats_training_data_parent_dir=brats_training_data_parent_dir,
@@ -605,7 +469,8 @@ home = str(Path.home())
 # the data you want to run inference over
 checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/brats/MICCAI_FeTS2021_TrainingData'
+data_path = '/home/brats/MICCAI_FeTS2022_ValidationData'
+validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
 best_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
@@ -616,6 +481,7 @@ outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_fold
 # using a provided data directory
 
 model_outputs_to_disc(data_path=data_path, 
+                      validation_csv=validation_csv_filename,
                       output_path=outputs_path, 
                       native_model_path=best_model_path,
                       outputtag='',

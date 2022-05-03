@@ -14,6 +14,7 @@ import SimpleITK as sitk
 import torch, torchio
 
 import openfl.native as fx
+from .gandlf_csv_adapter import construct_fedsim_csv
 
 logger = getLogger(__name__)
 
@@ -70,6 +71,17 @@ def get_binarized_and_belief(array, threshold=0.5):
     
     return binarized, belief
 
+def generate_validation_csv(data_path, validation_csv_filename, working_dir):
+    """
+    Create the validation CSV to be consumed by the FeTSChallengeTaskRunner
+    """
+    validation_csv_path = os.path.join(working_dir, validation_csv_filename)
+    validation_csv_dict = construct_fedsim_csv(data_path,
+                              validation_csv_path,
+                              0.0,
+                              'placeholder',
+                              training_and_validation=False)
+    validation_csv_dict.to_csv(os.path.join(working_dir, 'validation_paths.csv'),index=False)
 
 def replace_initializations(done_replacing, array, mask, replacement_value, initialization_value):
     """
@@ -189,6 +201,7 @@ def convert_to_original_labels(array, threshold=0.5, initialization_value=999):
 
 
 def model_outputs_to_disc(data_path, 
+                          validation_csv,
                           output_path, 
                           native_model_path,
                           outputtag='',
@@ -204,15 +217,18 @@ def model_outputs_to_disc(data_path,
 
     path.append(str(root))
     path.insert(0, str(work))
+
+    generate_validation_csv(data_path,validation_csv, working_dir=work)
     
     overrides = {
         'task_runner.settings.device': device,
-        'data_loader.settings.data_usage': 'inference',
-        'data_loader.settings.federated_simulation_institution_name': None,
+        'task_runner.settings.val_csv': 'validation_paths.csv',
+        'task_runner.settings.train_csv': None,
     }
     
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
+    plan.config['task_runner']['settings']['fets_config_dict']['save_output'] = True
 
     # overwrite datapath value for a single 'InferenceCol' collaborator
     plan.cols_data_paths['InferenceCol'] = data_path
@@ -226,13 +242,12 @@ def model_outputs_to_disc(data_path,
     # Populate model weights
     device = torch.device(device)
     task_runner.load_native(filepath=native_model_path, map_location=device)
-    task_runner.to(device)
-
+    task_runner.opt_treatment = 'RESET'
     
     
     logger.info('Starting inference using data from {}\n'.format(data_path))
     
-    inference_loader = data_loader.get_inference_loader()
+    inference_loader = data_loader.get_valid_loader()
     
     for subject in inference_loader:
         
@@ -245,32 +260,8 @@ def model_outputs_to_disc(data_path,
         inference_outpath = os.path.join(output_path, subfolder + outputtag + '.nii.gz') # the evaluation app requires the format "${subject_id}.nii.gz"
         
         logger.info("Validating with subject: {}".format(subfolder))
-        features = torch.cat([subject[key][torchio.DATA] for key in channel_keys], dim=1).float()
-        nan_check(tensor=features, tensor_description='features tensor')
-          
-        task_runner.sanity_check_val_input_shape(features)
-        output = task_runner.data.infer_with_patches(model_inference_function=[task_runner.infer_batch_with_no_numpy_conversion], 
-                                                              features=features)
-        nan_check(tensor=output, tensor_description='model output tensor')
-        task_runner.sanity_check_val_output_shape(output)
-          
-        output = np.squeeze(output.cpu().numpy())
-
-        # GANDLFData loader produces transposed output from what sitk gets from file, so transposing here.
-        output = np.transpose(output)
-
-        # process float sigmoid outputs (three channel corresponding to ET, TC, and WT)
-        # into original label output (no channels, but values in 0, 1, 2, 4)
-        output = convert_to_original_labels(output)
-  
-        # convert array to SimpleITK image 
-        image = sitk.GetImageFromArray(output)
-
-        # get the image information such as affine orientation from the first feature layer
-        image.CopyInformation(sitk.ReadImage(subject['1']['path'][0]))
-
-        logger.info("\nWriting inference NIfTI image of shape {} to {}".format(output.shape, inference_outpath))
-        sitk.WriteImage(image, inference_outpath)
+        task_runner.inference('aggregator',-1,task_runner.get_tensor_dict())
+        logger.info(f"\nFinished generating predictions to output folder {work}")
         
         
                           

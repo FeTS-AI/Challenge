@@ -227,7 +227,6 @@ def get_metric(metric, fl_round, tensor_db):
 def run_challenge_experiment(aggregation_function,
                              choose_training_collaborators,
                              training_hyper_parameters_for_round,
-                             validation_functions,
                              institution_split_csv_filename,
                              brats_training_data_parent_dir,
                              db_store_rounds=5,
@@ -245,7 +244,6 @@ def run_challenge_experiment(aggregation_function,
 
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
-    print(f'root = {root}')
     work = Path.cwd().resolve()
 
     path.append(str(root))
@@ -266,7 +264,6 @@ def run_challenge_experiment(aggregation_function,
         'aggregator.settings.db_store_rounds': db_store_rounds,
         'tasks.train.aggregation_type': aggregation_wrapper,
         'task_runner.settings.device': device,
-        'task_runner.settings.validation_functions': validation_functions,
     }
 
     if not include_validation_with_hausdorff:
@@ -277,6 +274,7 @@ def run_challenge_experiment(aggregation_function,
 
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
+    print(plan.config)
 
     # Overwrite collaborator names
     plan.authorized_cols = collaborator_names
@@ -502,9 +500,6 @@ def run_challenge_experiment(aggregation_function,
                 hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
                 hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
-            # compute the mean dice value
-            #round_dice = np.mean([binary_dice_wt, binary_dice_et, binary_dice_tc])
-
             # update best score
             if best_dice < round_dice:
                 best_dice = round_dice
@@ -518,6 +513,17 @@ def run_challenge_experiment(aggregation_function,
                     # here the temp model was the one validated
                     shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
                     logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+
+            ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
+            # set the task_runner data loader
+            # task_runner.data_loader = collaborator_data_loaders[col]
+            ### DELETE THIS LINE ###
+            # print(f'Collaborator {col} training data count = {task_runner.data_loader.get_train_data_size()}')
+
+            # run the collaborator
+            #collaborators[col].run_simulation()
+
+
 
             ## CONVERGENCE METRIC COMPUTATION
             # update the auc score
