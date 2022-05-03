@@ -230,6 +230,56 @@ def fixed_number_of_batches(collaborators,
 # 
 # [**LocalTensors**](https://github.com/intel/openfl/blob/fets/openfl/utilities/types.py#L13) are named tuples of the form `('collaborator_name', 'tensor', 'collaborator_weight')`. Your custom aggregation function will be passed a list of LocalTensors, which will contain an entry for each collaborator who participated in the prior training round. The [**`tensor_db`**](#Getting-access-to-historical-weights,-metrics,-and-more) gives direct access to the aggregator's tensor_db dataframe and includes all tensors / metrics reported by collaborators. Using the passed tensor_db reference, participants may even store custom information by using in-place write operations. A few examples are included below.
 # 
+# We also provide a number of convenience functions to be used in conjunction with the TensorDB for those who are less familiar with pandas. These are added directly to the dataframe object that gets passed to the aggregation function to make it easier to *store* , *retrieve*, and *search* through the database so that participants can focus on algorithms instead of infrastructure / framework details.
+#
+# tensor_db.store:
+#
+#        Convenience method to store a new tensor in the dataframe.
+#        Args:
+#            tensor_name [ optional ] : The name of the tensor (or metric) to be saved
+#            origin      [ optional ] : Origin of the tensor
+#            fl_round    [ optional ] : Round the tensor is associated with
+#            metric:     [ optional ] : Is the tensor a metric?
+#            tags:       [ optional ] : Tuple of unstructured tags associated with the tensor
+#            np.array    [ required ] : Value to store associated with the other included information (i.e. TensorKey info)
+#            overwrite:  [ optional ] : If the tensor is already present in the dataframe
+#                                       should it be overwritten?
+#        Returns:
+#            None
+#
+#
+# tensor_db.retrieve
+# 
+#        Convenience method to retrieve tensor from the dataframe.
+#        Args:
+#            tensor_name [ optional ] : The name of the tensor (or metric) to retrieve
+#            origin      [ optional ] : Origin of the tensor
+#            fl_round    [ optional ] : Round the tensor is associated with
+#            metric:     [ optional ] : Is the tensor a metric?
+#            tags:       [ optional ] : Tuple of unstructured tags associated with the tensor
+#                                       should it be overwritten?
+#        Returns:
+#            Optional[ np.array ]     : If there is a match, return the first row
+#
+# tensor_db.search
+#
+#        Search the tensor_db dataframe based on:
+#            - tensor_name
+#            - origin
+#            - fl_round
+#            - metric
+#            -tags
+#        Returns a new dataframe that matched the query
+#        Args:
+#            tensor_name: The name of the tensor (or metric) to be searched
+#            origin:      Origin of the tensor
+#            fl_round:    Round the tensor is associated with
+#            metric:      Is the tensor a metric?
+#            tags:        Tuple of unstructured tags associated with the tensor
+#        Returns:
+#            pd.DataFrame : New dataframe that matches the search query from 
+#                           the tensor_db dataframe
+#
 # ## Converting the tensor_db to a db_iterator (to reuse aggregation methods from last year's competition)
 # ### Using prior layer weights
 # Here is an example of how to extract layer weights from prior round. The tag is `'aggregated'` indicates this : 
