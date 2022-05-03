@@ -260,7 +260,7 @@ def model_outputs_to_disc(data_path,
         inference_outpath = os.path.join(output_path, subfolder + outputtag + '.nii.gz') # the evaluation app requires the format "${subject_id}.nii.gz"
         
         logger.info("Validating with subject: {}".format(subfolder))
-        task_runner.inference('aggregator',-1,task_runner.get_tensor_dict())
+        task_runner.inference('aggregator',-1,task_runner.get_tensor_dict(),apply='global')
         logger.info(f"\nFinished generating predictions to output folder {work}")
         
         
