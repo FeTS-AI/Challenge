@@ -64,7 +64,7 @@ We assign these network and compute distributions by drawing uniform-randomly fr
 For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
 
 ## Data Partitioning and Sharding
-The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_Training_###`, and two CSV files: 
+The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_###`, and two CSV files: 
 - **partitioning_1.csv**
 - **partitioning_2.csv**
 
@@ -74,8 +74,8 @@ Table 1: Information for partitionings provided in the FeTS 2022 data release as
 
 |     Split name                      |     CSV filename                         |     Description                                                                                                                                                                                       |     Number of institutions      |
 |-------------------------------------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|
-|     Institution Split               |     partitioning_1.csv                |     Split of FeTS 2022 training data by originating institution.                                                                                                                                    |     17                          |
-|     Institution Tumor Size Split    |     partitioning_2.csv      |     Refinement of the institution split by tumor size, further   splitting the larger institutions according to whether a record’s tumor size   fell above or below the mean size for that institution.    |     22                          |
+|     Institution Split               |     partitioning_1.csv                |     Split of FeTS 2022 training data by originating institution.                                                                                                                                    |     23                          |
+|     Institution Tumor Size Split    |     partitioning_2.csv      |     Refinement of the institution split by tumor size, further   splitting the larger institutions according to whether a record’s tumor size   fell above or below the mean size for that institution.    |     33                          |
 |     Test Split                      |          - not provided -       |     Undisclosed refinement of the institution split.                                                                                                                                                  |     Hidden from participants    |
 
 
