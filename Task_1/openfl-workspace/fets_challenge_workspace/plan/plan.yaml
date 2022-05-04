@@ -1,19 +1,16 @@
-# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
-
-# Contributing Authors (alphabetical):
-# Brandon Edwards (Intel)
-# Patrick Foley (Intel)
-# Micah Sheller (Intel)
-
+# Copyright (C) 2022 Intel Corporation
+# Licensed subject to the terms of the separately executed evaluation license agreement between Intel Corporation and you.
 
 aggregator :
   defaults : plan/defaults/aggregator.yaml
   template : openfl.component.Aggregator
   settings :
-    init_state_path : save/fets_challenge_init.pbuf
-    best_state_path : save/fets_challenge_best.pbuf
-    last_state_path : save/fets_challenge_last.pbuf
-    rounds_to_train : 4
+    init_state_path : save/fets_seg_test_init.pbuf
+    best_state_path : save/fets_seg_test_best.pbuf
+    last_state_path : save/fets_seg_test_last.pbuf
+    rounds_to_train : 3
+    write_logs : true
+
 
 collaborator :
   defaults : plan/defaults/collaborator.yaml
@@ -22,107 +19,122 @@ collaborator :
     delta_updates    : false
     opt_treatment    : RESET
 
-data_loader:
-  template: impl.fets_challenge_dataloader.FeTSChallengeDataLoader
-  settings: 
-    federated_simulation_institution_name: __USE_DATA_PATH_AS_INSTITUTION_NAME__
-    divisibility_factor: 16
-    data_usage: 'train-val'
-    patch_sampler: 'uniform'
-    psize: [128, 128, 128]
-    q_samples_per_volume: 1
-    q_verbose: False
-    split_instance_dirname: 'fets_phase2_split_1'
-    np_split_seed: 8950
-    allow_auto_split: True
-    class_list: ['4', '1||4', '1||2||4']
-    data_augmentation:
-      'noise':
-        'mean': 0.0
-        'std': 0.1
-        'probability': 0.2
-      'rotate_90':
-        'axis': [1, 2, 3]
-        'probability': 0.5
-      'rotate_180': 
-        'axis': [1, 2, 3]
-        'probability': 0.5
-      'flip':
-        'axis': [0, 1, 2]
-        'probability': 1.0
-    data_preprocessing:
-      'crop_external_zero_planes': null
-      'normalize_nonZero_masked': null
+data_loader :
+  defaults : plan/defaults/data_loader.yaml
+  template : openfl.federated.data.loader_fets_challenge.FeTSChallengeDataLoaderWrapper
+  settings :
+    feature_shape : [32, 32, 32]
 
-task_runner:
-  defaults : plan/defaults/task_runner.yaml
-  template: impl.fets_challenge_model.FeTSChallengeModel
-  settings:
-    base_filters: 30
-    lr: 0.00005
-    loss_function: mirrored_brats_dice_loss
-    opt: adam
-    use_penalties: False
-    validate_with_fine_grained_dice: True
-    sigmoid_input_multiplier: 20.0
-    validation_function: 'fets_phase2_validation'
-    validation_function_kwargs: 
-      challenge_reduced_output: True
+task_runner :
+  template : src.fets_challenge_model.FeTSChallengeModel
+  settings :
+    train_csv           : seg_test_train.csv
+    val_csv             : seg_test_val.csv
+    device              : cpu
+    fets_config_dict  :
+      batch_size: 1
+      clip_grad: null
+      clip_mode: null
+      data_augmentation: {}
+      data_postprocessing: {}
+      data_preprocessing:
+        normalize: null
+      enable_padding: false
+      in_memory: true
+      inference_mechanism  :
+        grid_aggregator_overlap: crop
+        patch_overlap: 0
+      learning_rate: 0.001
+      loss_function: dc
+      medcam_enabled: false
+      output_dir: '.'
+      metrics:
+      - dice
+      - dice_per_label
+      - hd95_per_label
+      model:
+        amp: true
+        architecture: resunet        
+        base_filters: 32
+        class_list:
+        - 0
+        - 1
+        - 2
+        - 4
+        dimension: 3
+        final_layer: softmax
+        ignore_label_validation: null
+        norm_type: instance
+      nested_training:
+        testing: 1
+        validation: -5
+      num_epochs: 1
+      optimizer: 
+        type: sgd
+      parallel_compute_command: ''
+      patch_sampler: label
+      patch_size:
+      - 64
+      - 64
+      - 64
+      patience: 100
+      pin_memory_dataloader: false
+      print_rgb_label_warning: true
+      q_max_length: 100
+      q_num_workers: 0
+      q_samples_per_volume: 40
+      q_verbose: false
+      save_output: false
+      save_training: false
+      scaling_factor: 1
+      scheduler:
+        type: triangle_modified
+      track_memory_usage: false
+      verbose: false
+      version:
+        maximum: 0.0.14
+        minimum: 0.0.14
+      weighted_loss: true
 
-tasks:
-  defaults: plan/defaults/tasks_torch.yaml
-  aggregated_model_validation:
-    function : validate
-    kwargs   :
-      apply   : global
-      metrics :
-        - acc    
-  locally_tuned_model_validation:
-    function  : validate
-    kwargs    :
-      apply: local
-      metrics :
-        - acc    
-  train:
-    function : train_batches
-    kwargs   :
-      metrics     :
-        - loss
 
-network:
-  defaults: plan/defaults/network.yaml
-
-# tasks:
-#   defaults: plan/defaults/tasks_torch.yaml
-#   aggregated_model_validation:
-#     function : validate
-#     kwargs   :
-#       apply   : global
-#       metrics :
-#         - acc
-    
-#   locally_tuned_model_validation:
-#     function  : validate
-#     kwargs    :
-#       apply: local
-#       metrics :
-#         - acc
-    
-#   train:
-#     function : train_batches
-#     kwargs   :
-#       metrics     :
-#       - loss
+network :
+  defaults : plan/defaults/network.yaml
 
 assigner:
-  template : impl.challenge_assigner.FeTSChallengeAssigner
+  template : src.challenge_assigner.FeTSChallengeAssigner
   settings :
     training_tasks  :
       - aggregated_model_validation
       - train
       - locally_tuned_model_validation
     validation_tasks  :
-      - aggregated_model_validation    
+      - aggregated_model_validation 
+
+tasks :
+  aggregated_model_validation:
+    function : validate
+    kwargs   :
+      apply   : global
+      metrics :
+        - valid_loss
+        - valid_dice
+    
+  locally_tuned_model_validation:
+    function  : validate
+    kwargs    :
+      apply: local
+      metrics :
+        - valid_loss
+        - valid_dice
+    
+  train:
+    function : train
+    kwargs   :
+      metrics     :
+      - loss
+      - train_dice
+      epochs : 1
+
 
 compression_pipeline :
   defaults : plan/defaults/compression_pipeline.yaml

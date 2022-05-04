@@ -1,7 +1,8 @@
-# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2021
+# Provided by the FeTS Initiative (www.fets.ai) as part of the FeTS Challenge 2022
 
 # Contributing Authors (alphabetical):
 # Brandon Edwards (Intel)
+# Patrick Foley (Intel)
 # Micah Sheller (Intel)
 
 import os
@@ -33,12 +34,13 @@ numeric_header_name_to_key = {value: key for key, value in numeric_header_names.
 
 # 0 is for the subject name, 1-4 for modes and 5 for label (as above)
 train_val_headers = [0, 1, 2, 3, 4, 5]
+val_headers = [0, 1, 2, 3, 4]
 
 
 def train_val_split(subdirs, percent_train, shuffle=True):
     
-    if percent_train <=0 or percent_train >=1:
-        raise ValueError('Percent train must be strictly between 0 and 1.')
+    if percent_train < 0 or percent_train >=1:
+        raise ValueError('Percent train must be >= 0 and < 1.')
         
     if len(subdirs) == 0:
         raise ValueError('An empty list was provided to split.')
@@ -47,8 +49,8 @@ def train_val_split(subdirs, percent_train, shuffle=True):
         np.random.shuffle(subdirs)
         
     cutpoint = int(len(subdirs) * percent_train)
-    if cutpoint == 0 or cutpoint == len(subdirs):
-        raise ValueError('The amount of data and percent train led to either empty train or val.')
+    #if cutpoint == 0 or cutpoint == len(subdirs):
+    #    raise ValueError('The amount of data and percent train led to either empty train or val.')
     
     train_subdirs = subdirs[:cutpoint]
     val_subdirs = subdirs[cutpoint:]
@@ -81,7 +83,8 @@ def paths_dict_to_dataframe(paths_dict, train_val_headers, numeric_header_name_t
 def construct_fedsim_csv(pardir, 
                          split_subdirs_path, 
                          percent_train, 
-                         federated_simulation_train_val_csv_path):
+                         federated_simulation_train_val_csv_path,
+                         training_and_validation=True):
     
     # read in the csv defining the subdirs per institution
     split_subdirs = pd.read_csv(split_subdirs_path, dtype=str)
@@ -122,14 +125,66 @@ def construct_fedsim_csv(pardir,
             paths_dict[inst_name]['train'].append(inner_dict)
             
         for subdir in val_subdirs:
-            inner_dict = get_appropriate_file_paths_from_subject_dir(os.path.join(pardir, subdir), include_labels=True)
+            inner_dict = get_appropriate_file_paths_from_subject_dir(os.path.join(pardir, subdir), include_labels=training_and_validation)
             inner_dict['Subject_ID'] = subdir
             paths_dict[inst_name]['val'].append(inner_dict)
         
     # now construct the dataframe and save it as a csv
-    df =  paths_dict_to_dataframe(paths_dict=paths_dict, 
-                                  train_val_headers=train_val_headers, 
-                                  numeric_header_name_to_key=numeric_header_name_to_key)
-    
+    if training_and_validation:
+        df =  paths_dict_to_dataframe(paths_dict=paths_dict, 
+                                      train_val_headers=train_val_headers, 
+                                      numeric_header_name_to_key=numeric_header_name_to_key)
+    else: 
+        df =  construct_validation_dataframe(paths_dict=paths_dict, 
+                                             val_headers=val_headers, 
+                                             numeric_header_name_to_key=numeric_header_name_to_key)
+        return df
+
     df.to_csv(federated_simulation_train_val_csv_path, index=False)
     return list(sorted(df.Partition_ID.unique()))
+
+def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_to_key):
+    
+    # intitialize columns
+    columns = {str(header): [] for header in val_headers}
+    columns['TrainOrVal'] = [] 
+    columns['Partition_ID'] = []
+    
+    for inst_name, inst_paths_dict in paths_dict.items():
+        for usage in ['train', 'val']:
+            for key_to_fpath in inst_paths_dict[usage]:
+                columns['Partition_ID'].append(inst_name)
+                columns['TrainOrVal'].append(usage)
+                for header in val_headers:
+                    if header == 0:
+                        # grabbing the the data subfolder name as the subject id
+                        columns[str(header)].append(key_to_fpath['Subject_ID'])
+                    else:
+                        columns[str(header)].append(key_to_fpath[numeric_header_name_to_key[header]])
+    
+    df = pd.DataFrame(columns, dtype=str)
+    df = df.drop(columns=['TrainOrVal','Partition_ID'])
+    df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
+                       '2': 'Channel_1', '3': 'Channel_2', 
+                       '4': 'Channel_3'})
+    return df
+
+
+
+def extract_csv_partitions(csv_path):
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
+                       '2': 'Channel_1', '3': 'Channel_2', 
+                       '4': 'Channel_3', '5': 'Label'})
+    cols = df['Partition_ID'].unique()
+    transformed_csv_dict = {}
+
+    for col in cols:
+        transformed_csv_dict[str(col)] = {}
+        transformed_csv_dict[str(col)]['train'] = \
+                df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'train')].drop(columns=['TrainOrVal','Partition_ID'])
+        transformed_csv_dict[str(col)]['val'] = \
+                df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'val')].drop(columns=['TrainOrVal','Partition_ID'])
+
+    return transformed_csv_dict
+
