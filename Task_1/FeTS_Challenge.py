@@ -15,8 +15,6 @@
 import os
 import numpy as np
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0' # edit according to your system's configuration
-
 from fets_challenge import run_challenge_experiment
 
 
@@ -370,43 +368,38 @@ def clipped_aggregation(local_tensors,
     clip_to_percentile = 80
     
     # first, we need to determine how much each local update has changed the tensor from the previous value
-    # we'll use the db_iterator to find the previous round's value for this tensor
-    previous_tensor_value = None
-    for _, record in tensor_db.iterrows():
-        if (
-            record['round'] == (fl_round - 1)
-            and record['tensor_name'] == tensor_name
-            and 'aggregated' in record['tags']
-            and 'delta' not in record['tags']
-           ):
-            previous_tensor_value = record['nparray']
-            break
-       
-    # if we have no previous tensor_value, we won't actually clip
-    if previous_tensor_value is None:
-        clipped_tensors = [t.tensor for t in local_tensors]
-    # otherwise, we will use clipped deltas
-    else:
-        # compute the deltas
-        deltas = [t.tensor - previous_tensor_value for t in local_tensors]
+    # we'll use the tensor_db search function to find the 
+    previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('model',), origin='aggregator')
+
+    if previous_tensor_value.shape[0] > 1:
+        print(previous_tensor_value)
+        raise ValueError(f'found multiple matching tensors for {tensor_name}, tags=(model,), origin=aggregator')
+
+    if previous_tensor_value.shape[0] < 1:
+        # no previous tensor, so just return the weighted average
+        return weighted_average_aggregation(local_tensors,
+                                            tensor_db,
+                                            tensor_name,
+                                            fl_round,
+                                            collaborators_chosen_each_round,
+                                            collaborator_times_per_round)
+
+    previous_tensor_value = previous_tensor_value.nparray.iloc[0]
+
+    # compute the deltas for each collaborator
+    deltas = [t.tensor - previous_tensor_value for t in local_tensors]
+
+    # get the target percentile using the absolute values of the deltas
+    clip_value = np.percentile(np.abs(deltas), clip_to_percentile)
+        
+    # let's log what we're clipping to
+    logger.info("Clipping tensor {} to value {}".format(tensor_name, clip_value))
     
-        # concatenate all the deltas
-        all_deltas = np.concatenate(deltas)
-        
-        # take the absolute value
-        abs_deltas = np.abs(all_deltas)
-        
-        # finally, get the 80th percentile
-        clip_value = np.percentile(abs_deltas, clip_to_percentile)
-        
-        # let's log what we're clipping to
-        logger.info("Clipping tensor {} to value {}".format(tensor_name, clip_value))
-    
-        # now we can compute our clipped tensors
-        clipped_tensors = []
-        for delta, t in zip(deltas, local_tensors):
-            new_tensor = previous_tensor_value + np.clip(delta, -1 * clip_value, clip_value)
-            clipped_tensors.append(new_tensor)
+    # now we can compute our clipped tensors
+    clipped_tensors = []
+    for delta, t in zip(deltas, local_tensors):
+        new_tensor = previous_tensor_value + np.clip(delta, -1 * clip_value, clip_value)
+        clipped_tensors.append(new_tensor)
         
     # get an array of weight values for the weighted average
     weights = [t.weight for t in local_tensors]
