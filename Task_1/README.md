@@ -8,6 +8,7 @@ Please ask any additional questions in our discussion pages on our github site a
 ### System requirements
 
 1. [Git](https://git-scm.com/downloads).
+2. [Git LFS](https://github.com/git-lfs/git-lfs#downloading)
 2. Python with virtual environment management system: we recommend using [Anaconda](https://www.anaconda.com/products/individual).
 3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
@@ -16,18 +17,19 @@ Please ask any additional questions in our discussion pages on our github site a
 1. Register for the FeTS 2022 Challenge [here](https://www.synapse.org/#!Synapse:syn28546456/wiki/617093) and submit a data request.
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
-4. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
+4. ```git lfs pull```
+5. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
 ```bash
 ## create venv in specific path
 conda create -p ./venv python=3.7 -y
 conda activate ./venv
 ```
-5. ```pip install --upgrade pip```
-6. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
-7. ```pip install .```
-8. ```python FeTS_Challenge.py```
-9. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.ipy)
-10. To view intermediate results with TensorBoard during training, you can run the following command:
+6. ```pip install --upgrade pip```
+7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
+8. ```pip install .```
+9. ```python FeTS_Challenge.py```
+10. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.ipy)
+11. To view intermediate results with TensorBoard during training, you can run the following command:
     ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
 ## Time to Convergence Metric (formerly "communication cost")
