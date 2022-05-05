@@ -92,9 +92,6 @@ class FeTSChallengeModel(FeTSChallengeTaskRunner):
                                                                 round_num,
                                                                 mode="inference")
 
-        self.logger.info(epoch_valid_loss)
-        self.logger.info(epoch_valid_metric)
-
         origin = col_name
         suffix = 'validate'
         if kwargs['apply'] == 'local':
