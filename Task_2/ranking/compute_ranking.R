@@ -322,6 +322,7 @@ if (length(args) == 0) {
 }
 data_path <- args[1]
 output_dir <- "ranking_output"
+# output_dir <- "ranking_output_C22_excluded"
 if (! dir.exists(output_dir)) {
   dir.create(output_dir)
 }
@@ -348,7 +349,13 @@ for (path in data_files) {
   # Institution i ----------------------------------------------------------
   print(path)
   institution_name <- unlist(strsplit(tail(unlist(strsplit(path, "/")), 1), "[.]"))[1]
+  # print(institution_name)
+  # if (institution_name == "C22_validation") {
+  #   next
+  #   print("skipping")
+  # }
   data_fets_inst <- load_data(path)
+  data_fets_inst <- subset(data_fets_inst, algorithm != "baseline_nnunet2020")   # not ranked
   
   # plot dots- and boxplots
   p_dice <- generate_dot_boxplots_per_institute(subset(data_fets_inst, metric=="Dice"), "Dice",
@@ -366,7 +373,7 @@ for (path in data_files) {
   # For each region, the ranking is computed for the Dice and Hausdorff95 metrics
   # Resulting in 6 rankings
   print("... calculate rankings ... ...")
-  rankings <- calculate_all_rankings_per_institute(data_fets_inst, institution_name, ranking_method)
+  rankings <- calculate_all_rankings_per_institute(data_fets_inst, institution_name, ranking_method, report_dir=report_dir)
   
   # Compute mean rank per algorithm for each institution --------------------
   mean_rank_df <- calculate_mean_ranks_one_institute(rankings, data_fets_inst, institution_name)
@@ -421,12 +428,12 @@ write.csv(countSign, file = paste(output_dir, paste(file_name_significant_counts
 # also sum up significance matrices
 total_sign_matrix <- NULL
 for (s in dataSignMatrices) {
+  ordered_s <- s$dummyTask[order(rownames(s$dummyTask)), order(colnames(s$dummyTask))]
   if (is_null(total_sign_matrix)){
-    total_sign_matrix <- s
+    total_sign_matrix <- ordered_s
   } else {
-    assertthat::are_equal(rownames(total_sign_matrix$dummyTask), rownames(s$dummyTask))
-    total_sign_matrix$dummyTask <- total_sign_matrix$dummyTask + s$dummyTask
+    total_sign_matrix <- total_sign_matrix + ordered_s
   }
 }
 file_name <- paste("significant_matrix", ranking_method, sep="_")
-write.csv(total_sign_matrix$dummyTask, file = paste(output_dir, paste(file_name, ".csv",sep=""), sep="/"))
+write.csv(total_sign_matrix, file = paste(output_dir, paste(file_name, ".csv",sep=""), sep="/"))
