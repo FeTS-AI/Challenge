@@ -28,7 +28,7 @@ conda activate ./venv
 7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
 8. ```pip install .```
 9. ```python FeTS_Challenge.py```
-10. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.ipy)
+10. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
 11. To view intermediate results with TensorBoard during training, you can run the following command:
     ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
