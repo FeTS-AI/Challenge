@@ -65,6 +65,10 @@ We assign these network and compute distributions by drawing uniform-randomly fr
 
 For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
 
+### Use in Ranking
+
+For 2022, this metric will be weighted the same as Dice and Hausdorff from each region of interest **together**. Basically, this year, this metric will be **weighted more** for ranking.
+
 ## Data Partitioning and Sharding
 The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_###`, and two CSV files: 
 - **partitioning_1.csv**
