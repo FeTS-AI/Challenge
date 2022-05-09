@@ -67,7 +67,7 @@ For a given collaborator, these normal distributions are constant throughout the
 
 ### Use in Ranking
 
-For ranking of multidimensional outcomes (or metrics), for each team, we will compute the summation of their ranks across the average of the **7** metrics (Dice and Hausdorff from 3 regions of interest and time to convergence) described as a univariate overall summary measure. This measure will decide the overall ranking for each specific team. Notably, since all teams are ranked per patient, whereas the communication cost is only accounted once for the complete training phase, the communication cost **will be weighted** according to the number of testing subjects in order to give it **equal importance** to the quality of the tumor segmentations.
+For ranking of multidimensional outcomes (or metrics), for each team, we will compute the summation of their ranks across the average of the **7** metrics (i.e., time to convergence, and Dice & Hausdorff from 3 regions of interest) described as a univariate overall summary measure. This measure will decide the overall ranking for each specific team. Notably, since all teams are ranked per patient, whereas the communication cost is only accounted once for the complete training phase, the communication cost **will be weighted** according to the number of testing subjects in order to give it **equal importance** to the quality of the tumor segmentations.
 
 
 ## Data Partitioning and Sharding
