@@ -7,7 +7,11 @@ TOY_CASE_IDS = ["FeTS2022_01151", "FeTS2022_00805", "FeTS2022_00311"]
 
 
 def main():
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        usage="This script helps you extracting the toy test cases used for sanity checks in the FeTS challenge. "
+        "It assumes that you have downloaded the training data. "
+        "Running it should leave you with a folder containing the test cases in the expected format."
+    )
     parser.add_argument(
         "train_data_path",
         type=str,
