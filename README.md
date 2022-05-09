@@ -5,9 +5,9 @@
 
 The repo for the FeTS Challenge: The 1st Computational Competition on Federated Learning.
 
-## Welcome message
+## Website
 
-https://github.com/FETS-AI/Challenge/discussions/3
+https://www.synapse.org/#!Synapse:syn28546456
 
 ## Challenge Tasks
 
