@@ -67,7 +67,8 @@ For a given collaborator, these normal distributions are constant throughout the
 
 ### Use in Ranking
 
-For 2022, this metric will be weighted the same as Dice and Hausdorff from each region of interest **together**. Basically, this year, this metric will be **weighted more** for ranking.
+For ranking of multidimensional outcomes (or metrics), for each team, we will compute the summation of their ranks across the average of the **7** metrics (Dice and Hausdorff from 3 regions of interest and time to convergence) described as a univariate overall summary measure. This measure will decide the overall ranking for each specific team. Notably, since all teams are ranked per patient, whereas the communication cost is only accounted once for the complete training phase, the communication cost **will be weighted** according to the number of testing subjects in order to give it **equal importance** to the quality of the tumor segmentations.
+
 
 ## Data Partitioning and Sharding
 The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_###`, and two CSV files: 
