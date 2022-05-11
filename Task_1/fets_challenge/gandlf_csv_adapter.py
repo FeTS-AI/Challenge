@@ -36,24 +36,48 @@ numeric_header_name_to_key = {value: key for key, value in numeric_header_names.
 train_val_headers = [0, 1, 2, 3, 4, 5]
 val_headers = [0, 1, 2, 3, 4]
 
+# hard coded samples used to train the FeTS2022 initial model
+# and therefore best to keep out of split insitution validation
+# set
+init_train = ['FeTS2022_00159','FeTS2022_00172','FeTS2022_00187','FeTS2022_00199','FeTS2022_00211','FeTS2022_00221', \
+              'FeTS2022_00235','FeTS2022_00243','FeTS2022_00258','FeTS2022_00269','FeTS2022_00282','FeTS2022_00291', \
+              'FeTS2022_00300','FeTS2022_00311','FeTS2022_00321','FeTS2022_00332','FeTS2022_00344','FeTS2022_00353', \
+              'FeTS2022_00370','FeTS2022_00380','FeTS2022_00391','FeTS2022_00403','FeTS2022_00413','FeTS2022_00425', \
+              'FeTS2022_00440','FeTS2022_01000','FeTS2022_01038','FeTS2022_01046','FeTS2022_01054','FeTS2022_01062', \
+              'FeTS2022_01070','FeTS2022_01078','FeTS2022_01086','FeTS2022_01094','FeTS2022_01102','FeTS2022_01110', \
+              'FeTS2022_01118','FeTS2022_01126','FeTS2022_01134','FeTS2022_01205','FeTS2022_01213','FeTS2022_01221', \
+              'FeTS2022_01229','FeTS2022_01237','FeTS2022_01245','FeTS2022_01253','FeTS2022_01261','FeTS2022_01269', \
+              'FeTS2022_01277','FeTS2022_01293','FeTS2022_01307','FeTS2022_01315','FeTS2022_01323','FeTS2022_01331', \
+              'FeTS2022_01339','FeTS2022_01347','FeTS2022_01355','FeTS2022_01363','FeTS2022_01371','FeTS2022_01379', \
+              'FeTS2022_01387','FeTS2022_01395','FeTS2022_01403']
+
 
 def train_val_split(subdirs, percent_train, shuffle=True):
     
     if percent_train < 0 or percent_train >=1:
         raise ValueError('Percent train must be >= 0 and < 1.')
-        
-    if len(subdirs) == 0:
+
+    # record original length of subdirs    
+    n_subdirs = len(subdirs)
+    if n_subdirs == 0:
         raise ValueError('An empty list was provided to split.')
     
+    train_subdirs = [subdir for subdir in subdirs if subdir in init_train]
+    # limit subdirs to those that do not lie in init_train
+    subdirs = [subdir for subdir in subdirs if subdir not in init_train]
+
+    assert len(subdirs) + len(train_subdirs) == n_subdirs
+
     if shuffle:
         np.random.shuffle(subdirs)
         
-    cutpoint = int(len(subdirs) * percent_train)
-    #if cutpoint == 0 or cutpoint == len(subdirs):
-    #    raise ValueError('The amount of data and percent train led to either empty train or val.')
+    cutpoint = int(n_subdirs * percent_train) - len(train_subdirs)
     
-    train_subdirs = subdirs[:cutpoint]
+    train_subdirs = train_subdirs + subdirs[:cutpoint]
     val_subdirs = subdirs[cutpoint:]
+
+    if shuffle:
+        np.random.shuffle(train_subdirs)
     
     return train_subdirs, val_subdirs
 
