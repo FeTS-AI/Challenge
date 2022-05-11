@@ -19,13 +19,13 @@ The first task of the challenge involves customizing core functions of a baselin
 
 This task utilizes federated testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
 
-## Documentation and more details
+## Documentation and Q&A
 
-Please see https://fets-ai.github.io/Challenge/
+Please visit the [challenge website](https://synapse.org/fets) and [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
 
-## Frequently asked questions
+<!-- ## Frequently asked questions
 
-Please see [FAQ](https://fets-ai.github.io/Challenge/faq/).
+Please see [FAQ](https://fets-ai.github.io/Challenge/faq/). -->
 
 ## Citation
 
