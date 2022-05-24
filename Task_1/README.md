@@ -65,6 +65,11 @@ We assign these network and compute distributions by drawing uniform-randomly fr
 
 For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
 
+### Use in Ranking
+
+For ranking of multidimensional outcomes (or metrics), for each team, we will compute the summation of their ranks across the average of the **7** metrics (i.e., time to convergence, and Dice & Hausdorff from 3 regions of interest) described as a univariate overall summary measure. This measure will decide the overall ranking for each specific team. Notably, since all teams are ranked per patient, whereas the communication cost is only accounted once for the complete training phase, the communication cost **will be weighted** according to the number of testing subjects in order to give it **equal importance** to the quality of the tumor segmentations.
+
+
 ## Data Partitioning and Sharding
 The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_###`, and two CSV files: 
 - **partitioning_1.csv**
