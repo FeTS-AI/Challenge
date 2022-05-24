@@ -1,0 +1,27 @@
+name: MLCommons FeTS
+description: MLCommons FeTS integration
+authors: 
+ - {name: "MLCommons Best Practices Working Group"}
+ - {name: "Maximilian Zenk (DKFZ)"}
+
+platform:
+  accelerator_count: 0 # 0 is for CPU, if have GPUs in your system specify the number of GPUs
+
+docker:
+  # Image name.
+  image: mlcommons/fets_model:0.0.1
+  # image: docker.synapse.org/syn28561391/test_mlcube:latest
+  # Docker build context relative to $MLCUBE_ROOT. Default is `build`.
+  build_context: "../project"
+  # Docker file name within docker build context, default is `Dockerfile`.
+  build_file: "Dockerfile"
+  # Uncomment the next line in case you have at least 1 GPU in your system
+  # gpu_args: "--gpus all"   # passed to docker run if platform.accelerator_count > 0
+
+tasks:
+  infer:
+  # Inference task
+    parameters:
+      # NOTE: parameters_file and checkpoint_path are *not* passed during federated evaluation
+      inputs: {data_path: data/, parameters_file: {type: file, default: "null"}, checkpoint_path: {type: file, default: "null"}}
+      outputs: {output_path: output/}
