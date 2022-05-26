@@ -138,7 +138,6 @@ class FeTSChallengeModel(FeTSChallengeTaskRunner):
             local_output_dict       : Tensors to maintain in the local TensorDB
         """
 
-        print(f'input tensor_dict = {input_tensor_dict.keys()}')
         # handle the hparams
         epochs_per_round = int(input_tensor_dict.pop('epochs_per_round'))
         learning_rate = float(input_tensor_dict.pop('learning_rate'))
