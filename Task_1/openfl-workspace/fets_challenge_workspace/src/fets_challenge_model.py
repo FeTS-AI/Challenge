@@ -17,6 +17,8 @@ from GANDLF.compute.generic             import create_pytorch_objects
 from GANDLF.compute.training_loop       import train_network
 from GANDLF.compute.forward_pass        import validate_network
 
+from . import TRAINING_HPARAMS
+
 class FeTSChallengeModel(FeTSChallengeTaskRunner):
     """FeTSChallenge Model class for Federated Learning."""
 
@@ -135,11 +137,21 @@ class FeTSChallengeModel(FeTSChallengeTaskRunner):
             global_output_dict      : Tensors to send back to the aggregator
             local_output_dict       : Tensors to maintain in the local TensorDB
         """
+
+        print(f'input tensor_dict = {input_tensor_dict.keys()}')
+        # handle the hparams
+        epochs_per_round = int(input_tensor_dict.pop('epochs_per_round'))
+        learning_rate = float(input_tensor_dict.pop('learning_rate'))
+
         self.rebuild_model(round_num, input_tensor_dict)
         # set to "training" mode
         self.model.train()
-        # self.model.to(self.device)
-        for epoch in range(epochs):
+
+        # Set the learning rate
+        for group in self.optimizer.param_groups:
+            group['lr'] = learning_rate
+
+        for epoch in range(epochs_per_round):
             self.logger.info(f'Run {epoch} epoch of {round_num} round')
             # FIXME: do we want to capture these in an array rather than simply taking the last value?
             epoch_train_loss, epoch_train_metric = train_network(self.model,
@@ -187,3 +199,11 @@ class FeTSChallengeModel(FeTSChallengeTaskRunner):
 
         # Return global_tensor_dict, local_tensor_dict
         return global_tensor_dict, local_tensor_dict
+
+    def get_required_tensorkeys_for_function(self, func_name, **kwargs):
+        required = super().get_required_tensorkeys_for_function(func_name, **kwargs)
+        if func_name == 'train':
+            round_number = required[0].round_number
+            for hparam in TRAINING_HPARAMS:
+                required.append(TensorKey(tensor_name=hparam, origin='GLOBAL', round_number=round_number, report=False, tags=('hparam', 'model')))
+        return required

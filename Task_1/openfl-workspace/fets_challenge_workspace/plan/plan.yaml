@@ -95,6 +95,7 @@ task_runner :
         maximum: 0.0.14
         minimum: 0.0.14
       weighted_loss: true
+      test: true
 
 
 network :
