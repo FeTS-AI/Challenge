@@ -16,7 +16,6 @@ def pseudo_predict(subject_dir: Path, output_dir: Path):
     output_fname = output_dir / f"{subject_dir.name}.nii.gz"
 
     # NOTE FeTS structure: one folder for each test case (subject), containing four niftis.
-    # Example: TODO check again with UPenn if this is up to date
     # Patient_001    # case identifier
     # │ Patient_001_brain_t1.nii.gz
     # │ Patient_001_brain_t1ce.nii.gz

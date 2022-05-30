@@ -25,12 +25,11 @@ virtualenv -p python3 ./env && source ./env/bin/activate && pip install mlcube-d
 
 <!-- - (Optional) Install MLCube's singularity runner. -->
 - Clone this repository
-<!-- TODO Update this once merged -->
 
 ```bash
-# Fetch the examples from GitHub
-git clone https://github.com/mlcommons/mlcube_examples
-cd ./mlcube_examples/fets/model/mlcube
+# Fetch the template from GitHub
+git clone https://github.com/FETS-AI/Challenge.git
+cd ./Task_2/mlcubes/model
 ```
 
 To test your installation, you can run any of the commands in [this section](#task-execution).

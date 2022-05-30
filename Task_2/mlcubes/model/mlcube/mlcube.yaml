@@ -1,5 +1,5 @@
-name: MLCommons FeTS
-description: MLCommons FeTS integration
+name: FeTS challenge 2022 (task 2) model MLCube
+description: Template for inference cubes submitted to task 2.
 authors: 
  - {name: "MLCommons Best Practices Working Group"}
  - {name: "Maximilian Zenk (DKFZ)"}

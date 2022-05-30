@@ -1,0 +1,10 @@
+PyYAML~=5.3
+pandas
+typer
+MedPy
+SimpleITK
+numpy
+scikit-learn
+synapseclient
+nibabel
+loguru
