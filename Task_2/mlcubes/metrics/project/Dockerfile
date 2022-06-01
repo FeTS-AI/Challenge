@@ -21,4 +21,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # copy all files
 COPY ./ /project
 
-ENTRYPOINT ["python3", "mlcube.py"]
+ENTRYPOINT ["python3", "/project/mlcube.py"]
