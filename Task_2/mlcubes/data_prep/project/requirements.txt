@@ -3,3 +3,4 @@ typer
 pandas
 SimpleITK>=2.1.0
 numpy
+tqdm

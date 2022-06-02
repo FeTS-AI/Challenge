@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+from tqdm import tqdm
 
 
 def copy_subject(subject_dir: Path, output_dir_data: Path, output_dir_labels: Path):
@@ -43,6 +44,7 @@ def run_preparation(
     output_data_path.mkdir(parents=True, exist_ok=True)
     output_labels_path.mkdir(parents=True, exist_ok=True)
 
-    for subject_dir in Path(input_dir).iterdir():
-        if subject_dir.is_dir():
-            copy_subject(subject_dir, output_data_path, output_labels_path)
+    subject_list = [x for x in Path(input_dir).iterdir() if x.is_dir()]
+    print(f"Preparing {len(subject_list)} subjects...")
+    for subject_dir in tqdm(subject_list):
+        copy_subject(subject_dir, output_data_path, output_labels_path)
