@@ -8,6 +8,7 @@ Please ask any additional questions in our discussion pages on our github site a
 ### System requirements
 
 1. [Git](https://git-scm.com/downloads).
+2. [Git LFS](https://github.com/git-lfs/git-lfs#downloading)
 2. Python with virtual environment management system: we recommend using [Anaconda](https://www.anaconda.com/products/individual).
 3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
@@ -16,18 +17,19 @@ Please ask any additional questions in our discussion pages on our github site a
 1. Register for the FeTS 2022 Challenge [here](https://www.synapse.org/#!Synapse:syn28546456/wiki/617093) and submit a data request.
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
-4. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
+4. ```git lfs pull```
+5. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
 ```bash
 ## create venv in specific path
 conda create -p ./venv python=3.7 -y
 conda activate ./venv
 ```
-5. ```pip install --upgrade pip```
-6. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
-7. ```pip install .```
-8. ```python FeTS_Challenge.py```
-9. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.ipy)
-10. To view intermediate results with TensorBoard during training, you can run the following command:
+6. ```pip install --upgrade pip```
+7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
+8. ```pip install .```
+9. ```python FeTS_Challenge.py```
+10. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
+11. To view intermediate results with TensorBoard during training, you can run the following command:
     ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
 ## Time to Convergence Metric (formerly "communication cost")
@@ -62,6 +64,11 @@ We assign these network and compute distributions by drawing uniform-randomly fr
 4. The mean and stdev seconds to upload the model.
 
 For a given collaborator, these normal distributions are constant throughout the experiment. Again, each possible timing distribution is based on actual timing information from a subset of the hospitals in the FeTS intitiative. You can find these distributions in the experiment.py file (search for ## COLLABORATOR TIMING DISTRIBUTIONS), as well as the random seed used to ensure reproducibility.
+
+### Use in Ranking
+
+For ranking of multidimensional outcomes (or metrics), for each team, we will compute the summation of their ranks across the average of the **7** metrics (i.e., time to convergence, and Dice & Hausdorff from 3 regions of interest) described as a univariate overall summary measure. This measure will decide the overall ranking for each specific team. Notably, since all teams are ranked per patient, whereas the communication cost is only accounted once for the complete training phase, the communication cost **will be weighted** according to the number of testing subjects in order to give it **equal importance** to the quality of the tumor segmentations.
+
 
 ## Data Partitioning and Sharding
 The FeTS 2022 data release consists of a training set and two CSV files - each providing information for how to partition the training data into non-IID institutional subsets. The release will contain subfolders for single patient records whose names have the format `FeTS2022_###`, and two CSV files: 

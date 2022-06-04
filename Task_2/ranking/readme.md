@@ -1,6 +1,6 @@
 # Task 2 Ranking
 
-This is an implementation of the ranking method described on the [challenge website](https://fets-ai.github.io/Challenge/participate/#task-2-evaluation-details). To run this on your computer, you need to install R and the challengeR toolkit, as described in their [repository](https://github.com/wiesenfa/challengeR/#installation). The script `compute_ranking.R` should be invoked by
+This is an implementation of the ranking method described on the [challenge website](https://www.synapse.org/#!Synapse:syn28546456/wiki/617245). To run this on your computer, you need to install R and the challengeR toolkit, as described in their [repository](https://github.com/wiesenfa/challengeR/#installation). The script `compute_ranking.R` should be invoked by
 ```
 Rscript compute_ranking.R data_path [report_save_dir]
 ```

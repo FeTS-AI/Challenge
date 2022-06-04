@@ -245,24 +245,7 @@ def model_outputs_to_disc(data_path,
     task_runner.load_native(filepath=native_model_path, map_location=device)
     task_runner.opt_treatment = 'RESET'
     
-    
     logger.info('Starting inference using data from {}\n'.format(data_path))
     
-    inference_loader = data_loader.get_valid_loader()
-    
-    for subject in inference_loader:
-        
-        subfolder = subject['subject_id'][0]
-        
-        #prep the path for the output file
-        if not os.path.exists(output_path):
-            os.mkdir(output_path)
-         
-        inference_outpath = os.path.join(output_path, subfolder + outputtag + '.nii.gz') # the evaluation app requires the format "${subject_id}.nii.gz"
-        
-        logger.info("Validating with subject: {}".format(subfolder))
-        task_runner.inference('aggregator',-1,task_runner.get_tensor_dict(),apply='global')
-        logger.info(f"\nFinished generating predictions to output folder {output_path}")
-        
-        
-                          
+    task_runner.inference('aggregator',-1,task_runner.get_tensor_dict(),apply='global')
+    logger.info(f"\nFinished generating predictions to output folder {output_path}")

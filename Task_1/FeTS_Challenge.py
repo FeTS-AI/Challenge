@@ -120,16 +120,13 @@ def one_collaborator_on_odd_rounds(collaborators,
 # 
 # The training hyper-parameters for a round are:
 # - **`learning_rate`**: the learning rate value set for the Adam optimizer
-# - **`batches_per_round`**: a flat number of batches each training collaborator will train. Must be an integer or None
 # - **`epochs_per_round`**: the number of epochs each training collaborator will train. Must be a float or None. Partial epochs are allowed, such as 0.5 epochs.
 # 
-# Note that exactly one of **`epochs_per_round`** and **`batches_per_round`** must be `"None"`. You will get an error message and the experiment will terminate if this is not the case to remind you of this requirement.
+# Your function will receive the typical aggregator state/history information that it can use to make its determination. The function must return a tuple of (`learning_rate`, `epochs_per_round`). For example, if you return:
 # 
-# Your function will receive the typical aggregator state/history information that it can use to make its determination. The function must return a tuple of (`learning_rate`, `epochs_per_round`, `batches_per_round`). For example, if you return:
+# `(1e-4, 2)`
 # 
-# `(1e-4, 2.5, None)`
-# 
-# then all collaborators selected based on the [collaborator training selection criteria](#Custom-Collaborator-Training-Selection) will train for `2.5` epochs with a learning rate of `1e-4`.
+# then all collaborators selected based on the [collaborator training selection criteria](#Custom-Collaborator-Training-Selection) will train for `2` epochs with a learning rate of `1e-4`.
 # 
 # Different hyperparameters can be specified for collaborators for different rounds but they remain the same for all the collaborators that are chosen for that particular round. In simpler words, collaborators can not have different hyperparameters for the same round.
 
@@ -149,15 +146,14 @@ def constant_hyper_parameters(collaborators,
         collaborators_chosen_each_round: a dictionary of {round: list of collaborators}. Each list indicates which collaborators trained in that given round.
         collaborator_times_per_round: a dictionary of {round: {collaborator: total_time_taken_in_round}}.  
     Returns:
-        tuple of (learning_rate, epochs_per_round, batches_per_round). One of epochs_per_round and batches_per_round must be None.
+        tuple of (learning_rate, epochs_per_round).
     """
     # these are the hyperparameters used in the May 2021 recent training of the actual FeTS Initiative
     # they were tuned using a set of data that UPenn had access to, not on the federation itself
     # they worked pretty well for us, but we think you can do better :)
-    epochs_per_round = 1.0
-    batches_per_round = None
+    epochs_per_round = 1
     learning_rate = 5e-5
-    return (learning_rate, epochs_per_round, batches_per_round)
+    return (learning_rate, epochs_per_round)
 
 
 # this example trains less at each round
@@ -176,7 +172,7 @@ def train_less_each_round(collaborators,
         collaborators_chosen_each_round: a dictionary of {round: list of collaborators}. Each list indicates which collaborators trained in that given round.
         collaborator_times_per_round: a dictionary of {round: {collaborator: total_time_taken_in_round}}.  
     Returns:
-        tuple of (learning_rate, epochs_per_round, batches_per_round). One of epochs_per_round and batches_per_round must be None.
+        tuple of (learning_rate, epochs_per_round) 
     """
 
     # we'll have a constant learning_rate
@@ -187,40 +183,9 @@ def train_less_each_round(collaborators,
     decay = min(fl_round, 10)
     decay = 0.9 ** decay
     epochs_per_round *= decay    
+    epochs_per_round = int(epochs_per_round)
     
-    return (learning_rate, epochs_per_round, None)
-
-
-# this example has each institution train the same number of batches
-def fixed_number_of_batches(collaborators,
-                            db_iterator,
-                            fl_round,
-                            collaborators_chosen_each_round,
-                            collaborator_times_per_round):
-    """Set the training hyper-parameters for the round.
-    
-    Args:
-        collaborators: list of strings of collaborator names
-        db_iterator: iterator over history of all tensors.
-            Columns: ['tensor_name', 'round', 'tags', 'nparray']
-        fl_round: round number
-        collaborators_chosen_each_round: a dictionary of {round: list of collaborators}. Each list indicates which collaborators trained in that given round.
-        collaborator_times_per_round: a dictionary of {round: {collaborator: total_time_taken_in_round}}.  
-    Returns:
-        tuple of (learning_rate, epochs_per_round, batches_per_round). One of epochs_per_round and batches_per_round must be None.
-    """
-
-    # we'll have a constant learning_rate
-    learning_rate = 5e-5
-    
-    # instead of a number of epochs, collaborators will train for a number of batches
-    # this means the number of training batches is irrespective of the data sizes at the institutions
-    # if the institution has less data than this, they will loop on their data until they have trained
-    # the correct number of batches
-    batches_per_round = 16
-    
-    # Note that the middle element (epochs_per_round) is now None
-    return (learning_rate, None, batches_per_round)
+    return (learning_rate, epochs_per_round)
 
 
 # # Custom Aggregation Functions
