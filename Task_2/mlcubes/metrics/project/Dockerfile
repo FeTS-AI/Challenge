@@ -8,8 +8,6 @@ RUN cd /work/CaPTk/bin/ && \
     chmod a+x Hausdorff95 && \
     rm Hausdorff95_linux.zip
 
-ENV LANG C.UTF-8
-
 # install all python requirements
 RUN yum install python3 python3-pip -y
 
@@ -20,5 +18,14 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # copy all files
 COPY ./ /project
+
+# Set the locale
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# these produce problems with singularity
+ENV CMAKE_PREFIX_PATH=
+ENV DCMTK_DIR=
 
 ENTRYPOINT ["python3", "/project/mlcube.py"]
