@@ -70,7 +70,7 @@ In this file (`requirements.txt`) you can add all the python dependencies needed
 <details><summary><b>Dockerfile </b></summary>
 <p>
 
-This file can be adapted to add your own docker labels, install some OS dependencies or to change the base docker image. Note however that we *strongly recommend* to use one of our proposed base image, to make sure your application can be executed in the federated evaluation. Inside the file you can find some information about the existing steps.
+This file can be adapted to add your own docker labels, install some OS dependencies or to change the base docker image. Note however that we *strongly recommend* to use one of our proposed base images (`nvcr.io/nvidia/pytorch:20.08-py3` or tensorflow equivalent), to make sure your application can be executed in the federated evaluation. Note that the [pytorch (or tensorflow) version](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html) inside this container is 1.7.0 (or 2.2.0), so for inference you may not be able to use features introduced in later versions, unfortunately.
 
 </p>
 </details>
