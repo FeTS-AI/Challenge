@@ -1,6 +1,7 @@
 """Logic file"""
 from pathlib import Path
 
+import torch
 import numpy as np
 import SimpleITK as sitk
 
@@ -73,6 +74,11 @@ def run_inference(
 
     # Just for demonstration: This is a user-implemented utility function.
     helper()
+
+    # GPU check
+    if not torch.cuda.is_available():
+        print("\n!!!WARNING!!! Could not detect GPU. Please check why the cube cannot access GPUs.\n")
+
 
     # Iterate over subjects
     for subject in in_folder.iterdir():

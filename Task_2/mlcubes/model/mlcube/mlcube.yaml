@@ -5,7 +5,8 @@ authors:
  - {name: "Maximilian Zenk (DKFZ)"}
 
 platform:
-  accelerator_count: 0 # 0 is for CPU, if have GPUs in your system specify the number of GPUs
+  # If you have GPUs, specify the number of GPUs; 0 is for CPU
+  accelerator_count: 1
 
 docker:
   # Image name.
@@ -14,8 +15,8 @@ docker:
   build_context: "../project"
   # Docker file name within docker build context, default is `Dockerfile`.
   build_file: "Dockerfile"
-  # Uncomment the next line in case you have at least 1 GPU in your system
-  # gpu_args: "--gpus all"   # passed to docker run if platform.accelerator_count > 0
+  # Used in case you have at least 1 GPU in your system and if platform.accelerator_count > 0
+  gpu_args: "--gpus all"
 
 tasks:
   infer:
