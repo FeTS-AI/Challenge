@@ -159,6 +159,7 @@ def score(labels_dir: Path, preds_dir: Path, tmp_output="tmp.csv") -> pd.DataFra
             extra_scores = pd.DataFrame([confusion_matrix]).set_index("subject_id")
             scan_scores = pd.concat([scan_scores, extra_scores], axis=1)
 
+        scan_scores["missing_pred"] = not pred_path.exists()
         scores.append(scan_scores)
     if len(missing_preds) > 0:
         logger.warning(
