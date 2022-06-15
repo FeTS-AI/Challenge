@@ -13,9 +13,8 @@ To make sure that the containers submitted by the participants also run successf
 ## Project setup
 
 Please follow these steps to get started:
-<!-- TODO singularity stuff once it is ready -->
+
 - Install [docker](https://docs.docker.com/engine/install/). You may also have to install the [NVIDIA container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#installing-on-ubuntu-and-debian) for GPU-support.
-<!-- - (Optional) Install [singularity](https://sylabs.io/guides/latest/user-guide/quick_start.html#quick-installation-steps). Only required if you want to test docker-to-singularity conversion yourself. -->
 - [Install MLCube](https://mlcommons.github.io/mlcube/getting-started/) (with docker runner) to a virtual/conda environment of your choice. For example:
 
 ```bash
@@ -58,7 +57,7 @@ These are the most important files on this project:
 
 ## How to modify this project
 
-You can change each file described above in order to add your own implementation. In case you need more information on the internals of MLCube, check out the official [git repository](https://github.com/mlcommons/mlcube) or [documentation](https://mlcommons.github.io/mlcube/).
+You can change each file described above to add your own implementation. In particular, participants will want to adapt the `Dockerfile`, `requirements.txt` and code in `project/src`. They should also add model checkpoints to their container. Each place where modifications are possible is described in some detail below. More information on the internals of MLCube can be found in the official [git repository](https://github.com/mlcommons/mlcube) or [documentation](https://mlcommons.github.io/mlcube/).
 
 <details><summary><b>Requirements file </b></summary>
 <p>
@@ -87,9 +86,9 @@ In the existing implementation you will find the `infer` task, which will be exe
   - checkpoint_path: folder path containing model checkpoints
   - parameters_file: Extra parameters
 - Output parameters:
-  - output_folder: folder path where output data will be stored
+  - output_path: folder path where output data will be stored
 
-This task loads the input data, processes it and then saves the output result in the output_folder. It also prints some information from the extra parameters.
+This task loads the input data, processes it and then saves the output result in the output_path. It also prints some information from the extra parameters.
 
 </p>
 </details>
@@ -98,7 +97,8 @@ This task loads the input data, processes it and then saves the output result in
 <p>
 
 The `mlcube.py` file is the handler file and entrypoint described in the dockerfile. Here you can find all the logic related to how to process each MLCube task. For most challenge participants, the provided template should be usable without modifications.
-If you want to add a new task first you must define it inside the `mlcube.yaml` file with its input and output parameters and then you need to add the logic to handle this new task inside the `mlcube.py` file.
+Note that the *infer* task is the only one that will be executed in the evaluation pipeline.
+If you still want to add a new task for your convenience (for example model training), you have to define it inside `mlcube.yaml` with its input and output parameters and then add the logic to handle this new task inside the `mlcube.py` file.
 
 </p>
 </details>
@@ -108,7 +108,7 @@ If you want to add a new task first you must define it inside the `mlcube.yaml` 
 
 The `my_logic.py` file contains the main logic of the project; hence most of the custom implementations by challenge participants are required here. This logic file is called from the `mlcube.py` file.
 
-*Please make sure* that your MLCube obeyes the [conventions for input/output folders](#description-of-io-interface) after modification!
+*Please make sure* that your MLCube obeys the [conventions for input/output folders](#description-of-io-interface) after modification!
 
 </p>
 </details>
@@ -134,14 +134,16 @@ When testing your MLCube locally, different checkpoint directories can be passed
 <p>
 
 This file (`parameters.yaml`) contains all extra parameters that aren't files or directories. For example, here you can place all the hyperparameters that you will use for training a model. The parameters used for a challenge submission have to be stored inside the MLCube to guarantee reproducibility. Therefore, please copy the final paramters to the `project/parameters.yaml` file, which will be copied to the docker image if you use the provided Dockerfile.
-When testing your MLCube locally, different parameter files can be passed to an existing MLCube without rebuilding the image, as described in the [example section](#tasks-execution)). 
+When testing your MLCube locally, different parameter files can be passed to an existing MLCube without rebuilding the image, as described in the [example section](#tasks-execution)).
 
 </p>
 </details>
 
 ## Task execution
 
-Here we describe the simple commands required to build and run MLCubes. Note that we use docker-based MLCubes for development, which are converted automatically to singularity images before the official evaluation.
+Here we describe the simple commands required to build and run individual MLCubes, which is useful for debugging your submission.
+To run the complete evaluation pipeline (including toy data preparation and scoring), follow the steps [here](../../README.md#how-to-run-the-evaluation-pipeline-locally).
+Note that we use docker-based MLCubes for development, which are converted automatically to singularity images before the official evaluation.
 
 First, make sure that you are still in the `mlcube` folder. To run the `infer` task specified by the MLCube:
 
@@ -172,16 +174,6 @@ If you want to build the docker image without running it, you can use
 # Only build without running a task
 mlcube configure --mlcube=mlcube.yaml -Pdocker.build_strategy=always
 ```
-
-<!-- TODO add singularity part once it's ready -->
-<!-- To use the Singularity runner instead, add the flag `--platform=singularity`:
-
-```bash
-# Run main task with singularity runner
-mlcube run --mlcube=mlcube.yaml --task=infer --platform=singularity
-```
-
-Note that you need singularity installed and the MLCube singularity runner to run your MLCube with singularity. -->
 
 ## Description of IO-interface
 

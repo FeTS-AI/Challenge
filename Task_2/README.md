@@ -59,6 +59,7 @@ Note that the toy test cases are part of the FeTS 2022 training data and the sam
 
 In the testing phase of Task 2, we are going to perform a federated evaluation on multiple remote institutions with limited computation capabilities. To finish the evaluation before the MICCAI conference, we have to restrict the inference time of the submitted algorithms. As the number of participants is not known in advance, we decided for the following rules in that regard:
 
-- We will test the submission on the three toy test cases shipped with the MedPerf environment on a system with one GPU (11GB) and 40 GB RAM.
+- We will perform a test run of the submission on three toy test cases (shipped with the MedPerf environment) on a system with one GPU (11GB) and 40 GB RAM.
 - For each submission, we are going to check if the algorithms produces valid outputs on the toy test cases. Submissions that exit with error are invalid.
 - Participants are allowed to do their own memory management to fit a larger algorithm, but there will be a timeout of `num_cases * 180` seconds on the inference time.
+<!-- - After conversion to a singularity image file, each submission has to be smaller than 12GB. Participants will be notified if this limit is exceeded during the test run. -->
