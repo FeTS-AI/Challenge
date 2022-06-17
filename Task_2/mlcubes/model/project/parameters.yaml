@@ -1,0 +1,10 @@
+# Here you can define new parameters
+# author info
+AUTHOR_NAME: "Chuck Norris"
+AUTHOR_EMAIL: "chuck@norris.org"
+# put your app name here
+APPLICATION_NAME: "AMAZING APPLICATION"
+# specify version here, if possible use semantic versioning
+APPLICATION_VERSION: "0.0.1"
+# It's also possible to have a hyperparameter config here
+HPARAM_EXAMPLE: 42

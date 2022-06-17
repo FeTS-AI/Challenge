@@ -1,0 +1,27 @@
+name: FeTS challenge 2022 (task 2) model MLCube
+description: Template for inference cubes submitted to task 2.
+authors: 
+ - {name: "MLCommons Best Practices Working Group"}
+ - {name: "Maximilian Zenk (DKFZ)"}
+
+platform:
+  # If you have GPUs, specify the number of GPUs; 0 is for CPU
+  accelerator_count: 1
+
+docker:
+  # Image name.
+  image: docker.synapse.org/syn31437293/fets22_model
+  # Docker build context relative to $MLCUBE_ROOT. Default is `build`.
+  build_context: "../project"
+  # Docker file name within docker build context, default is `Dockerfile`.
+  build_file: "Dockerfile"
+  # Used in case you have at least 1 GPU in your system and if platform.accelerator_count > 0
+  gpu_args: "--gpus all"
+
+tasks:
+  infer:
+  # Inference task
+    parameters:
+      # NOTE: parameters_file and checkpoint_path are *not* passed during federated evaluation
+      inputs: {data_path: data/, parameters_file: {type: file, default: "null"}, checkpoint_path: {type: file, default: "null"}}
+      outputs: {output_path: output/}
