@@ -5,6 +5,6 @@ items:
     # subtitle: Example subtitle 1
     icon: fa-bullhorn
     description: >
-      The training data has been released!
-    call_to_action_name: Visit website
+      You're viewing the website for FeTS 2021.
+    call_to_action_name: Visit new website
     call_to_action_link: "https://synapse.org/fets"
