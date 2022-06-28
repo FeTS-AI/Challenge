@@ -33,9 +33,9 @@ cd ./Task_2/mlcubes/model
 
 To test your installation, you can run any of the commands in [this section](#task-execution).
 
-## Important files
+## How to modify this project
 
-These are the most important files on this project:
+You can change each file in this project to add your own implementation. In particular, participants will want to adapt the `Dockerfile`, `requirements.txt` and code in `project/src`. They should also add model checkpoints to their container. Each place where modifications are possible is described in some detail below. We also made a short guide for converting BraTS docker submissions to the format used in FeTS [here](#guide-for-converting-brats-submissions). Here is an overview of files in this project: 
 
 ```bash
 ├── mlcube
@@ -55,10 +55,6 @@ These are the most important files on this project:
             └── utilities.py # Python utilities file that stores useful functions.
 ```
 
-## How to modify this project
-
-You can change each file described above to add your own implementation. In particular, participants will want to adapt the `Dockerfile`, `requirements.txt` and code in `project/src`. They should also add model checkpoints to their container. Each place where modifications are possible is described in some detail below. More information on the internals of MLCube can be found in the official [git repository](https://github.com/mlcommons/mlcube) or [documentation](https://mlcommons.github.io/mlcube/).
-
 <details><summary><b>Requirements file </b></summary>
 <p>
 
@@ -77,7 +73,7 @@ This file can be adapted to add your own docker labels, install some OS dependen
 <details><summary><b>MLCube yaml file </b></summary>
 <p>
 
-`mlcube.yaml` contains instructions about the docker image and platform that will be used, information about the project (name, description, authors), and also the tasks defined for the project. **Note** that this file is not submitted and changes will hence not have any effect in the official evaluation. We will use the provided template with the name of your docker image instead.
+`mlcube.yaml` contains instructions about the docker image and platform that will be used, information about the project (name, description, authors), and also the tasks defined for the project. **Note** that this file is not submitted and changes will hence not have any effect in the official evaluation. We will use the provided template with the name of your docker image instead. To change the name of your docker image, you can use the `docker.image` field in the `mlcube.yaml` or use `docker tag` after building it.
 
 In the existing implementation you will find the `infer` task, which will be executed in the federated evaluation. It takes the following parameters:
 
@@ -139,6 +135,8 @@ When testing your MLCube locally, different parameter files can be passed to an 
 </p>
 </details>
 
+More information on the internals of MLCube can be found in the official [git repository](https://github.com/mlcommons/mlcube) or [documentation](https://mlcommons.github.io/mlcube/). 
+
 ## Task execution
 
 Here we describe the simple commands required to build and run individual MLCubes, which is useful for debugging your submission.
@@ -195,6 +193,48 @@ data/ # this path is passed for inference
 Furthermore, predictions for test cases should be placed in an output directory and named as follows: `<case-identifier>.nii.gz`
 An example for loading images and saving segmentations is included in [`my_logic.py`](project/src/my_logic.py).
 
+
+## Guide for converting BraTS submissions
+
+This section is supposed to help teams that already created a docker submission for BraTS 2021 with converting it so that it's a valid FeTS task-2 submission. The first step is to download [this folder](.) and copy your code to `project/src`. Then, you will need to modify a few files:
+
+- `mlcube.py`: You can write a simple wrapper that basically calls your original inference code for each test case. This could look similar to this:
+  ```python
+  # ...
+
+  @app.command("infer")
+  def infer(
+      data_path: str = typer.Option(..., "--data_path"),
+      output_path: str = typer.Option(..., "--output_path"),
+      parameters_file: str = typer.Option(..., "--parameters_file"),
+      ckpt_path: str = typer.Option(..., "--checkpoint_path")
+  ):
+      if not Path(ckpt_path).exists():
+          print(ckpt_path)
+          # For federated evaluation, model needs to be stored here
+          print("WARNING: Checkpoint path not specified or doesn't exist. Using default path instead.")
+          ckpt_path = "/mlcube_project/model_ckpts"
+      
+      for idx, subject_dir in enumerate(Path(data_path).iterdir()):
+          if subject_dir.is_dir():
+              subject_id = subject_dir.name
+              print("Processing subject {}".format(subject_id))
+              # run code from original BraTS submission. 
+              # TODO Make sure your code can handle input/output paths as arguments: --input and --output. Also make sure outputs from previous runs in the output are not overwritten
+              single_case_cmd = ["<insert_your_entrypoint>", "--input", str(subject_dir), "--output", str(output_path)]
+              subprocess.run(single_case_cmd, check=True)
+  ```
+  If your original entrypoint is a python script, you can of course also import it in `mlcube.py` instead of using a subprocess. It is important to keep the interface of the `infer` command unchanged.
+
+- `requirements.txt`: Update the python requirements.
+
+- `Dockerfile`: Merge your Dockerfile with the one provided in [`project/Dockerfile`](./project/Dockerfile). It's important to make `mlcube.py` the entrypoint now, as in our Dockerfile. If possible, you should try to use the base image (`FROM` instruction) we suggest, to guarantee your container runs on various GPU setups.
+
+- `model_ckpts`: Your model checkpoints have to be embedded in the docker image. Copy them here before building the image and make sure they are found by your script inside the container.
+
+- `mlcube.yaml`: Insert your custom image name in the `docker.image` field.
+
+After these changes, you should be able to run tests using the commands from [this section](#task-execution). Once these run without error, you're ready to [submit](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255)!
 
 ## Project workflow
 
