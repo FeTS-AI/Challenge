@@ -1,0 +1,19 @@
+name: MLCommons FeTS
+description: MLCommons FeTS integration
+authors: 
+ - {name: "MLCommons Best Practices Working Group"}
+ - {name: "Maximilian Zenk (DKFZ)"}
+
+platform:
+  accelerator_count: 1
+
+singularity:
+  image: nnunet_example.sif
+
+tasks:
+  infer:
+  # Inference task
+    parameters:
+      # NOTE: parameters_file and checkpoint_path are *not* passed during federated evaluation
+      inputs: {data_path: data/, parameters_file: {type: file, default: "null"}, checkpoint_path: {type: file, default: "null"}}
+      outputs: {output_path: output/}
