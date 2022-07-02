@@ -9,6 +9,7 @@ platform:
 
 singularity:
   image: nnunet_example.sif
+  run_args: "-C --writable-tmpfs --net --network=none --nv"
 
 tasks:
   infer:
