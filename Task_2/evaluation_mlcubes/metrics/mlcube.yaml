@@ -9,7 +9,7 @@ platform:
 
 singularity:
   image: fets22metrics.sif
-  run_args: "-C --writable-tmpfs --net --network=none --nv"
+  run_args: "--cleanenv --writable-tmpfs --net --network=none"
 
 tasks:
   # Metrics MLCubes require only a single task: `evaluate`
