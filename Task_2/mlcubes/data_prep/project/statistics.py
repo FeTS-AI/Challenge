@@ -22,7 +22,8 @@ def get_statistics(data_path: str, labels_path: str) -> dict:
 
     for curr_subject_dir in Path(data_path).iterdir():
         if curr_subject_dir.is_dir():
-            if check_subject_validity(curr_subject_dir, Path(labels_path)):
+            missing_files, wrong_size, wrong_spacing, wrong_labels = check_subject_validity(curr_subject_dir, Path(labels_path))
+            if 0 == len(missing_files + wrong_size + wrong_spacing + wrong_labels):
                 number_valid_subjects += 1
             else:
                 number_of_invalid_subjects += 1
@@ -40,5 +41,5 @@ def get_statistics(data_path: str, labels_path: str) -> dict:
 def run_statistics(data_path: str, labels_path: str, out_file: str):
     stats = get_statistics(data_path, labels_path)
 
-    with open(out_file, "w") as f:
+    with open(out_file, "w", encoding="utf-8") as f:
         yaml.dump(stats, f)
