@@ -63,3 +63,11 @@ In the testing phase of Task 2, we are going to perform a federated evaluation o
 - For each submission, we are going to check if the algorithms produces valid outputs on the toy test cases. Submissions that exit with error are invalid.
 - Participants are allowed to do their own memory management to fit a larger algorithm, but there will be a timeout of `num_cases * 180` seconds on the inference time.
 <!-- - After conversion to a singularity image file, each submission has to be smaller than 12GB. Participants will be notified if this limit is exceeded during the test run. -->
+
+## Common Problems
+
+Problems related to docker -> singularity conversion. There are some cases in which a docker submission can be run without errors by the submitter, but the same container causes errors on the organizers' end (because we convert them to singularity):
+- `WORKDIR` not set in singularity: If `WORKDIR` is used in the Dockerfile, this can result in `FileNotFoundError` when we run your submission with singularity. To avoid this, please use only absolute paths in your code. Also the entrypoint of the container should use an absolute path to your script.
+- Limited tmpfs space in singularity: Often causes errors like `OSError: [Errno 28] No space left on device`. Solution: Please make sure you write files only to the `output_path` passed to `mlcube.py`. Temporary files can be saved in a sub-directory of `output_path`, for example.
+
+Any other Errors ? Feel free to contact us: [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default)
