@@ -93,7 +93,7 @@ def run_preparation(
     output_labels_path.mkdir(parents=True, exist_ok=True)
 
     val_split_path = Path(input_dir) / "split_info" / "fets_phase2_split_1" / "val.csv"
-    subject_dir_list = get_validation_subjects(input_dir, val_split_path)
+    subject_dir_list = get_validation_subjects(Path(input_dir), val_split_path)
     print(f"Preparing {len(subject_dir_list)} subjects...")
     for subject_dir in tqdm(subject_dir_list):
         copy_subject(subject_dir, output_data_path, output_labels_path)
