@@ -1,0 +1,5 @@
+prepare:
+  max_val_size: 250
+  seed: 108493
+  val_split_file: null  # alternative: split_info/fets_phase2_split_1/val.csv
+  anonymize_subjects: true
