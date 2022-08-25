@@ -8,6 +8,7 @@
 # By running the application through subprocesses.
 
 import typer
+import yaml
 from prepare import run_preparation
 from sanity_check import run_sanity_check
 from statistics import run_statistics
@@ -33,10 +34,19 @@ def prepare(
         params_file (str): Location of the parameters.yaml file. Required for Medperf Data Preparation MLCubes.
         out_path (str): Location to store transformed data. Required for Medperf Data Preparation MLCubes.
     """
+    with open(params_file, encoding="utf-8") as f:
+        config = yaml.load(f, Loader=yaml.SafeLoader)
+    config_key = "prepare"
+    if not isinstance(config, dict) or not isinstance(config.get(config_key, None), dict):
+        # We don't want to get unexpected behavior due to incorrect parameter files
+        raise KeyError(
+            f"Parameter file does not have a correctly formatted group `{config_key}` with parameters for the `prepare` task."
+        )
     run_preparation(
         input_dir=data_path,
         output_data_dir=out_path,
-        output_label_dir=out_labels_path
+        output_label_dir=out_labels_path,
+        **config[config_key],
     )
 
 
@@ -66,13 +76,13 @@ def statistics(
     """Computes statistics about the data. This statistics are uploaded
     to the Medperf platform under the data owner's approval. Include
     every statistic you consider useful for determining the nature of the
-    data, but keep in mind that we want to keep the data as private as 
+    data, but keep in mind that we want to keep the data as private as
     possible.
 
     Args:
         data_path (str): Location of the prepared data. Required for Medperf Data Preparation MLCubes.
         params_file (str): Location of the parameters.yaml file. Required for Medperf Data Preparation MLCubes.
-        output_path (str): File to store the statistics. Must be statistics.yaml. Required for Medperf Data Preparation MLCubes. 
+        output_path (str): File to store the statistics. Must be statistics.yaml. Required for Medperf Data Preparation MLCubes.
     """
     run_statistics(data_path=data_path, labels_path=labels_path, out_file=output_path)
 
