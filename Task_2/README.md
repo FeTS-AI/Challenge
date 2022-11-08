@@ -69,5 +69,6 @@ In the testing phase of Task 2, we are going to perform a federated evaluation o
 Problems related to docker -> singularity conversion. There are some cases in which a docker submission can be run without errors by the submitter, but the same container causes errors on the organizers' end (because we convert them to singularity):
 - `WORKDIR` not set in singularity: If `WORKDIR` is used in the Dockerfile, this can result in `FileNotFoundError` when we run your submission with singularity. To avoid this, please use only absolute paths in your code. Also the entrypoint of the container should use an absolute path to your script.
 - Limited tmpfs space in singularity: Often causes errors like `OSError: [Errno 28] No space left on device`. Solution: Please make sure you write files only to the `output_path` passed to `mlcube.py`. Temporary files can be saved in a sub-directory of `output_path`, for example.
+- User inside singularity containers isn't root: This can lead to `PermissionError` when reading files from the file system like model checkpoints. Make sure that all files that need to be read from inside the container can be read by *all users*, either before copying them in the Dockerfile or adding chmod commands to the Dockerfile.
 
 Any other Errors ? Feel free to contact us: [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default)
