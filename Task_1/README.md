@@ -11,6 +11,7 @@ Please ask any additional questions in our discussion pages on our github site a
 2. [Git LFS](https://github.com/git-lfs/git-lfs#downloading)
 2. Python with virtual environment management system: we recommend using [Anaconda](https://www.anaconda.com/products/individual).
 3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+4. Use CUDA 11 for your installation as CUDA 12 is not compatible with this codebase.
 
 ### Instructions
 
