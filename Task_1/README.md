@@ -27,10 +27,12 @@ conda activate ./venv
 ```
 6. ```pip install --upgrade pip```
 7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
-8. ```pip install .```
-9. ```python FeTS_Challenge.py```
-10. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
-11. To view intermediate results with TensorBoard during training, you can run the following command:
+8. set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
+9. ```pip install .``` 
+> * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
+10. ```python FeTS_Challenge.py```
+11. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
+12. To view intermediate results with TensorBoard during training, you can run the following command:
     ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
 ## Time to Convergence Metric (formerly "communication cost")
