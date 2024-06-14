@@ -11,6 +11,7 @@ Please ask any additional questions in our discussion pages on our github site a
 2. [Git LFS](https://github.com/git-lfs/git-lfs#downloading)
 2. Python with virtual environment management system: we recommend using [Anaconda](https://www.anaconda.com/products/individual).
 3. **Windows- Only**: Pickle5 requires Microsoft C++ 14.0 or greater from the [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+> * _Note: if you run into ```UnicodeDecodeError``` during installation, trying pinning ```openfl @ git+https://github.com/intel/openfl.git@v1.4``` in [setup.py](https://github.com/FeTS-AI/Challenge/blob/main/Task_1/setup.py#L31)_
 4. Use CUDA 11 for your installation as CUDA 12 is not compatible with this codebase.
 
 ### Instructions
@@ -27,7 +28,7 @@ conda activate ./venv
 ```
 6. ```pip install --upgrade pip```
 7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
-8. set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
+8. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
 9. ```pip install .``` 
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
 10. ```python FeTS_Challenge.py```
