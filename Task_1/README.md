@@ -14,18 +14,18 @@ Please ask any additional questions in our discussion pages on our github site a
 > * _Note: if you run into ```UnicodeDecodeError``` during installation, trying pinning ```openfl @ git+https://github.com/intel/openfl.git@v1.4``` in [setup.py](https://github.com/FeTS-AI/Challenge/blob/main/Task_1/setup.py#L31)_
 4. Use CUDA 11 for your installation as CUDA 12 is not compatible with this codebase.
 
-### Instructions
+### Instructions --- IMPORTANT
 
 1. Register for the FeTS 2022 Challenge [here](https://www.synapse.org/#!Synapse:syn28546456/wiki/617093) and submit a data request.
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
 4. ```git lfs pull```
 5. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
-```bash
-## create venv in specific path
-conda create -p ./venv python=3.7 -y
-conda activate ./venv
-```
+    ```sh
+    ## create venv in specific path
+    conda create -p ./venv python=3.7 -y
+    conda activate ./venv
+    ```
 6. ```pip install --upgrade pip```
 7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
 8. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
@@ -33,8 +33,7 @@ conda activate ./venv
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
 10. ```python FeTS_Challenge.py```
 11. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
-12. To view intermediate results with TensorBoard during training, you can run the following command:
-    ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
+12. To view intermediate results with TensorBoard during training, you can run the following command: ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
 ## Time to Convergence Metric (formerly "communication cost")
 Along with the typical DICE and Hausdorff metrics, we include a "time to convergence metric" intended to encourage solutions that converge to good scores quickly in terms of time. We simulate the time taken to run each round so that competitors don't need to be concerned with runtime optimizations such as compiled vs. interpreted code, and so that final scoring will not depend on the hardware used. This simulated time is computed in the experiment.py file and provided in the metrics output of the experiment execution.
