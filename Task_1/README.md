@@ -27,11 +27,14 @@ Please ask any additional questions in our discussion pages on our github site a
     conda activate ./venv
     ```
 6. ```pip install --upgrade pip```
-7. Install Pytorch LTS (1.8.2) for your system using [these instructions](https://pytorch.org/get-started/locally/)
-8. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
-9. ```pip install .``` 
+7. Install Pytorch LTS (1.8.2) for your system (use CUDA 11):
+   ```pip3 install torch==1.8.2 torchvision==0.9.2 torchaudio==0.8.2 --extra-index-url https://download.pytorch.org/whl/lts/1.8/cu111```
+*Note all previous versions of pytorch can be found in [these instructions]([https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/previous-versions/))
+9. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
+10. ```pip install .``` 
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
 10. ```python FeTS_Challenge.py```
+> * _Note: if you run into ```ImportError: /home/locolinux/FETS2024/fets2024env/bin/../lib/libstdc++.so.6: version GLIBCXX_3.4.30' not found (required by /home/locolinux/FETS2024/fets2024env/lib/python3.7/site-packages/SimpleITK/_SimpleITK.so)```, try installing a previous version of SimpleITK (version 2.2.0 works)
 11. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
 12. To view intermediate results with TensorBoard during training, you can run the following command: ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
