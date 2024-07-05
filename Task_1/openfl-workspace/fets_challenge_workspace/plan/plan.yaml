@@ -40,7 +40,7 @@ task_runner :
       data_preprocessing:
         normalize: null
       enable_padding: false
-      in_memory: true
+      in_memory: false
       inference_mechanism  :
         grid_aggregator_overlap: crop
         patch_overlap: 0
