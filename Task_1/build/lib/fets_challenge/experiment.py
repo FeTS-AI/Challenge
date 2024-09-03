@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from openfl.utilities import TensorKey
+from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
 import torch
@@ -214,28 +214,6 @@ def compute_times_per_collaborator(collaborator_names,
         times[col] = time
     return times
 
-def split_tensor_dict_into_floats_and_non_floats(tensor_dict):
-    """
-    Split the tensor dictionary into float and non-floating point values.
-
-    Splits a tensor dictionary into float and non-float values.
-
-    Args:
-        tensor_dict: A dictionary of tensors
-
-    Returns:
-        Two dictionaries: the first contains all of the floating point tensors
-        and the second contains all of the non-floating point tensors
-
-    """
-    float_dict = {}
-    non_float_dict = {}
-    for k, v in tensor_dict.items():
-        if np.issubdtype(v.dtype, np.floating):
-            float_dict[k] = v
-        else:
-            non_float_dict[k] = v
-    return float_dict, non_float_dict
 
 def get_metric(metric, fl_round, tensor_db):
     metric_name = metric
@@ -286,7 +264,6 @@ def run_challenge_experiment(aggregation_function,
 
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
-    print("****Debugging: plan is", plan)
 
     if not include_validation_with_hausdorff:
         plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
@@ -296,12 +273,6 @@ def run_challenge_experiment(aggregation_function,
     # overwrite datapath values with the collaborator name itself
     for col in collaborator_names:
         plan.cols_data_paths[col] = col
-
-        # Update the plan's data loader template for each collaborator
-        correct_template = "openfl.federated.data.loader_gandlf"
-        
-        # Modify the plan's data loader settings if needed
-        plan.config['data_loader'][col] = correct_template
 
     # get the data loaders for each collaborator
     collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
