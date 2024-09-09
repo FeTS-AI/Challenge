@@ -297,11 +297,11 @@ def run_challenge_experiment(aggregation_function,
     for col in collaborator_names:
         plan.cols_data_paths[col] = col
 
-        # Update the plan's data loader template for each collaborator
-        correct_template = "openfl.federated.data.loader_gandlf"
+        # # Update the plan's data loader template for each collaborator
+        # correct_template = "openfl.federated.data.loader_gandlf"
         
-        # Modify the plan's data loader settings if needed
-        plan.config['data_loader'][col] = correct_template
+        # # Modify the plan's data loader settings if needed
+        # plan.config['data_loader'][col] = correct_template
 
     # get the data loaders for each collaborator
     collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
