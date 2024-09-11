@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from openfl.utilities import TensorKey
+from openfl.utilities.split import split_tensor_dict_for_holdouts
 from openfl.protocols import utils
 import openfl.native as fx
 import torch
