@@ -29,7 +29,7 @@ Please ask any additional questions in our discussion pages on our github site a
 6. ```pip install --upgrade pip```
 7. Install Pytorch (2.3.1) for your system:
    ```pip install torch==2.3.1 torchvision==0.18.1```
-*Note all previous versions of pytorch can be found in [these instructions]([https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/previous-versions/))
+*Note all previous versions of pytorch can be found in these instructions:[https://pytorch.org/get-started/previous-versions/](https://pytorch.org/get-started/previous-versions/)
 8. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
 9. ```pip install .``` 
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_

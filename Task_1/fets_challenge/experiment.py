@@ -310,8 +310,9 @@ def run_challenge_experiment(aggregation_function,
     # get the task runner, passing the first data loader
     for col in collaborator_data_loaders:
         #Insert logic to serialize train / val CSVs here
-        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
-        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
+        os.makedirs(os.path.join(work, col), exist_ok=True)
+        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, col, 'train.csv'))
+        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, col, 'valid.csv'))
         task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
 
     if use_pretrained_model:

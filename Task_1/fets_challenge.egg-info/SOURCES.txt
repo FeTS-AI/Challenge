@@ -18,6 +18,7 @@ openfl-workspace/fets_challenge_workspace/partitioning_1.csv
 openfl-workspace/fets_challenge_workspace/partitioning_2.csv
 openfl-workspace/fets_challenge_workspace/requirements.txt
 openfl-workspace/fets_challenge_workspace/small_split.csv
+openfl-workspace/fets_challenge_workspace/smaller_split.csv
 openfl-workspace/fets_challenge_workspace/validation.csv
 openfl-workspace/fets_challenge_workspace/plan/cols.yaml
 openfl-workspace/fets_challenge_workspace/plan/data.yaml

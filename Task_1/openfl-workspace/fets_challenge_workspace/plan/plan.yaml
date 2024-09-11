@@ -33,12 +33,12 @@ task_runner :
     device              : cpu
     gandlf_config  :
       batch_size: 1
-      clip_grad: null
-      clip_mode: null
+      clip_grad: None
+      clip_mode: None
       data_augmentation: {}
       data_postprocessing: {}
       data_preprocessing:
-        normalize: null
+        normalize: None
       enable_padding: false
       in_memory: false
       inference_mechanism  :
@@ -63,7 +63,7 @@ task_runner :
         - 4
         dimension: 3
         final_layer: softmax
-        ignore_label_validation: null
+        ignore_label_validation: None
         norm_type: instance
       nested_training:
         testing: 1
