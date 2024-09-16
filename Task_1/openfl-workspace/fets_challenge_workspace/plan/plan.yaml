@@ -33,8 +33,8 @@ task_runner :
     device              : cpu
     gandlf_config  :
       batch_size: 1
-      clip_grad: None
-      clip_mode: None
+      clip_mode: norm
+      clip_grad: 0.1
       data_augmentation: {}
       data_postprocessing: {}
       data_preprocessing:
@@ -50,8 +50,8 @@ task_runner :
       output_dir: '.'
       metrics:
       - dice
-      - dice_per_label
-      - hd95_per_label
+      # - dice_per_label
+      # - hd95_per_label
       model:
         amp: true
         architecture: resunet        
