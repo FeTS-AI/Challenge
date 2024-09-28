@@ -81,7 +81,8 @@ def generate_validation_csv(data_path, validation_csv_filename, working_dir):
                               0.0,
                               'placeholder',
                               training_and_validation=False)
-    validation_csv_dict.to_csv(os.path.join(working_dir, 'validation_paths.csv'),index=False)
+    os.makedirs(os.path.join(working_dir, 'inference_col'), exist_ok=True)
+    validation_csv_dict.to_csv(os.path.join(working_dir, 'inference_col', 'valid.csv'),index=False)
 
 def replace_initializations(done_replacing, array, mask, replacement_value, initialization_value):
     """
@@ -228,12 +229,13 @@ def model_outputs_to_disc(data_path,
     
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
-    plan.config['task_runner']['settings']['fets_config_dict']['save_output'] = True
-    plan.config['task_runner']['settings']['fets_config_dict']['output_dir'] = output_path
+    plan.config['task_runner']['settings']['gandlf_config']['save_output'] = True
+    plan.config['task_runner']['settings']['gandlf_config']['output_dir'] = output_path
 
     # overwrite datapath value for a single 'InferenceCol' collaborator
-    plan.cols_data_paths['InferenceCol'] = data_path
-    
+    # plan.cols_data_paths['InferenceCol'] = data_path
+    plan.cols_data_paths['InferenceCol'] = 'inference_col'
+
     # get the inference data loader
     data_loader = copy(plan).get_data_loader('InferenceCol')
 

@@ -254,7 +254,7 @@ def run_challenge_experiment(aggregation_function,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
                              include_validation_with_hausdorff=True,
-                             use_pretrained_model=True):
+                             use_pretrained_model=False):
 
     fx.init('fets_challenge_workspace')
     
@@ -367,18 +367,18 @@ def run_challenge_experiment(aggregation_function,
             'time': [],
             'convergence_score': [],
             'round_dice': [],
-            'dice_label_0': [],
-            'dice_label_1': [],
-            'dice_label_2': [],
-            'dice_label_4': [],
+            # 'dice_label_0': [],
+            # 'dice_label_1': [],
+            # 'dice_label_2': [],
+            # 'dice_label_4': [],
         }
-    if include_validation_with_hausdorff:
-        experiment_results.update({
-            'hausdorff95_label_0': [],
-            'hausdorff95_label_1': [],
-            'hausdorff95_label_2': [],
-            'hausdorff95_label_4': [],
-            })
+    # if include_validation_with_hausdorff:
+    #     experiment_results.update({
+    #         'hausdorff95_label_0': [],
+    #         'hausdorff95_label_1': [],
+    #         'hausdorff95_label_2': [],
+    #         'hausdorff95_label_4': [],
+    #         })
         
 
     if restore_from_checkpoint_folder is None:
@@ -496,15 +496,15 @@ def run_challenge_experiment(aggregation_function,
        
         # get the performace validation scores for the round
         round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
-        dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
-        dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
-        dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
-        dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
-        if include_validation_with_hausdorff:
-            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
-            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
-            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
-            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
+        # dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
+        # dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
+        # dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
+        # dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
+        # if include_validation_with_hausdorff:
+        #     hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
+        #     hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
+        #     hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
+        #     hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
         # update best score
         if best_dice < round_dice:
@@ -537,30 +537,30 @@ def run_challenge_experiment(aggregation_function,
         summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
         summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
         summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-        if include_validation_with_hausdorff:
-            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+        # summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+        # summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+        # summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+        # summary += "\n\tDICE Label 4: {}".format(dice_label_4)
+        # if include_validation_with_hausdorff:
+        #     summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+        #     summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+        #     summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+        #     summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
 
 
         experiment_results['round'].append(round_num)
         experiment_results['time'].append(total_simulated_time)
         experiment_results['convergence_score'].append(projected_auc)
         experiment_results['round_dice'].append(round_dice)
-        experiment_results['dice_label_0'].append(dice_label_0)
-        experiment_results['dice_label_1'].append(dice_label_1)
-        experiment_results['dice_label_2'].append(dice_label_2)
-        experiment_results['dice_label_4'].append(dice_label_4)
-        if include_validation_with_hausdorff:
-            experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-            experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-            experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-            experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+        # experiment_results['dice_label_0'].append(dice_label_0)
+        # experiment_results['dice_label_1'].append(dice_label_1)
+        # experiment_results['dice_label_2'].append(dice_label_2)
+        # experiment_results['dice_label_4'].append(dice_label_4)
+        # if include_validation_with_hausdorff:
+        #     experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+        #     experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+        #     experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+        #     experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
         logger.info(summary)
 
         if save_checkpoints:
