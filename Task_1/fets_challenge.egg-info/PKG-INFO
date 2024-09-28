@@ -14,11 +14,11 @@ Classifier: Programming Language :: Python :: 3
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: openfl@ git+https://github.com/intel/openfl.git@v1.5.1
-Requires-Dist: GANDLF@ git+https://github.com/CBICA/GaNDLF.git@0.0.17
+Requires-Dist: openfl@ git+https://github.com/securefederatedai/openfl.git@kta-intel/fets-2024-patch-1
+Requires-Dist: GANDLF@ git+https://github.com/CBICA/GaNDLF.git@0.1.0
 Requires-Dist: fets@ git+https://github.com/FETS-AI/Algorithms.git@fets_challenge
 
-# FeTS 2022 Challenge Task 1
+# FeTS 2024+ Challenge Task 1
 Task 1 (**"Federated Training"**) aims at effective weight aggregation methods for the creation of a consensus model given a pre-defined segmentation algorithm for training, while also (optionally) accounting for network outages.
 
 Please ask any additional questions in our discussion pages on our github site and we will try to update this README.md as we identify confusions/gaps in our explanations and instructions.

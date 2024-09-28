@@ -528,6 +528,7 @@ institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_Trai
 
 # change this to point to the parent directory of the data
 brats_training_data_parent_dir = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = '/home/locolinux2/datasets/MICCAI_FeTS2022_Resized'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
