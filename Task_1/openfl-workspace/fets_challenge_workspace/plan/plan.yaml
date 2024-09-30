@@ -73,7 +73,7 @@ task_runner :
       optimizer: 
         type: sgd
       parallel_compute_command: ''
-      patch_sampler: label
+      patch_sampler: uniform
       patch_size:
       - 128
       - 128
@@ -95,7 +95,7 @@ task_runner :
       version:
         maximum: 0.1.0
         minimum: 0.0.14
-      weighted_loss: true
+      weighted_loss: false
       modality: rad
 
 
