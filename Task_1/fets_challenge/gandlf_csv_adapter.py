@@ -5,7 +5,7 @@
 # Patrick Foley (Intel)
 # Micah Sheller (Intel)
 
-import os
+import os, sys
 
 import numpy as np
 import pandas as pd
@@ -195,7 +195,7 @@ def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_
 
 
 
-def extract_csv_partitions(csv_path):
+def extract_segmentation_csv_partitions(csv_path):
     df = pd.read_csv(csv_path)
     df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
                        '2': 'Channel_1', '3': 'Channel_2', 
@@ -212,3 +212,61 @@ def extract_csv_partitions(csv_path):
 
     return transformed_csv_dict
 
+def extract_classification_csv_partitions(csv_path):
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
+                            '2': 'Channel_1', '3': 'Channel_2', 
+                            '4': 'Channel_3', '5': 'Label'})
+    
+    cols = df['Partition_ID'].unique()
+    transformed_csv_dict = {}
+
+    # Define a mapping for channel labels
+    channel_label_mapping = {
+        'Channel_0': 0,  # t1
+        'Channel_1': 1,  # t2
+        'Channel_2': 2,  # flair
+        'Channel_3': 3   # t1ce
+    }
+
+    for col in cols:
+        transformed_csv_dict[str(col)] = {}
+
+        # Create lists for train and val partitions
+        train_list = []
+        val_list = []
+
+        # Filter rows by partition
+        for _, row in df[df['Partition_ID'] == col].iterrows():
+            subject_id = row['SubjectID']
+            train_or_val = row['TrainOrVal']
+
+            # Iterate through the channels (up to 4 channels)
+            for channel_name, channel_index in channel_label_mapping.items():
+                channel_path = row[channel_name]
+
+                # Create a row for the CSV output with the correct channel label
+                row_dict = {
+                    'SubjectID': subject_id,
+                    'Channel': channel_path,
+                    'ValueToPredict': channel_index  # Correct label (0-3 for t1, t2, flair, t1ce)
+                }
+
+                # Add row to the correct partition list
+                if train_or_val == 'train':
+                    train_list.append(row_dict)
+                else:
+                    val_list.append(row_dict)
+                    
+        # Convert lists to DataFrames for train and val
+        transformed_csv_dict[str(col)]['train'] = pd.DataFrame(train_list)
+        transformed_csv_dict[str(col)]['val'] = pd.DataFrame(val_list)
+
+        # Prints for easy debugging
+        print(f"\n=== Sample of Partition {col} - Train Data ===")
+        transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+        
+        print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+
+    return transformed_csv_dict

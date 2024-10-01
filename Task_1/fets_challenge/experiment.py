@@ -19,7 +19,7 @@ from openfl.protocols import utils
 import openfl.native as fx
 import torch
 
-from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
+from .gandlf_csv_adapter import construct_fedsim_csv, extract_segmentation_csv_partitions, extract_classification_csv_partitions 
 from .custom_aggregation_wrapper import CustomAggregationWrapper
 from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
@@ -290,7 +290,7 @@ def run_challenge_experiment(aggregation_function,
     print("****Debugging: plan is", plan)
 
     if not include_validation_with_hausdorff:
-        plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
+        plan.config['task_runner']['settings']['gandlf_config']['metrics'] = ['dice','dice_per_label']
 
     # Overwrite collaborator names
     plan.authorized_cols = collaborator_names
@@ -307,7 +307,14 @@ def run_challenge_experiment(aggregation_function,
     # get the data loaders for each collaborator
     collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
 
-    transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    # Check the task type and use the appropriate function
+    if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'segmentation':
+        transformed_csv_dict = extract_segmentation_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    elif plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'classification':
+        transformed_csv_dict = extract_classification_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    else:
+        raise ValueError("Invalid problem type. Expected 'segmentation' or 'classification'.")
+
     # get the task runner, passing the first data loader
     for col in collaborator_data_loaders:
         #Insert logic to serialize train / val CSVs here

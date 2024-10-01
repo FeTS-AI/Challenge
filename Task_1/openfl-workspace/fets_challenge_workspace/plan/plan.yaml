@@ -28,10 +28,11 @@ data_loader :
 task_runner :
   template : src.fets_challenge_model.FeTSChallengeModel
   settings :
-    train_csv           : cla_test_train.csv
-    val_csv             : cla_test_val.csv
+    # train_csv           : cla_test_train.csv
+    # val_csv             : cla_test_val.csv
     device              : cpu
     gandlf_config  :
+      problem_type: classification
       # label: None
       # clip_mode: norm
       # clip_grad: 0.1
@@ -42,7 +43,7 @@ task_runner :
       data_preprocessing: {}
       in_memory: false
       learning_rate: 0.001
-      loss_function: ce
+      loss_function: cel
       metrics:
         - classification_accuracy       
       modality: rad
