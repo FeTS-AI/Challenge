@@ -32,7 +32,7 @@ task_runner :
     # val_csv             : cla_test_val.csv
     device              : cpu
     gandlf_config  :
-      problem_type: classification
+      problem_type: classification #segmentation, classification
       # label: None
       # clip_mode: norm
       # clip_grad: 0.1
@@ -45,12 +45,15 @@ task_runner :
       learning_rate: 0.001
       loss_function: cel
       metrics:
-        - classification_accuracy       
+        - classification_accuracy   
+        - recall
+        - precision
+        - f1      
       modality: rad
       model:
         amp: false
         onnx_export: false
-        architecture: vgg11
+        architecture: densenet121
         base_filters: 16
         class_list:
         - '0'
@@ -59,7 +62,7 @@ task_runner :
         - '3'
         dimension: 3
         final_layer: softmax
-        num_channels: 4
+        num_channels: 1
         norm_type: instance
       weighted_loss: false
       num_epochs: 500

@@ -211,12 +211,12 @@ def extract_segmentation_csv_partitions(csv_path):
                 df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'val')].drop(columns=['TrainOrVal','Partition_ID'])
 
         # Prints for easy debugging
-        print(f"\n=== Sample of Partition {col} - Train Data ===")
-        transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+        # print(f"\n=== Sample of Partition {col} - Train Data ===")
+        # transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
 
-        print(f"\n=== Sample of Partition {col} - Validation Data ===")
-        transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
-        
+        # print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        # transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+
     return transformed_csv_dict
 
 def extract_classification_csv_partitions(csv_path):
@@ -269,11 +269,11 @@ def extract_classification_csv_partitions(csv_path):
         transformed_csv_dict[str(col)]['train'] = pd.DataFrame(train_list)
         transformed_csv_dict[str(col)]['val'] = pd.DataFrame(val_list)
 
-        # Prints for easy debugging
-        print(f"\n=== Sample of Partition {col} - Train Data ===")
-        transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+        # # Prints for easy debugging
+        # print(f"\n=== Sample of Partition {col} - Train Data ===")
+        # transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
         
-        print(f"\n=== Sample of Partition {col} - Validation Data ===")
-        transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+        # print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        # transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
 
     return transformed_csv_dict
