@@ -518,13 +518,14 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=True
+include_validation_with_hausdorff=True # IF SET TO FALSE WHOLE CODE RUNS SEGMENTATION FOR SOME REASON
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
 #institution_split_csv_filename = 'partitioning_1.csv'
 #institution_split_csv_filename = 'partitioning_1.csv'
-institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/partitioning_2.csv' #'small_split.csv'
+institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/partitioning_2.csv' 
+institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/sanity_partitioning.csv' # a small subset for sanity checks and debugging. Comment out to run the actual challenge partition.
 
 # change this to point to the parent directory of the data
 brats_training_data_parent_dir = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData'

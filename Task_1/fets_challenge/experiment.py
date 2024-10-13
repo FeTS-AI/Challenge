@@ -4,6 +4,7 @@
 # Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
+from sys import path, exit
 import warnings
 from collections import namedtuple
 from copy import copy
@@ -258,8 +259,6 @@ def run_challenge_experiment(aggregation_function,
 
     fx.init('fets_challenge_workspace')
     
-    from sys import path, exit
-
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
@@ -365,15 +364,15 @@ def run_challenge_experiment(aggregation_function,
     logger.info('Starting experiment')
 
     total_simulated_time = 0
-    best_dice = -1.0
-    best_dice_over_time_auc = 0
+    best_score = -1.0
+    best_score_over_time_auc = 0
 
     # results dataframe data
     experiment_results = {
             'round':[],
             'time': [],
             'convergence_score': [],
-            'round_dice': [],
+            'round_score': [],
             # 'dice_label_0': [],
             # 'dice_label_1': [],
             # 'dice_label_2': [],
@@ -402,7 +401,7 @@ def run_challenge_experiment(aggregation_function,
             checkpoint_folder = restore_from_checkpoint_folder
 
             [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
-             total_simulated_time, best_dice, best_dice_over_time_auc, 
+             total_simulated_time, best_score, best_score_over_time_auc, 
              collaborators_chosen_each_round, collaborator_times_per_round, 
              experiment_results, summary, agg_tensor_db] = state
 
@@ -440,6 +439,7 @@ def run_challenge_experiment(aggregation_function,
                                                       collaborator_times_per_round)
 
         learning_rate, epochs_per_round = hparams
+        # learning_rate, epochs_per_round, _ = hparams #IrfanKhan
 
         if (epochs_per_round is None):
             logger.warning('Hyper-parameter function warning: function returned None for "epochs_per_round". Setting "epochs_per_round" to 1')
@@ -502,30 +502,53 @@ def run_challenge_experiment(aggregation_function,
 
        
         # get the performace validation scores for the round
-        round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
-        # dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
-        # dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
-        # dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
-        # dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
-        # if include_validation_with_hausdorff:
-        #     hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
-        #     hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
-        #     hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
-        #     hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
+        if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'segmentation':
+            round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
+            # dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
+            # dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
+            # dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
+            # dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
+            # if include_validation_with_hausdorff:
+            #     hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
-        # update best score
-        if best_dice < round_dice:
-            best_dice = round_dice
-            # Set the weights for the final model
-            if round_num == 0:
-                # here the initial model was validated (temp model does not exist)
-                logger.info(f'Skipping best model saving to disk as it is a random initialization.')
-            elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
-                raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
-            else:
-                # here the temp model was the one validated
-                shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
-                logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+            # update best score
+            if best_score < round_dice:
+                best_score = round_dice
+                # Set the weights for the final model
+                if round_num == 0:
+                    # here the initial model was validated (temp model does not exist)
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+                else:
+                    # here the temp model was the one validated
+                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary DICE: {best_score} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+
+            round_score = round_dice
+
+        if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'classification':
+            round_f1 = get_metric('valid_f1', round_num, aggregator.tensor_db)
+
+            # update best score
+            if best_score < round_f1:
+                best_score = round_f1
+                # Set the weights for the final model
+                if round_num == 0:
+                    # here the initial model was validated (temp model does not exist)
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+                else:
+                    # here the temp model was the one validated
+                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl', dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary F1: {best_score} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+
+            round_score = round_f1
+
 
         ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
         # set the task_runner data loader
@@ -533,11 +556,11 @@ def run_challenge_experiment(aggregation_function,
 
         ## CONVERGENCE METRIC COMPUTATION
         # update the auc score
-        best_dice_over_time_auc += best_dice * round_time
+        best_score_over_time_auc += best_score * round_time
 
         # project the auc score as remaining time * best dice
         # this projection assumes that the current best score is carried forward for the entire week
-        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
+        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_score + best_score_over_time_auc
         projected_auc /= MAX_SIMULATION_TIME
 
         # End of round summary
@@ -558,7 +581,7 @@ def run_challenge_experiment(aggregation_function,
         experiment_results['round'].append(round_num)
         experiment_results['time'].append(total_simulated_time)
         experiment_results['convergence_score'].append(projected_auc)
-        experiment_results['round_dice'].append(round_dice)
+        experiment_results['round_score'].append(round_score)
         # experiment_results['dice_label_0'].append(dice_label_0)
         # experiment_results['dice_label_1'].append(dice_label_1)
         # experiment_results['dice_label_2'].append(dice_label_2)
@@ -576,8 +599,8 @@ def run_challenge_experiment(aggregation_function,
             save_checkpoint(checkpoint_folder, aggregator, 
                             collaborator_names, collaborators,
                             round_num, collaborator_time_stats, 
-                            total_simulated_time, best_dice, 
-                            best_dice_over_time_auc, 
+                            total_simulated_time, best_score, 
+                            best_score_over_time_auc, 
                             collaborators_chosen_each_round, 
                             collaborator_times_per_round,
                             experiment_results,
