@@ -108,6 +108,7 @@ def construct_fedsim_csv(pardir,
                          split_subdirs_path, 
                          percent_train, 
                          federated_simulation_train_val_csv_path,
+                         problem_type,
                          training_and_validation=True):
     
     # read in the csv defining the subdirs per institution
@@ -159,15 +160,56 @@ def construct_fedsim_csv(pardir,
                                       train_val_headers=train_val_headers, 
                                       numeric_header_name_to_key=numeric_header_name_to_key)
     else: 
-        df =  construct_validation_dataframe(paths_dict=paths_dict, 
-                                             val_headers=val_headers, 
-                                             numeric_header_name_to_key=numeric_header_name_to_key)
+        if problem_type == "classification":
+            df =  construct_validation_dataframe_classification(paths_dict=paths_dict, 
+                                                val_headers=val_headers, 
+                                                numeric_header_name_to_key=numeric_header_name_to_key)        
+        elif problem_type == "segmentation":
+            df =  construct_validation_dataframe_segmentation(paths_dict=paths_dict, 
+                                                val_headers=val_headers, 
+                                                numeric_header_name_to_key=numeric_header_name_to_key)
         return df
 
     df.to_csv(federated_simulation_train_val_csv_path, index=False)
     return list(sorted(df.Partition_ID.unique()))
 
-def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_to_key):
+
+def construct_validation_dataframe_classification(paths_dict, val_headers, numeric_header_name_to_key):
+    # Define a mapping for channel labels
+    channel_label_mapping = {
+        'Channel_0': 0,  # t1
+        'Channel_1': 1,  # t2
+        'Channel_2': 2,  # flair
+        'Channel_3': 3   # t1ce
+    }
+    
+    # Initialize list to store rows in the new format
+    rows = []
+
+    for inst_name, inst_paths_dict in paths_dict.items():
+        for usage in ['train', 'val']:
+            for key_to_fpath in inst_paths_dict[usage]:
+                subject_id = key_to_fpath['Subject_ID']
+                
+                # Iterate through each channel to create a separate row for each
+                for header in val_headers:
+                    if header != 0:  # Skip SubjectID, as it's handled separately
+                        channel_key = f"Channel_{header - 1}"  # Map header to 'Channel_0', 'Channel_1', etc.
+                        channel_path = key_to_fpath[numeric_header_name_to_key[header]]
+                        value_to_predict = channel_label_mapping[channel_key]
+                        
+                        # Append a row with the final headers format
+                        rows.append({
+                            'SubjectID': subject_id,
+                            'Channel': channel_path,
+                            'ValueToPredict': value_to_predict
+                        })
+    
+    # Convert the list of rows into a DataFrame
+    df = pd.DataFrame(rows, dtype=str)
+    return df
+
+def construct_validation_dataframe_segmentation(paths_dict, val_headers, numeric_header_name_to_key):
     
     # intitialize columns
     columns = {str(header): [] for header in val_headers}
@@ -192,8 +234,6 @@ def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_
                        '2': 'Channel_1', '3': 'Channel_2', 
                        '4': 'Channel_3'})
     return df
-
-
 
 def extract_segmentation_csv_partitions(csv_path):
     df = pd.read_csv(csv_path)
@@ -270,10 +310,10 @@ def extract_classification_csv_partitions(csv_path):
         transformed_csv_dict[str(col)]['val'] = pd.DataFrame(val_list)
 
         # # Prints for easy debugging
-        # print(f"\n=== Sample of Partition {col} - Train Data ===")
-        # transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+        print(f"\n=== Sample of Partition {col} - Train Data ===")
+        transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
         
-        # print(f"\n=== Sample of Partition {col} - Validation Data ===")
-        # transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+        print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
 
     return transformed_csv_dict

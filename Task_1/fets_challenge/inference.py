@@ -71,7 +71,7 @@ def get_binarized_and_belief(array, threshold=0.5):
     
     return binarized, belief
 
-def generate_validation_csv(data_path, validation_csv_filename, working_dir):
+def generate_validation_csv(data_path, validation_csv_filename, working_dir, problem_type):
     """
     Create the validation CSV to be consumed by the FeTSChallengeTaskRunner
     """
@@ -80,7 +80,8 @@ def generate_validation_csv(data_path, validation_csv_filename, working_dir):
                               validation_csv_path,
                               0.0,
                               'placeholder',
-                              training_and_validation=False)
+                              training_and_validation=False,
+                              problem_type=problem_type)
     os.makedirs(os.path.join(working_dir, 'inference_col'), exist_ok=True)
     validation_csv_dict.to_csv(os.path.join(working_dir, 'inference_col', 'valid.csv'),index=False)
 
@@ -205,6 +206,7 @@ def model_outputs_to_disc(data_path,
                           validation_csv,
                           output_path, 
                           native_model_path,
+                          problem_type,
                           outputtag='',
                           device='cpu'):
 
@@ -219,7 +221,7 @@ def model_outputs_to_disc(data_path,
     path.append(str(root))
     path.insert(0, str(work))
 
-    generate_validation_csv(data_path,validation_csv, working_dir=work)
+    generate_validation_csv(data_path,validation_csv, working_dir=work, problem_type=problem_type)
     
     overrides = {
         'task_runner.settings.device': device,
