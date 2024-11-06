@@ -1,2 +1,0 @@
-fets_challenge
-openfl-workspace
