@@ -23,68 +23,79 @@ data_loader :
   defaults : plan/defaults/data_loader.yaml
   template : openfl.federated.data.loader_gandlf.GaNDLFDataLoaderWrapper
   settings :
-    feature_shape : [128,128,64] #[32,32,32]
+    feature_shape : [32, 32, 32]
 
 task_runner :
   template : src.fets_challenge_model.FeTSChallengeModel
   settings :
-    # train_csv           : cla_test_train.csv
-    # val_csv             : cla_test_val.csv
+    train_csv           : seg_test_train.csv
+    val_csv             : seg_test_val.csv
     device              : cpu
     gandlf_config  :
-      problem_type: classification #segmentation, classification
-      # label: None
-      # clip_mode: norm
-      # clip_grad: 0.1
-      output_dir: '.'
-
-      batch_size: 8
+      batch_size: 1
+      clip_mode: norm
+      clip_grad: 0.1
       data_augmentation: {}
-      data_preprocessing: {}
+      data_postprocessing: {}
+      data_preprocessing:
+        normalize: None
+      enable_padding: false
       in_memory: false
+      inference_mechanism  :
+        grid_aggregator_overlap: crop
+        patch_overlap: 0
       learning_rate: 0.001
-      loss_function: cel
+      loss_function: dc
+      medcam_enabled: false
+      output_dir: '.'
       metrics:
-        - classification_accuracy   
-        - recall
-        - precision
-        - f1      
-      modality: rad
+      - dice
+      # - dice_per_label
+      # - hd95_per_label
       model:
-        amp: false
-        onnx_export: false
-        architecture: densenet121
-        base_filters: 16
+        amp: true
+        architecture: resunet        
+        base_filters: 32
         class_list:
-        - '0'
-        - '1'
-        - '2'
-        - '3'
+        - 0
+        - 1
+        - 2
+        - 4
         dimension: 3
         final_layer: softmax
-        num_channels: 1
+        ignore_label_validation: None
         norm_type: instance
-      weighted_loss: false
-      num_epochs: 500
       nested_training:
         testing: 1
-        validation: -4 ## these are 4 because there is one site (i.e., Site3) that has only 4 samples.
-      optimizer: adam
-      patch_sampler: uniform
+        validation: -5
+      num_epochs: 1
+      optimizer: 
+        type: sgd
+      parallel_compute_command: ''
+      patch_sampler: label
       patch_size:
-      - 128
-      - 128
+      - 64
+      - 64
       - 64
       patience: 100
+      pin_memory_dataloader: false
+      print_rgb_label_warning: true
       q_max_length: 100
       q_num_workers: 0
       q_samples_per_volume: 40
       q_verbose: false
-      save_masks: false
-      scheduler: triangle
+      save_output: false
+      save_training: false
+      scaling_factor: 1
+      scheduler:
+        type: triangle_modified
+      track_memory_usage: false
+      verbose: false
       version:
         maximum: 0.1.0
         minimum: 0.0.14
+      weighted_loss: true
+      modality: rad
 
 
 network :
