@@ -21,28 +21,27 @@ You need to modify the MLCube template we provide. Details are described [here](
 
 Once you have prepared your submission and pushed it to [synapse](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255), it's possible to run the official evaluation pipeline on toy test cases for sanity-checking your submission. To do so, please follow these steps:
 
+1. Make sure [docker](https://docs.docker.com/engine/install/) is installed. It is required for downloading the pipeline components. Then, log into the synapse docker registry: `docker login  docker.synapse.org` using your synapse username and password
 1. [Download](https://hub.dkfz.de/s/Ctb6bQ7mbiwM6Af) the medperf environment folder and unpack it:
     ```bash
-    cd ~
-    mkdir .medperf
-    cd .medperf
-    tar -xzvf ~/Downloads/medperf_env.tar.gz
+    mkdir ~/.medperf_fets
+    tar -xzvf /path/to/downloaded/medperf_env.tar.gz -C ~/.medperf_fets
     ```
 2. Setup python environment (install MedPerf):
     ```bash
     # Optional but recommended: use conda or virtualenv
-    conda create -n fets_medperf pip
+    conda create -n fets_medperf python=3.9 pip=24.0
     conda activate fets_medperf
     # Actual installation. Important: Please use the branch below
     cd ~
     git clone https://github.com/mlcommons/medperf.git && \
         cd medperf/cli && \
-        git checkout cli-assoc-comp-test && \
+        git checkout fets-challenge && \
         pip install -e .
     ```
-3. Run the sanity check with docker:
+4. Run the sanity check with docker:
     ```
-    medperf --log=debug --no-cleanup test -b 1
+    medperf --log=debug --no-cleanup --platform=docker test -b 1
     ```
     Above will run the default model defined in this [folder](mlcubes/model/mlcube/). To use your local model, please specify its path with -m:
     ```
