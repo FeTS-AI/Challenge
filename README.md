@@ -5,11 +5,15 @@
 
 The repo for the FeTS Challenge: The 1st Computational Competition on Federated Learning.
 
-## Website
+## Quickstart
+
+The official challenge website with detailed information on the challenge is:
 
 https://www.synapse.org/#!Synapse:syn28546456
 
-## Challenge Tasks
+As the challenge is currently inactive, submitting algorithms is not possible. However, the challenge data is accessible [here](https://www.synapse.org/Synapse:syn54079892/wiki/626854). Please check the instructions there for downloading it and the conditions of use.
+
+This repository complements the challenge website above by providing code for developing and testing algorithm submissions to the two task of the FeTS Challenge:
 
 ### Task 1
 
@@ -17,7 +21,7 @@ The first task of the challenge involves customizing core functions of a baselin
 
 ### Task 2
 
-This task utilizes federated testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
+This task utilizes decentralized testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
 
 ## Documentation and Q&A
 
