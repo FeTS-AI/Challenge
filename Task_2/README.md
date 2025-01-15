@@ -50,7 +50,7 @@ It is possible to run the official evaluation pipeline on toy test cases for san
     ```
     medperf --log=debug --no-cleanup --platform=docker test -b 1
     ```
-    Above will run the toy model defined in this [folder](mlcubes/model/mlcube/). To use your own, local model (created using the template [over here](mlcubes/model)), please specify its path with -m:
+    Above will run the toy model defined in this [folder](mlcubes/model/mlcube/), which will take about 1:30min excluding download time of docker containers (about 34 GB). To use your own, local model (created using the template [over here](mlcubes/model)), please specify its path with -m:
     ```
     MODEL_PATH=/path/to/local/mlcube/folder
     medperf --log=debug --no-cleanup test -b 1 -m $MODEL_PATH

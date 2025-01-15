@@ -34,8 +34,9 @@ Please ask any additional questions in our discussion pages on our github site a
 10. ```pip install .``` 
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
 10. ```python FeTS_Challenge.py```
-> * _Note: if you run into ```ImportError: /home/locolinux/FETS2024/fets2024env/bin/../lib/libstdc++.so.6: version GLIBCXX_3.4.30' not found (required by /home/locolinux/FETS2024/fets2024env/lib/python3.7/site-packages/SimpleITK/_SimpleITK.so)```, try installing a previous version of SimpleITK (version 2.2.0 works)
-11. All lower-level details are in the [FeTS Challenge python file](./FeTS_Challenge.py)
+> * _Note_: if you run into ```ImportError: /home/locolinux/FETS2024/fets2024env/bin/../lib/libstdc++.so.6: version GLIBCXX_3.4.30' not found (required by /home/locolinux/FETS2024/fets2024env/lib/python3.7/site-packages/SimpleITK/_SimpleITK.so)```, try installing a previous version of SimpleITK (version 2.2.0 works)
+> * With the default configuration (a demo that does short training on a small split subset) training will run about 6h without GPU and inference will take roughly 8h.
+11. All lower-level details on how to adapt the aggregation function and other FL components in the template are in the [FeTS Challenge python file](./FeTS_Challenge.py)
 12. To view intermediate results with TensorBoard during training, you can run the following command: ```tensorboard --logdir ~/.local/workspace/logs/tensorboard```
 
 ## Time to Convergence Metric (formerly "communication cost")
