@@ -6,9 +6,9 @@ In the FeTS challenge task 2, participants can submit their solution in the form
 
 1. Update the MLCube template with your custom code and dependencies ([guide below](#how-to-modify-this-project)).
 2. Build and test the docker image as described [below](#task-execution).
-3. Submit the container as described on the [challenge website](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255).
+3. Submit the container as described on the [challenge website](https://www.synapse.org/Synapse:syn28546456/wiki/630620).
 
-To make sure that the containers submitted by the participants also run successfully on the remote institutions in the FeTS federation, we will offer functionality tests on a few toy cases. Details are provided in the [challenge website](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255). Note that we will internally convert the submitted docker images into singularity images before running the evaluation.
+To make sure that the containers submitted by the participants also run successfully on the remote institutions in the FeTS federation, we will offer functionality tests on a few toy cases. Details are provided in the [challenge website](https://www.synapse.org/Synapse:syn28546456/wiki/630620). Note that we will internally convert the submitted docker images into singularity images before running the evaluation.
 
 ## Project setup
 
@@ -234,7 +234,7 @@ This section is supposed to help teams that already created a docker submission 
 
 - `mlcube.yaml`: Insert your custom image name in the `docker.image` field.
 
-After these changes, you should be able to run tests using the commands from [this section](#task-execution). Once these run without error, you're ready to [submit](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255)!
+After these changes, you should be able to run tests using the commands from [this section](#task-execution). Once these run without error, you're ready to [submit](https://www.synapse.org/Synapse:syn28546456/wiki/630620)!
 
 ## Project workflow
 
