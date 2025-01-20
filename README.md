@@ -27,9 +27,28 @@ This task utilizes decentralized testing across various sites of the FeTS initia
 
 Please visit the [challenge website](https://synapse.org/fets) and [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
 
-<!-- ## Frequently asked questions
+## Source Code for the Paper Analysis
 
-Please see [FAQ](https://fets-ai.github.io/Challenge/faq/). -->
+The code is located in [paper_analysis](./paper_analysis/). Please follow these instructions to reproduce the analysis from our paper:
+
+1. Download the source data from TODO
+1. Clone repository:
+      ```
+      git clone https://github.com/FETS-AI/Challenge.git
+      cd Challenge/paper_analysis
+      ```
+1. Prepare the python environment:
+      ```
+      conda create -y -n fets_analysis python=3.10
+      conda activate fets_analysis
+      pip install -r requirements.txt
+      ```
+1. Run the analysis script
+      ```
+      python make_main_figures.py /path/to/sourcedata/file /path/to/output/directory
+      ```
+
+This should produce the rankings and figures from the main article. If you are interested in the figures from the supplementary material, feel free to contact us!
 
 ## Citation
 
