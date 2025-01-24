@@ -13,7 +13,7 @@ https://www.synapse.org/#!Synapse:syn28546456
 
 As the challenge is currently inactive, submitting algorithms is not possible. However, the challenge data is accessible [here](https://www.synapse.org/Synapse:syn54079892/wiki/626854). Please check the instructions there for downloading it and the conditions of use.
 
-This repository complements the challenge website above by providing code for developing and testing algorithm submissions to the two task of the FeTS Challenge:
+This repository complements the challenge website above by providing code for developing and testing algorithm submissions to the two task of the FeTS Challenge. Furthermore, it allows reproducing the results of the summarizing paper by providing source code and instructions.
 
 ### Task 1
 
@@ -23,21 +23,17 @@ The first task of the challenge involves customizing core functions of a baselin
 
 This task utilizes decentralized testing across various sites of the FeTS initiative in order to evaluate model submissions across data from different medical institutions, MRI scanners, image acquisition parameters and populations. The goal of this task is to find algorithms (by whatever training technique you wish to apply) that score well across these data. For more details, please see [Task_2](./Task_2).
 
-## Documentation and Q&A
-
-Please visit the [challenge website](https://synapse.org/fets) and [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
-
-## Source Code for the Paper Analysis
+### Source Code for the Paper Analysis
 
 The code is located in [paper_analysis](./paper_analysis/). Please follow these instructions to reproduce the analysis from our paper:
 
-1. Download the source data from TODO
+1. Download the source data from TODO-ADDED-AFTER-PUBLICATION
 1. Clone repository:
       ```
       git clone https://github.com/FETS-AI/Challenge.git
       cd Challenge/paper_analysis
       ```
-1. Prepare the python environment:
+1. Prepare the python environment (_note:_ only tested with python version 3.10):
       ```
       conda create -y -n fets_analysis python=3.10
       conda activate fets_analysis
@@ -49,6 +45,10 @@ The code is located in [paper_analysis](./paper_analysis/). Please follow these 
       ```
 
 This should produce the rankings and figures from the main article. If you are interested in the figures from the supplementary material, feel free to contact us!
+
+## Challenge documentation and Q&A
+
+Please visit the [challenge website](https://synapse.org/fets) and [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
 
 ## Citation
 

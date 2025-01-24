@@ -21,14 +21,11 @@ def main():
     args = parser.parse_args()
 
     figures_dir = Path(args.output_dir)
+    figures_dir.mkdir(exist_ok=True)
     source_data_file = Path(args.source_data_file)
     if not source_data_file.exists() or not source_data_file.suffix == ".xlsx":
         raise ValueError(
             f"Source data file {source_data_file} does not exist or is not an Excel file."
-        )
-    if not figures_dir.exists() or not figures_dir.is_dir():
-        raise ValueError(
-            f"Output directory {figures_dir} does not exist or is not a directory."
         )
 
     matplotlib.rcParams["font.size"] = 5
