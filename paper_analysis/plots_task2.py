@@ -200,7 +200,7 @@ def overview_plot_heatmap_single(
             np.array(new_ticks) - 0.5, labels=new_ticklabels
         )  # IDK why -0.5
 
-    return fig
+    return fig, plot_data
 
 
 def plot_results_overview_single_model(
@@ -246,7 +246,8 @@ def plot_results_overview_single_model(
             scores_df = scores_df[scores_df.dataset.isin(filter_datasets)]
             # print(compute_num_per_site(scores_df).sum())
         top_results_test = scores_df.loc[
-            scores_df.model.isin(top_models), ["dataset", "model", metric_region]
+            scores_df.model.isin(top_models),
+            ["dataset", "case_id", "model", metric_region],
         ]
         return top_results_test
 
@@ -267,6 +268,9 @@ def plot_results_overview_single_model(
         figsize=get_figsize(textwidth_factor=0.5), layout="constrained"
     )
     fig.patch.set_facecolor("none")
+    test_scores_filtered[["dataset", "case_id", metric]].to_csv(
+        output_file.with_suffix(".csv"), index=False
+    )
     sns.stripplot(
         test_scores_filtered,
         x="dataset",
@@ -312,7 +316,7 @@ def plot_results_mean_per_dataset(
         cmap = sns.color_palette("RdYlGn", as_cmap=True)
     # cmap = sns.color_palette("rocket", as_cmap=True)
     # cmap = sns.color_palette("viridis", as_cmap=True)
-    fig = overview_plot_heatmap_single(
+    fig, plot_data = overview_plot_heatmap_single(
         per_site_agg_results,
         metric=metric,
         model_order=included_models_ranking_order,
@@ -323,6 +327,10 @@ def plot_results_mean_per_dataset(
         vmax=1.0 if "Dice" in metric else 80,
         fig_kwargs={"figsize": get_figsize(aspect_ratio=0.7)},
         highlight_models=["8", "10", "11", "12", "54"],
+    )
+    per_site_agg_results.to_csv(output_file.with_suffix(".csv"), index=False)
+    site_sizes.rename("num cases").to_csv(
+        output_file.with_name("fig2_dataset_sizes.csv"), index=True
     )
     plt_save_and_close(fig, output_file)
 
@@ -382,6 +390,9 @@ def plot_brats_vs_fets_testset_results_single_metric_nosize(
         ["#aa676a", "#ff957f", "#d62728"]
         if distinguish_brats_fets
         else ["#ff957f", "#d62728"]
+    )
+    plot_data[["dataset", "origin", "case_id", metric]].to_csv(
+        output_file.with_suffix(".csv"), index=False
     )
     sns.boxplot(
         data=plot_data,
@@ -519,10 +530,14 @@ def analysis_task2(results_df: pd.DataFrame, figures_dir: Path):
     # # Fig. 2: Task 2 raw results
     # (and all other metrics/regions for appendix)
     for metric in DICE_METRICS + HAUSD_METRICS + ["Dice_mean"]:
+        if metric == "Dice_mean":
+            outfile = figures_dir / f"fig2_{metric}"
+        else:
+            outfile = figures_dir / f"xtra_mean_results_{metric}"
         plot_results_mean_per_dataset(
             results_df,
             [x for x in ranked_model_list if x != "53"],  # model 53 is broken
-            figures_dir / f"fig2_{metric}",
+            outfile,
             sort_by_size=True,
             metric=metric,
         )
@@ -538,6 +553,6 @@ def analysis_task2(results_df: pd.DataFrame, figures_dir: Path):
         plot_brats_vs_fets_testset_results_single_metric_nosize(
             results_df,
             [ranked_model_list[0]],
-            figures_dir / f"best_model_results_{metric}",
+            figures_dir / f"xtra_best_model_results_{metric}",
             metric=metric,
         )

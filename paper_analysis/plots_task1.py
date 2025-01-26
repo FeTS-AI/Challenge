@@ -150,7 +150,6 @@ def plot_convscore_task1(comm_data, output_dir, map_team_names=None, team_order=
     # rotate xticklabels
     for tick in ax.get_xticklabels():
         tick.set_rotation(30)
-    plt_save_and_close(fig, output_dir / "communication.png")
     return fig, ax
 
 
@@ -249,7 +248,7 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
     fig, ax = plot_convscore_task1(
         convscores, output_dir, team_order=teams_ranking_order
     )
-    plt_save_and_close(fig, output_dir / "communication.png")
+    plt_save_and_close(fig, output_dir / "fig-b5_convergence_scores.png")
 
     # All in one figure
     fig, axes = plt.subplots(
@@ -273,7 +272,10 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
             curr_ax.set_xlim([-13, 388])
         if i % 3 != 2:
             curr_ax.set_xticklabels([])
-    plt_save_and_close(fig, output_dir / "task1_all_metrics.png")
+    metrics_df[["case_idx", "team"] + DICE_METRICS + HAUSD_METRICS].to_csv(
+        output_dir / "fig-b4_allmetrics.csv", index=False
+    )
+    plt_save_and_close(fig, output_dir / "fig-b4_allmetrics.png")
 
     # Table with everything (dice, hausdorff, communication cost, ranking)
     make_overview_table(
@@ -281,16 +283,20 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
         convscores,
         baseline_metrics_df,
         mean_ranks,
-        output_dir / "baseline_comparison.tex",
+        output_dir / "table-b1_overview_with_baselines.tex",
     )
 
     # Ranking plot
-    fig, ax = plt.subplots(figsize=(7, 5), layout="constrained")
+    fig, ax = plt.subplots(
+        figsize=get_figsize(textwidth_factor=0.8), layout="constrained"
+    )
     plot_violin_figure_task1(
         ranking_df, metric="cum_rank_plus_comm", y_order=teams_ranking_order, ax=ax
     )
+    ranking_df[["case_idx", "team", "cum_rank_plus_comm"]].to_csv(
+        output_dir / "fig-b3_ranking_scores.csv", index=False
+    )
     ax.set_xlabel("Ranking score")
-    ax.set_title("With convergence score")
-    fig.savefig(output_dir / "task1_ranking.png", bbox_inches="tight")
+    plt_save_and_close(fig, output_dir / "fig-b3_ranking_scores.png")
     print("Final ranking (with communication):")
     print(mean_ranks.sort_values())
