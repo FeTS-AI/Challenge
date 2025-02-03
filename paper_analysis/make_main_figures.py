@@ -10,7 +10,7 @@ from plots_task2 import analysis_task2
 
 def main():
     parser = argparse.ArgumentParser(description="Generate main figures")
-    parser.add_argument("source_data_dir", type=str, help="Input file with results")
+    parser.add_argument("source_data_dir", type=str, help="Input directory with results")
     parser.add_argument("output_dir", type=str, help="Output directory for figures")
     parser.add_argument(
         "--only-task1", action="store_true", help="Generate only task 1 figures"

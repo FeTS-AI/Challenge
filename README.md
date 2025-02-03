@@ -41,7 +41,7 @@ The code is located in [paper_analysis](./paper_analysis/). Please follow these 
       ```
 1. Run the analysis script
       ```
-      python make_main_figures.py /path/to/sourcedata/file /path/to/output/directory
+      python make_main_figures.py /path/to/sourcedata/directory /path/to/output/directory
       ```
 
 This should produce the rankings and figures from the main article. If you are interested in the figures from the supplementary material, feel free to contact us!
