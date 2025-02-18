@@ -1,4 +1,4 @@
-from openfl.component.aggregation_functions.experimental import PrivilegedAggregationFunction
+from openfl.interface.aggregation_functions.experimental import PrivilegedAggregationFunction
 
 
 # extends the openfl agg func interface to include challenge-relevant information

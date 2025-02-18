@@ -13,7 +13,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
+from openfl.utilities.split import split_tensor_dict_for_holdouts
+from openfl.utilities import TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
 import torch
@@ -231,7 +232,7 @@ def run_challenge_experiment(aggregation_function,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
                              include_validation_with_hausdorff=True,
-                             use_pretrained_model=True):
+                             use_pretrained_model=False):
 
     fx.init('fets_challenge_workspace')
     
@@ -240,6 +241,8 @@ def run_challenge_experiment(aggregation_function,
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
+
+    print(f"TESTING ->>>>>>  Work directory: {work}")
 
     path.append(str(root))
     path.insert(0, str(work))
@@ -251,6 +254,8 @@ def run_challenge_experiment(aggregation_function,
                                               institution_split_csv_filename,
                                               0.8,
                                               gandlf_csv_path)
+    
+    print(f'TESTING ->>>>>> Collaborator names: {collaborator_names}')
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function)
 
@@ -279,16 +284,27 @@ def run_challenge_experiment(aggregation_function,
 
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
     # get the task runner, passing the first data loader
+    print('TESTING ->>>>>> Fetching TaskRunner ...')
     for col in collaborator_data_loaders:
         #Insert logic to serialize train / val CSVs here
-        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
-        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
+        # transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
+        # transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
+        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'train.csv'))
+        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'valid.csv'))
         task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
 
     if use_pretrained_model:
-        print('Loading pretrained model...')
+        print('TESTING ->>>>>> Loading pretrained model...')
         if device == 'cpu':
             checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth',map_location=torch.device('cpu'))
+            print('TESTING ->>>>>> Loading checkpoint model...')
+            print(checkpoint.keys())
+            print('TESTING ->>>>>> Loading checkpoint state dict...')
+            model_state = checkpoint['model_state_dict']
+            for name, tensor in model_state.items():
+                print(f"Priting {name}: {tensor.shape}")
+            print('TESTING ->>>>>> Loading taskrunner model')
+            print(task_runner.model)    
             task_runner.model.load_state_dict(checkpoint['model_state_dict'])
             task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         else:
