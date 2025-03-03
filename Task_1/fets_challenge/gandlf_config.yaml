@@ -1,0 +1,63 @@
+batch_size: 1
+clip_grad: null
+clip_mode: null
+data_augmentation: {}
+data_postprocessing: {}
+data_preprocessing:
+  normalize: null
+enable_padding: false
+in_memory: true
+inference_mechanism  :
+  grid_aggregator_overlap: crop
+  patch_overlap: 0
+learning_rate: 0.001
+loss_function: dc
+medcam_enabled: false
+output_dir: '.'
+metrics:
+- dice
+model:
+  amp: true
+  architecture: unet        
+  base_filters: 32
+  batch_norm: false
+  class_list:
+  - 0
+  - 1
+  dimension: 3
+  final_layer: sigmoid
+  ignore_label_validation: null
+  norm_type: instance
+  num_channels: 4
+nested_training:
+  testing: -5
+  validation: -5
+num_epochs: 1
+optimizer:
+  type: adam
+parallel_compute_command: ''
+patch_sampler: uniform
+patch_size:
+- 32
+- 32
+- 32
+patience: 1
+pin_memory_dataloader: false
+print_rgb_label_warning: true
+q_max_length: 1
+q_num_workers: 0
+q_samples_per_volume: 1
+q_verbose: false
+save_output: false
+save_training: false
+scaling_factor: 1
+scheduler:
+  type: triangle
+track_memory_usage: false
+verbose: false
+version:
+  maximum: 0.1.0
+  minimum: 0.0.13
+weighted_loss: true
+modality: rad
+problem_type: classification

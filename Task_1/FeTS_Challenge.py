@@ -537,7 +537,7 @@ device = 'cpu'
 
 # you'll want to increase this most likely. You can set it as high as you like, 
 # however, the experiment will exit once the simulated time exceeds one week. 
-rounds_to_train = 5
+rounds_to_train = 1
 
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
