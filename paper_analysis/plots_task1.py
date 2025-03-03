@@ -186,8 +186,8 @@ def make_overview_table(
         :, DICE_METRICS + HAUSD_METRICS + ["communication_metric", "Ranking score"]
     ]
     table_data.rename(columns=NICE_METRIC_MAPPING, inplace=True)
-    cm = sns.color_palette("RdYlGn", as_cmap=True)
-    cm_rev = sns.color_palette("RdYlGn_r", as_cmap=True)
+    cm = sns.color_palette("magma", as_cmap=True)
+    cm_rev = sns.color_palette("magma_r", as_cmap=True)
     s = table_data.style.background_gradient(
         cmap=cm,
         axis=0,
@@ -244,13 +244,8 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
     ranking_df, mean_ranks = compute_ranking(metrics_df, convscores)
     teams_ranking_order = mean_ranks.sort_values().index.to_list()
 
-    # only communication cost plot
-    fig, ax = plot_convscore_task1(
-        convscores, output_dir, team_order=teams_ranking_order
-    )
-    plt_save_and_close(fig, output_dir / "fig-b5_convergence_scores.png")
-
     # All in one figure
+    figname = "suppl-fig-4_allmetrics"
     fig, axes = plt.subplots(
         3,
         2,
@@ -273,9 +268,9 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
         if i % 3 != 2:
             curr_ax.set_xticklabels([])
     metrics_df[["case_idx", "team"] + DICE_METRICS + HAUSD_METRICS].to_csv(
-        output_dir / "fig-b4_allmetrics.csv", index=False
+        output_dir / f"{figname}.csv", index=False
     )
-    plt_save_and_close(fig, output_dir / "fig-b4_allmetrics.png")
+    plt_save_and_close(fig, output_dir / f"{figname}.png")
 
     # Table with everything (dice, hausdorff, communication cost, ranking)
     make_overview_table(
@@ -283,10 +278,11 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
         convscores,
         baseline_metrics_df,
         mean_ranks,
-        output_dir / "table-b1_overview_with_baselines.tex",
+        output_dir / "suppl-table-1_overview_with_baselines.tex",
     )
 
     # Ranking plot
+    figname = "suppl-fig-3_ranking_scores"
     fig, ax = plt.subplots(
         figsize=get_figsize(textwidth_factor=0.8), layout="constrained"
     )
@@ -294,9 +290,9 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
         ranking_df, metric="cum_rank_plus_comm", y_order=teams_ranking_order, ax=ax
     )
     ranking_df[["case_idx", "team", "cum_rank_plus_comm"]].to_csv(
-        output_dir / "fig-b3_ranking_scores.csv", index=False
+        output_dir / f"{figname}.csv", index=False
     )
     ax.set_xlabel("Ranking score")
-    plt_save_and_close(fig, output_dir / "fig-b3_ranking_scores.png")
+    plt_save_and_close(fig, output_dir / f"{figname}.png")
     print("Final ranking (with communication):")
     print(mean_ranks.sort_values())

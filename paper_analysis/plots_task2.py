@@ -292,6 +292,7 @@ def plot_results_mean_per_dataset(
     output_file: Path,
     sort_by_size=True,
     metric="Dice_ET",
+    cmap="magma",
 ):
     plot_data = metrics_df.copy()
     if metric == "Dice_mean" and metric not in plot_data.columns:
@@ -311,11 +312,9 @@ def plot_results_mean_per_dataset(
         per_site_agg_results.model.isin(included_models_ranking_order)
     ]
     if "Hausd" in metric:
-        cmap = sns.color_palette("RdYlGn_r", as_cmap=True)
+        cmap = sns.color_palette(cmap + "_r", as_cmap=True)
     else:
-        cmap = sns.color_palette("RdYlGn", as_cmap=True)
-    # cmap = sns.color_palette("rocket", as_cmap=True)
-    # cmap = sns.color_palette("viridis", as_cmap=True)
+        cmap = sns.color_palette(cmap, as_cmap=True)
     fig, plot_data = overview_plot_heatmap_single(
         per_site_agg_results,
         metric=metric,
@@ -436,6 +435,19 @@ def plot_brats_vs_fets_testset_results_single_metric_nosize(
     _ = ax.set_xticks(ax.get_xticks(), ds_order)
     ax.set_xlabel("Institution ID")
     ax.set_ylabel(metric_label)
+
+    # Add "n =" labels
+    ypos = ax.get_ylim()[1] * 1.01
+    ax.text(
+        -0.5, ypos, "n =", fontsize=5, ha="right", va="bottom", fontweight="bold", color="gray"
+    )
+
+    # Add individual sample counts above bars
+    sample_counts = plot_data.groupby("dataset").size().to_dict()
+    for i, cat in enumerate(ds_order):
+        ax.text(
+            i, ypos, f"{sample_counts[cat]}", fontsize=5, ha="center", va="bottom", color="gray"
+        )
     if output_file is not None:
         plt_save_and_close(fig, output_file)
 
@@ -533,7 +545,8 @@ def analysis_task2(results_df: pd.DataFrame, figures_dir: Path):
         if metric == "Dice_mean":
             outfile = figures_dir / f"fig2_{metric}"
         else:
-            outfile = figures_dir / f"xtra_mean_results_{metric}"
+            # extra plots for individual tumor region metrics
+            outfile = figures_dir / f"suppl-fig_results_{metric}"
         plot_results_mean_per_dataset(
             results_df,
             [x for x in ranked_model_list if x != "53"],  # model 53 is broken
@@ -549,10 +562,11 @@ def analysis_task2(results_df: pd.DataFrame, figures_dir: Path):
         figures_dir / "fig3_mean_dice",
         metric="Dice_mean",
     )
+    # some extra plots for individual tumor regions
     for metric in DICE_METRICS:
         plot_brats_vs_fets_testset_results_single_metric_nosize(
             results_df,
             [ranked_model_list[0]],
-            figures_dir / f"xtra_best_model_results_{metric}",
+            figures_dir / f"suppl-fig_best_model_results_{metric}",
             metric=metric,
         )

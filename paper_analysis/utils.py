@@ -6,13 +6,13 @@ import numpy as np
 
 PAPER_TEXTWIDTH = 5.1483  # inches
 NICE_METRIC_MAPPING = {
-    "Dice_TC": "Dice TC",
-    "Dice_WT": "Dice WT",
-    "Dice_ET": "Dice ET",
-    "Dice_mean": "Mean Dice",
-    "Hausdorff95_WT": "Hausdorff-95 WT",
-    "Hausdorff95_TC": "Hausdorff-95 TC",
-    "Hausdorff95_ET": "Hausdorff-95 ET",
+    "Dice_TC": "DSC (TC)",
+    "Dice_WT": "DSC (WT)",
+    "Dice_ET": "DSC (ET)",
+    "Dice_mean": "Mean DSC",
+    "Hausdorff95_WT": "Hausdorff-95 (WT)",
+    "Hausdorff95_TC": "Hausdorff-95 (TC)",
+    "Hausdorff95_ET": "Hausdorff-95 (ET)",
     "Hausdorff95_mean": "Mean Hausdorff-95",
     "communication_metric": "Convergence score",
     "Ranking score": "Rank score",
