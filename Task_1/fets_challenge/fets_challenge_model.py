@@ -154,19 +154,25 @@ class FeTSChallengeModel():
         print(f"Validation metric: {epoch_valid_metric}")
 
         origin = col_name
-        suffix = "validate"
-        # if kwargs["apply"] == "local":
-        #     suffix += "_local"
+        suffix = 'validate'
+        # if kwargs['apply'] == 'local':
+        #     suffix += '_local'
         # else:
-        #     suffix += "_agg"
-        tags = ("metric", suffix)
+        #     suffix += '_agg'
+        tags = ('metric', suffix)
 
         output_tensor_dict = {}
-        valid_loss_tensor_key = TensorKey("valid_loss", origin, round_num, True, tags)
-        output_tensor_dict[valid_loss_tensor_key] = np.array(epoch_valid_loss)
+        output_tensor_dict[TensorKey('valid_loss', origin, round_num, True, tags)] = np.array(epoch_valid_loss)
         for k, v in epoch_valid_metric.items():
-            tensor_key = TensorKey(f"valid_{k}", origin, round_num, True, tags)
-            output_tensor_dict[tensor_key] = np.array(v)
+            print(f"Testing ->>>> Metric Key {k} Value {v}")
+            if isinstance(v, str):
+                v = list(map(float, v.split('_')))
+
+            if np.array(v).size == 1:
+                output_tensor_dict[TensorKey(f'valid_{k}', origin, round_num, True, tags)] = np.array(v)
+            else:
+                for idx,label in enumerate([0,1]):
+                    output_tensor_dict[TensorKey(f'valid_{k}_{label}', origin, round_num, True, tags)] = np.array(v[idx])
 
         # Empty list represents metrics that should only be stored locally
         return output_tensor_dict, {}
@@ -205,9 +211,16 @@ class FeTSChallengeModel():
         # output model tensors (Doesn't include TensorKey)
         tensor_dict = self.get_tensor_dict(with_opt_vars=True)
 
-        metric_dict = {"loss": epoch_train_loss}
+        metric_dict = {'loss': epoch_train_loss}
         for k, v in epoch_train_metric.items():
-            metric_dict[f"train_{k}"] = v
+            print(f"Testing ->>>> Metric Key {k} Value {v}")
+            if isinstance(v, str):
+                v = list(map(float, v.split('_')))
+            if np.array(v).size == 1:
+                metric_dict[f'train_{k}'] = np.array(v)
+            else:
+                for idx,label in enumerate([0,1]):
+                    metric_dict[f'train_{k}_{label}'] = np.array(v[idx])
 
         # Return global_tensor_dict, local_tensor_dict
         # is this even pt-specific really?

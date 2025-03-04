@@ -16,6 +16,7 @@ medcam_enabled: false
 output_dir: '.'
 metrics:
 - dice
+- dice_per_label
 model:
   amp: true
   architecture: unet        
