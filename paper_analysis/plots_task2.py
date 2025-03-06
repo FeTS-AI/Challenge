@@ -268,9 +268,6 @@ def plot_results_overview_single_model(
         figsize=get_figsize(textwidth_factor=0.5), layout="constrained"
     )
     fig.patch.set_facecolor("none")
-    test_scores_filtered[["dataset", "case_id", metric]].to_csv(
-        output_file.with_suffix(".csv"), index=False
-    )
     sns.stripplot(
         test_scores_filtered,
         x="dataset",
@@ -326,10 +323,6 @@ def plot_results_mean_per_dataset(
         vmax=1.0 if "Dice" in metric else 80,
         fig_kwargs={"figsize": get_figsize(aspect_ratio=0.7)},
         highlight_models=["8", "10", "11", "12", "54"],
-    )
-    per_site_agg_results.to_csv(output_file.with_suffix(".csv"), index=False)
-    site_sizes.rename("num cases").to_csv(
-        output_file.with_name("fig2_dataset_sizes.csv"), index=True
     )
     plt_save_and_close(fig, output_file)
 
@@ -389,9 +382,6 @@ def plot_brats_vs_fets_testset_results_single_metric_nosize(
         ["#aa676a", "#ff957f", "#d62728"]
         if distinguish_brats_fets
         else ["#ff957f", "#d62728"]
-    )
-    plot_data[["dataset", "origin", "case_id", metric]].to_csv(
-        output_file.with_suffix(".csv"), index=False
     )
     sns.boxplot(
         data=plot_data,

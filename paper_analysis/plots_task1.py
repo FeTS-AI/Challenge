@@ -267,9 +267,6 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
             curr_ax.set_xlim([-13, 388])
         if i % 3 != 2:
             curr_ax.set_xticklabels([])
-    metrics_df[["case_idx", "team"] + DICE_METRICS + HAUSD_METRICS].to_csv(
-        output_dir / f"{figname}.csv", index=False
-    )
     plt_save_and_close(fig, output_dir / f"{figname}.png")
 
     # Table with everything (dice, hausdorff, communication cost, ranking)
@@ -288,9 +285,6 @@ def analysis_task1(metrics_df, convscores, baseline_metrics_df, output_dir):
     )
     plot_violin_figure_task1(
         ranking_df, metric="cum_rank_plus_comm", y_order=teams_ranking_order, ax=ax
-    )
-    ranking_df[["case_idx", "team", "cum_rank_plus_comm"]].to_csv(
-        output_dir / f"{figname}.csv", index=False
     )
     ax.set_xlabel("Ranking score")
     plt_save_and_close(fig, output_dir / f"{figname}.png")
