@@ -63,6 +63,7 @@ class FeTSChallengeModel():
 
         gandlf_conf = ConfigManager(gandlf_config_path)
 
+        # TODO -> CHECK HOW TO CREATE A MODEL HERE
         (
             model,
             optimizer,
@@ -155,10 +156,10 @@ class FeTSChallengeModel():
 
         origin = col_name
         suffix = 'validate'
-        # if kwargs['apply'] == 'local':
-        #     suffix += '_local'
-        # else:
-        #     suffix += '_agg'
+        if kwargs['apply'] == 'local':
+            suffix += '_local'
+        else:
+            suffix += '_agg'
         tags = ('metric', suffix)
 
         output_tensor_dict = {}
@@ -171,13 +172,13 @@ class FeTSChallengeModel():
             if np.array(v).size == 1:
                 output_tensor_dict[TensorKey(f'valid_{k}', origin, round_num, True, tags)] = np.array(v)
             else:
-                for idx,label in enumerate([0,1]):
+                for idx,label in enumerate([0,1,2,4]):
                     output_tensor_dict[TensorKey(f'valid_{k}_{label}', origin, round_num, True, tags)] = np.array(v[idx])
 
         # Empty list represents metrics that should only be stored locally
         return output_tensor_dict, {}
 
-    def train(self, model, col_name, round_num, train_loader, params, optimizer, use_tqdm=False, epochs=1, **kwargs):
+    def train(self, model, col_name, round_num, train_loader, params, optimizer, hparams_dict, use_tqdm=False, epochs=1, **kwargs):
         """Train batches.
         Train the model on the requested number of batches.
         Args:
@@ -194,9 +195,18 @@ class FeTSChallengeModel():
             local_tensor_dict (dict): Tensors to maintain in the local
                 TensorDB.
         """
+        # handle the hparams
+        #epochs_per_round = int(input_tensor_dict.pop('epochs_per_round'))
+        #learning_rate = float(input_tensor_dict.pop('learning_rate'))
+
         #self.rebuild_model(round_num, input_tensor_dict)
         # set to "training" mode
         self.model.train()
+
+        # Set the learning rate
+        #for group in optimizer.param_groups:
+        #    group['lr'] = learning_rate
+
         for epoch in range(epochs):
             print(f"Run %s epoch of %s round", epoch, round_num)
             # FIXME: do we want to capture these in an array
@@ -219,7 +229,7 @@ class FeTSChallengeModel():
             if np.array(v).size == 1:
                 metric_dict[f'train_{k}'] = np.array(v)
             else:
-                for idx,label in enumerate([0,1]):
+                for idx,label in enumerate([0,1,2,4]):
                     metric_dict[f'train_{k}_{label}'] = np.array(v[idx])
 
         # Return global_tensor_dict, local_tensor_dict
@@ -482,6 +492,9 @@ def create_tensorkey_dicts(
     global_model_dict, local_model_dict = split_tensor_dict_for_holdouts(
         logger, tensor_dict, **tensor_dict_split_fn_kwargs
     )
+
+    # global_model_dict : [{x: np1}, {x1: np2}]
+    # global_tensorkey_model_dict : [{tk1: np1}, {tk2: np2}]
 
     # Create global tensorkeys
     global_tensorkey_model_dict = {

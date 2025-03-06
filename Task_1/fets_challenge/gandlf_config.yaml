@@ -6,7 +6,7 @@ data_postprocessing: {}
 data_preprocessing:
   normalize: null
 enable_padding: false
-in_memory: true
+in_memory: false
 inference_mechanism  :
   grid_aggregator_overlap: crop
   patch_overlap: 0
@@ -17,48 +17,50 @@ output_dir: '.'
 metrics:
 - dice
 - dice_per_label
+- hd95_per_label
 model:
   amp: true
-  architecture: unet        
+  architecture: resunet        
   base_filters: 32
-  batch_norm: false
   class_list:
   - 0
   - 1
+  - 2
+  - 4
   dimension: 3
-  final_layer: sigmoid
+  final_layer: softmax
   ignore_label_validation: null
   norm_type: instance
   num_channels: 4
 nested_training:
-  testing: -5
+  testing: 1
   validation: -5
 num_epochs: 1
-optimizer:
-  type: adam
+optimizer: 
+  type: sgd
 parallel_compute_command: ''
-patch_sampler: uniform
+patch_sampler: label
 patch_size:
-- 32
-- 32
-- 32
-patience: 1
+- 64
+- 64
+- 64
+patience: 100
 pin_memory_dataloader: false
 print_rgb_label_warning: true
-q_max_length: 1
+q_max_length: 100
 q_num_workers: 0
-q_samples_per_volume: 1
+q_samples_per_volume: 40
 q_verbose: false
 save_output: false
 save_training: false
 scaling_factor: 1
 scheduler:
-  type: triangle
+  type: triangle_modified
 track_memory_usage: false
 verbose: false
 version:
   maximum: 0.1.0
-  minimum: 0.0.13
+  minimum: 0.0.14
 weighted_loss: true
 modality: rad
 problem_type: classification

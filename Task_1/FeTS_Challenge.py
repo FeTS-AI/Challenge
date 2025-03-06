@@ -552,7 +552,8 @@ restore_from_checkpoint_folder = None
 
 
 # the scores are returned in a Pandas dataframe
-scores_dataframe, checkpoint_folder = run_challenge_experiment(
+#scores_dataframe, 
+checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
     training_hyper_parameters_for_round=training_hyper_parameters_for_round,
@@ -566,7 +567,7 @@ scores_dataframe, checkpoint_folder = run_challenge_experiment(
     restore_from_checkpoint_folder = restore_from_checkpoint_folder)
 
 
-scores_dataframe
+#scores_dataframe
 
 
 # ## Produce NIfTI files for best model outputs on the validation set
@@ -578,36 +579,36 @@ scores_dataframe
 # experiment (look for the log entry: "Created experiment folder experiment_##..." above).
 
 
-from fets_challenge import model_outputs_to_disc
-from pathlib import Path
+# from fets_challenge import model_outputs_to_disc
+# from pathlib import Path
 
-# infer participant home folder
-home = str(Path.home())
+# # infer participant home folder
+# home = str(Path.home())
 
-# you will need to specify the correct experiment folder and the parent directory for
-# the data you want to run inference over (assumed to be the experiment that just completed)
+# # you will need to specify the correct experiment folder and the parent directory for
+# # the data you want to run inference over (assumed to be the experiment that just completed)
 
-#checkpoint_folder='experiment_1'
-#data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData'
-validation_csv_filename = 'validation.csv'
+# #checkpoint_folder='experiment_1'
+# #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
+# data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData'
+# validation_csv_filename = 'validation.csv'
 
-# you can keep these the same if you wish
-final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
+# # you can keep these the same if you wish
+# final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
 
-# If the experiment is only run for a single round, use the temp model instead
-if not Path(final_model_path).exists():
-   final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'temp_model.pkl')
+# # If the experiment is only run for a single round, use the temp model instead
+# if not Path(final_model_path).exists():
+#    final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'temp_model.pkl')
 
-outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'model_outputs')
+# outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'model_outputs')
 
 
-# Using this best model, we can now produce NIfTI files for model outputs 
-# using a provided data directory
+# # Using this best model, we can now produce NIfTI files for model outputs 
+# # using a provided data directory
 
-model_outputs_to_disc(data_path=data_path, 
-                      validation_csv=validation_csv_filename,
-                      output_path=outputs_path, 
-                      native_model_path=final_model_path,
-                      outputtag='',
-                      device=device)
+# model_outputs_to_disc(data_path=data_path, 
+#                       validation_csv=validation_csv_filename,
+#                       output_path=outputs_path, 
+#                       native_model_path=final_model_path,
+#                       outputtag='',
+#                       device=device)

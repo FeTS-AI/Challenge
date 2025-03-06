@@ -17,6 +17,7 @@ from openfl.utilities.split import split_tensor_dict_for_holdouts
 from openfl.utilities import TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
+from openfl.databases import TensorDB
 import torch
 
 from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
@@ -227,15 +228,35 @@ def get_metric(metric, fl_round, tensor_db):
     target_tags = ('metric', 'validate_agg')
     return float(tensor_db.tensor_db.query("tensor_name == @metric_name and round == @fl_round and tags == @target_tags").nparray)
 
+def aggregator_private_attributes(
+       uuid, aggregation_type, round_number, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, training_hyper_parameters_for_round):
+    print(f'Tarun inside aggregator_private_attributes ->>>>>> Aggregation Type: {aggregation_type}')
+    print(f'Tarun inside aggregator_private_attributes ->>>>>> Round Number: {round_number}')
+    print(f'Tarun inside aggregator_private_attributes ->>>>>> Collaborator Names: {collaborator_names}')
+    print(f'Tarun inside aggregator_private_attributes ->>>>>> Choose Training Collaborators: {choose_training_collaborators}')
+    print(f'Tarun inside aggregator_private_attributes ->>>>>> Training Hyper Parameters for Round: {training_hyper_parameters_for_round}')
+    return {"uuid": uuid, 
+            "aggregation_type" : aggregation_type,
+             "round_number": round_number,
+             "collaborator_names": collaborator_names,
+             "include_validation_with_hausdorff": include_validation_with_hausdorff,
+             "choose_training_collaborators": choose_training_collaborators,
+             "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
+             "max_simulation_time": MAX_SIMULATION_TIME
+    }
+ 
+
 def collaborator_private_attributes(
-        index, n_collaborators, train_csv, valid_csv, gandlf_config, device
+        index, n_collaborators, train_csv, valid_csv, gandlf_config, device, training_hyper_parameters_for_round
     ):
         return {
             "train_csv": train_csv,
             "val_csv": valid_csv,
             "gandlf_config": gandlf_config,
-            "device": device
+            "device": device,
+            "training_hyper_parameters_for_round": training_hyper_parameters_for_round
         }
+
 
 def run_challenge_experiment(aggregation_function,
                              choose_training_collaborators,
@@ -279,48 +300,32 @@ def run_challenge_experiment(aggregation_function,
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function) # ---> [TODO] Set the aggregation function in the workflow
 
-    overrides = {
-        'aggregator.settings.rounds_to_train': rounds_to_train,
-        'aggregator.settings.db_store_rounds': db_store_rounds,
-        'tasks.train.aggregation_type': aggregation_wrapper,
-        'task_runner.settings.device': device,
-    }
 
+    # [TODO] [Workflow - API] Need to check db_store rounds
+    # overrides = {
+    #     'aggregator.settings.rounds_to_train': rounds_to_train,
+    #     'aggregator.settings.db_store_rounds': db_store_rounds,
+    #     'tasks.train.aggregation_type': aggregation_wrapper,
+    #     'task_runner.settings.device': device,
+    # }
 
-    # Update the plan if necessary
-    # # [Kush - Flow] -> Update the Plan with the overrides
-    # ---> Not required in workflow
-    #plan = fx.update_plan(overrides)
-
+    # [TODO] [Workflow - API] How to update the gandfl_config runtime
     # if not include_validation_with_hausdorff:
     #     plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
 
-    # # Overwrite collaborator names
-    # plan.authorized_cols = collaborator_names
-    # # overwrite datapath values with the collaborator name itself
-    # for col in collaborator_names:
-    #     # [Kush - Flow] -> Collaborator data path dictionary
-    #     plan.cols_data_paths[col] = col
-
-    # get the data loaders for each collaborator
-    # [Kush - Flow] -> def get_data_loader(self, collaborator_name): Builds the DataLoader for the collaborator based on plan
-    # --> Not required for workflow
-    # collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
-
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
-    # get the task runner, passing the first data loader
-    print('TESTING ->>>>>> Fetching TaskRunner ...')
-    # for col in collaborator_data_loaders:
-    #     #Insert logic to serialize train / val CSVs here
-    #     # transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
-    #     # transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
-    #     transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'train.csv'))
-    #     transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'valid.csv'))
-    #     # [Kush - Flow] -> def get_task_runner(self, data_loader): Builds the TaskRunner and returns returns the taskrunner instance for the collaborator based on plan
-    #     # ---> [[TODO]] Create coll priv_attributes as per csv dictionary.
-    #     task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
 
-    aggregator = Aggregator()
+    aggregator = Aggregator(name="aggregator",
+                            private_attributes_callable=aggregator_private_attributes,
+                            num_cpus=0.0,
+                            num_gpus=0.0,
+                            uuid='aggregator',
+                            round_number=rounds_to_train,
+                            collaborator_names=collaborator_names,
+                            include_validation_with_hausdorff=include_validation_with_hausdorff,
+                            aggregation_type=aggregation_wrapper,
+                            choose_training_collaborators=choose_training_collaborators,
+                            training_hyper_parameters_for_round=training_hyper_parameters_for_round)
 
     collaborators = []
     for idx, col in enumerate(collaborator_names):
@@ -347,7 +352,8 @@ def run_challenge_experiment(aggregation_function,
                 train_csv=train_csv_path,
                 valid_csv=val_csv_path,
                 gandlf_config=gandlf_config_path,
-                device=device
+                device=device,
+                training_hyper_parameters_for_round=training_hyper_parameters_for_round
             )
         )
 
@@ -380,7 +386,7 @@ def run_challenge_experiment(aggregation_function,
     flflow.runtime = local_runtime
     flflow.run()
 
-    # [Kush - Flow] -> Commenting as pretrained model is not used.
+    # [TODO] [Workflow - API] -> Commenting as pretrained model is not used.
     # ---> Define a new step in federated flow before training to load the pretrained model
     # if use_pretrained_model:
     #     print('TESTING ->>>>>> Loading pretrained model...')
@@ -401,11 +407,11 @@ def run_challenge_experiment(aggregation_function,
     #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
     #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
-    # [Kush - Flow] -> [TODO] Compression Pipeline
+    # [TODO] [Workflow - API] Compression Pipeline
     # tensor_pipe = plan.get_tensor_pipe()
 
     # # Initialize model weights
-    # # [Kush - FLow] - [TODO] How to set the initial state in the workflow
+    # # [TODO] [Workflow - API] How to set the initial state in the workflow
     # init_state_path = plan.config['aggregator']['settings']['init_state_path']
     # tensor_dict, _ = split_tensor_dict_for_holdouts(logger, task_runner.get_tensor_dict(False))
 
@@ -415,52 +421,18 @@ def run_challenge_experiment(aggregation_function,
 
     # utils.dump_proto(model_proto=model_snap, fpath=init_state_path)
 
-    # # [Kush - Flow] ->Fetch the required aggregator from plan
-    # # --> [SKIP] Not required for workflow as we will we creating aggregator and setting to runtime
+    # # [TODO] [Workflow - API] ->Fetch the required aggregator from plan
     # # get the aggregator, now that we have the initial weights file set up
-    # logger.info('Creating aggregator...')
-    # aggregator = plan.get_aggregator()
     # # manually override the aggregator UUID (for checkpoint resume when rounds change)
     # aggregator.uuid = 'aggregator'
     # aggregator._load_initial_tensors()
-
-    # # create our collaborators
-    # # [Kush - Flow] ->Fetch the required COLLABORTAOR from plan
-    # # --> [SKIP] Not required for workflow as we will we creating COLLABORATORS and setting to runtime
-    # logger.info('Creating collaborators...')
-    # collaborators = {col: copy(plan).get_collaborator(col, task_runner=task_runner, client=aggregator) for col in collaborator_names}
-
-    # collaborator_time_stats = gen_collaborator_time_stats(plan.authorized_cols)
 
     # collaborators_chosen_each_round = {}
     # collaborator_times_per_round = {}
 
     # logger.info('Starting experiment')
 
-    # total_simulated_time = 0
-    # best_dice = -1.0
-    # best_dice_over_time_auc = 0
-
-    # # results dataframe data
-    # experiment_results = {
-    #         'round':[],
-    #         'time': [],
-    #         'convergence_score': [],
-    #         'round_dice': [],
-    #         'dice_label_0': [],
-    #         'dice_label_1': [],
-    #         'dice_label_2': [],
-    #         'dice_label_4': [],
-    #     }
-    # if include_validation_with_hausdorff:
-    #     experiment_results.update({
-    #         'hausdorff95_label_0': [],
-    #         'hausdorff95_label_1': [],
-    #         'hausdorff95_label_2': [],
-    #         'hausdorff95_label_4': [],
-    #         })
-        
-    # # [Kush-Flow] [TODO] Will check later
+    # # [TODO] [Workflow - API] Restore from checkpoint
     # # if restore_from_checkpoint_folder is None:
     # #     checkpoint_folder = setup_checkpoint_folder()
     # #     logger.info(f'\nCreated experiment folder {checkpoint_folder}...')
@@ -494,8 +466,7 @@ def run_challenge_experiment(aggregation_function,
 
     # for round_num in range(starting_round_num, rounds_to_train):
     #     # pick collaborators to train for the round
-    #     # [Kush - Flow] -> Choose Training Collaborators
-    #     # ---> [TODO] In flow based API's, in start we can pass as foreach = 'collaborators' 
+    #     # ---> [TODO] [Workflow - API] In flow based API's, in start we can pass as foreach = 'collaborators' 
     #     training_collaborators = choose_training_collaborators(collaborator_names,
     #                                                            aggregator.tensor_db._iterate(),
     #                                                            round_num,
@@ -507,46 +478,12 @@ def run_challenge_experiment(aggregation_function,
     #     # save the collaborators chosen this round
     #     collaborators_chosen_each_round[round_num] = training_collaborators
 
-    #     # get the hyper-parameters from the competitor
-    #     # [KUSH - Flow] --> Need to set how to set hyper parameters in the workflow
-    #     # --> [TODO] Set some private attribute for the collaborator
-    #     hparams = training_hyper_parameters_for_round(collaborator_names,
-    #                                                   aggregator.tensor_db._iterate(),
-    #                                                   round_num,
-    #                                                   collaborators_chosen_each_round,
-    #                                                   collaborator_times_per_round)
-
-    #     learning_rate, epochs_per_round = hparams
-
-    #     if (epochs_per_round is None):
-    #         logger.warning('Hyper-parameter function warning: function returned None for "epochs_per_round". Setting "epochs_per_round" to 1')
-    #         epochs_per_round = 1
-        
-    #     hparam_message = "\n\tlearning rate: {}".format(learning_rate)
-
-    #     hparam_message += "\n\tepochs_per_round: {}".format(epochs_per_round)
-
-    #     logger.info("Hyper-parameters for round {}:{}".format(round_num, hparam_message))
-
-    #     # cache each tensor in the aggregator tensor_db
-    #     hparam_dict = {}
-    #     tk = TensorKey(tensor_name='learning_rate',
-    #                     origin=aggregator.uuid,
-    #                     round_number=round_num,
-    #                     report=False,
-    #                     tags=('hparam', 'model'))
-    #     hparam_dict[tk] = np.array(learning_rate)
-    #     tk = TensorKey(tensor_name='epochs_per_round',
-    #                     origin=aggregator.uuid,
-    #                     round_number=round_num,
-    #                     report=False,
-    #                     tags=('hparam', 'model'))
-    #     hparam_dict[tk] = np.array(epochs_per_round)
-    #     # [Kush - FLow] -> [TODO] How to cache the tensor in the workflow ?
+    #     
+    #     # [TODO] [Workflow - API] How to cache the tensor in the workflow ? do we need to cache h-params ?
     #     aggregator.tensor_db.cache_tensor(hparam_dict)
 
     #     # pre-compute the times for each collaborator
-    #     # [Kush - Flow] [TODO] What is the use of this ?
+    #     # [TODO] [Workflow - API] What is the use of this ?
     #     times_per_collaborator = compute_times_per_collaborator(collaborator_names,
     #                                                             training_collaborators,
     #                                                             epochs_per_round,
@@ -555,144 +492,18 @@ def run_challenge_experiment(aggregation_function,
     #                                                             round_num)
     #     collaborator_times_per_round[round_num] = times_per_collaborator
 
-    #     # [Kush - Flow] -> Not required in workflow
-    #     aggregator.assigner.set_training_collaborators(training_collaborators)
 
     #     # update the state in the aggregation wrapper
-    #     # [Kush - Flow] -> [TODO] See how to pass this in the workflow as aggregation function and use in JOIN step
+    #     # [TODO] [Workflow - API] See how to pass this in the workflow as aggregation function and use in JOIN step
     #     aggregation_wrapper.set_state_data_for_round(collaborators_chosen_each_round, collaborator_times_per_round)
 
     #     # turn the times list into a list of tuples and sort it
     #     times_list = [(t, col) for col, t in times_per_collaborator.items()]
     #     times_list = sorted(times_list)
 
-    #     # now call each collaborator in order of time
-    #     # FIXME: this doesn't break up each task. We need this if we're doing straggler handling
-    #     # [Kush - Flow] -> Below codeblock is not required in workflow as below two lines will be handled by the workflow
-    #     # ---> [TODO] Create LocalRunTime using ray bakcend and do flow.run() to start the training
+    #     # [TODO] [Workflow - API] Create LocalRunTime using ray bakcend and do flow.run() to start the training
     #     for t, col in times_list:
-    #         # set the task_runner data loader
-    #         task_runner.data_loader = collaborator_data_loaders[col]
-
-    #         # run the collaborator
-    #         collaborators[col].run_simulation()
-            
     #         logger.info("Collaborator {} took simulated time: {} minutes".format(col, round(t / 60, 2)))
-
-    #     # the round time is the max of the times_list
-    #     round_time = max([t for t, _ in times_list])
-    #     total_simulated_time += round_time
-
-    #    # [Kush - Flow] --> [TODO] How to set these metrics in the workflow and save the checkpoint ??
-    #     # get the performace validation scores for the round
-    #     round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
-    #     dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
-    #     dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
-    #     dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
-    #     dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
-    #     if include_validation_with_hausdorff:
-    #         hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
-    #         hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
-    #         hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
-    #         hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
-
-    #     # update best score
-    #     if best_dice < round_dice:
-    #         best_dice = round_dice
-    #         # Set the weights for the final model
-    #         if round_num == 0:
-    #             # here the initial model was validated (temp model does not exist)
-    #             logger.info(f'Skipping best model saving to disk as it is a random initialization.')
-    #         elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
-    #             raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
-    #         else:
-    #             # here the temp model was the one validated
-    #             shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
-    #             logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
-
-    #     ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
-    #     # set the task_runner data loader
-    #     # task_runner.data_loader = collaborator_data_loaders[col]
-
-    #     ## CONVERGENCE METRIC COMPUTATION
-    #     # update the auc score
-    #     best_dice_over_time_auc += best_dice * round_time
-
-    #     # project the auc score as remaining time * best dice
-    #     # this projection assumes that the current best score is carried forward for the entire week
-    #     projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
-    #     projected_auc /= MAX_SIMULATION_TIME
-
-    #     # End of round summary
-    #     summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
-    #     summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-    #     summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-    #     summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-    #     summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-    #     summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-    #     summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-    #     if include_validation_with_hausdorff:
-    #         summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-    #         summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-    #         summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-    #         summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
-
-
-    #     experiment_results['round'].append(round_num)
-    #     experiment_results['time'].append(total_simulated_time)
-    #     experiment_results['convergence_score'].append(projected_auc)
-    #     experiment_results['round_dice'].append(round_dice)
-    #     experiment_results['dice_label_0'].append(dice_label_0)
-    #     experiment_results['dice_label_1'].append(dice_label_1)
-    #     experiment_results['dice_label_2'].append(dice_label_2)
-    #     experiment_results['dice_label_4'].append(dice_label_4)
-    #     if include_validation_with_hausdorff:
-    #         experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-    #         experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-    #         experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-    #         experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
-    #     logger.info(summary)
-
-    #     if save_checkpoints:
-    #         logger.info(f'Saving checkpoint for round {round_num}')
-    #         logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{checkpoint_folder}\'')
-    #         save_checkpoint(checkpoint_folder, aggregator, 
-    #                         collaborator_names, collaborators,
-    #                         round_num, collaborator_time_stats, 
-    #                         total_simulated_time, best_dice, 
-    #                         best_dice_over_time_auc, 
-    #                         collaborators_chosen_each_round, 
-    #                         collaborator_times_per_round,
-    #                         experiment_results,
-    #                         summary)
-
-    #     # if the total_simulated_time has exceeded the maximum time, we break
-    #     # in practice, this means that the previous round's model is the last model scored,
-    #     # so a long final round should not actually benefit the competitor, since that final
-    #     # model is never globally validated
-    #     if total_simulated_time > MAX_SIMULATION_TIME:
-    #         logger.info("Simulation time exceeded. Ending Experiment")
-    #         break
-
-    #     # save the most recent aggregated model in native format to be copied over as best when appropriate
-    #     # (note this model has not been validated by the collaborators yet)
-    #     task_runner.rebuild_model(round_num, aggregator.last_tensor_dict, validation=True)
-    #     task_runner.save_native(f'checkpoint/{checkpoint_folder}/temp_model.pkl')
-        
             
-
-    return pd.DataFrame.from_dict(experiment_results), checkpoint_folder
-
-
-# High Level Things Required
-# 1. Create Aggregator and see is private attributes setting required.
-# 2. Create Collaborators and pass training/valid csv files as private attributes.(See what else can be passed as private attributes) - Done
-# 3. How to set the hyperparameters for each round.
-# 4. How to set the aggregation function.
-# 5. Create FederatedFlow and what all steps are required. Define the functions for the steps. 
-# 6. Create Federated Model Class 
-# 7. Check how to update metrics after each round.
-# 8. Check the requirement for setting times per collaborator. 
-# 9. How to store checkpoint and restore from checkpoint.
-# 10. How to set the initial state of the model.
-# 
+    #return pd.DataFrame.from_dict(experiment_results), checkpoint_folder
+    return None
