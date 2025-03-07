@@ -229,12 +229,13 @@ def get_metric(metric, fl_round, tensor_db):
     return float(tensor_db.tensor_db.query("tensor_name == @metric_name and round == @fl_round and tags == @target_tags").nparray)
 
 def aggregator_private_attributes(
-       uuid, aggregation_type, round_number, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, training_hyper_parameters_for_round):
-    print(f'Tarun inside aggregator_private_attributes ->>>>>> Aggregation Type: {aggregation_type}')
-    print(f'Tarun inside aggregator_private_attributes ->>>>>> Round Number: {round_number}')
-    print(f'Tarun inside aggregator_private_attributes ->>>>>> Collaborator Names: {collaborator_names}')
-    print(f'Tarun inside aggregator_private_attributes ->>>>>> Choose Training Collaborators: {choose_training_collaborators}')
-    print(f'Tarun inside aggregator_private_attributes ->>>>>> Training Hyper Parameters for Round: {training_hyper_parameters_for_round}')
+       uuid, aggregation_type, round_number, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, training_hyper_parameters_for_round, restore_from_checkpoint_folder, save_checkpoints, collaborator_time_stats):
+    print(f'aggregator_private_attributes ->>>>>> Aggregation Type: {aggregation_type}')
+    print(f'aggregator_private_attributes ->>>>>> Round Number: {round_number}')
+    print(f'aggregator_private_attributes ->>>>>> Collaborator Names: {collaborator_names}')
+    print(f'aggregator_private_attributes ->>>>>> Choose Training Collaborators: {choose_training_collaborators}')
+    print(f'aggregator_private_attributes ->>>>>> Training Hyper Parameters for Round: {training_hyper_parameters_for_round}')
+    print(f'aggregator_private_attributes ->>>>>> restore_from_checkpoint_folder: {restore_from_checkpoint_folder}')
     return {"uuid": uuid, 
             "aggregation_type" : aggregation_type,
              "round_number": round_number,
@@ -242,7 +243,10 @@ def aggregator_private_attributes(
              "include_validation_with_hausdorff": include_validation_with_hausdorff,
              "choose_training_collaborators": choose_training_collaborators,
              "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
-             "max_simulation_time": MAX_SIMULATION_TIME
+             "max_simulation_time": MAX_SIMULATION_TIME,
+             "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
+             "save_checkpoints":save_checkpoints,
+             "collaborator_time_stats": collaborator_time_stats
     }
  
 
@@ -299,7 +303,8 @@ def run_challenge_experiment(aggregation_function,
     print(f'TESTING ->>>>>> Collaborator names: {collaborator_names}')
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function) # ---> [TODO] Set the aggregation function in the workflow
-
+    
+    collaborator_time_stats = gen_collaborator_time_stats(collaborator_names)
 
     # [TODO] [Workflow - API] Need to check db_store rounds
     # overrides = {
@@ -325,7 +330,10 @@ def run_challenge_experiment(aggregation_function,
                             include_validation_with_hausdorff=include_validation_with_hausdorff,
                             aggregation_type=aggregation_wrapper,
                             choose_training_collaborators=choose_training_collaborators,
-                            training_hyper_parameters_for_round=training_hyper_parameters_for_round)
+                            training_hyper_parameters_for_round=training_hyper_parameters_for_round,
+                            restore_from_checkpoint_folder=restore_from_checkpoint_folder,
+                            save_checkpoints=save_checkpoints,
+                            collaborator_time_stats=collaborator_time_stats)
 
     collaborators = []
     for idx, col in enumerate(collaborator_names):
@@ -431,37 +439,6 @@ def run_challenge_experiment(aggregation_function,
     # collaborator_times_per_round = {}
 
     # logger.info('Starting experiment')
-
-    # # [TODO] [Workflow - API] Restore from checkpoint
-    # # if restore_from_checkpoint_folder is None:
-    # #     checkpoint_folder = setup_checkpoint_folder()
-    # #     logger.info(f'\nCreated experiment folder {checkpoint_folder}...')
-    # #     starting_round_num = 0
-    # # else:
-    # #     if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
-    # #         logger.warning(f'Could not find provided checkpoint folder: {restore_from_checkpoint_folder}. Exiting...')
-    # #         exit(1)
-    # #     else:
-    # #         logger.info(f'Attempting to load last completed round from {restore_from_checkpoint_folder}')
-    # #         state = load_checkpoint(restore_from_checkpoint_folder)
-    # #         checkpoint_folder = restore_from_checkpoint_folder
-
-    # #         [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
-    # #          total_simulated_time, best_dice, best_dice_over_time_auc, 
-    # #          collaborators_chosen_each_round, collaborator_times_per_round, 
-    # #          experiment_results, summary, agg_tensor_db] = state
-
-    # #         if loaded_collaborator_names != collaborator_names:
-    # #             logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
-    # #                          f'do not match provided collaborators ({collaborator_names})')
-    # #             exit(1)
-
-    # #         logger.info(f'Previous summary for round {starting_round_num}')
-    # #         logger.info(summary)
-
-    # #         starting_round_num += 1
-    # #         aggregator.tensor_db.tensor_db = agg_tensor_db
-    # #         aggregator.round_number = starting_round_num
 
 
     # for round_num in range(starting_round_num, rounds_to_train):

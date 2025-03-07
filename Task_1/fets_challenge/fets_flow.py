@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import torch as pt
 import yaml
+import shutil
 
 from sys import path
 from openfl.federated import Plan
@@ -56,9 +57,9 @@ class FeTSFederatedFlow(FLSpec):
     def start(self):
         self.collaborators = self.runtime.collaborators
         logger.info(f'Collaborators: {self.collaborators}')
-        #self.agg_tensor_db = TensorDB()
-        #self.next(self.initialize_collaborators, foreach='collaborators', exclude='agg_tensor_db')
-        self.next(self.fetch_hyper_parameters)
+        logger.info(f'save_checkpoints: {self.save_checkpoints}')
+        logger.info(f'collaborator_time_stats: {self.collaborator_time_stats}')
+        logger.info(f'restore_from_checkpoint_folder: {self.restore_from_checkpoint_folder}')
 
         self.experiment_results = {
             'round':[],
@@ -82,35 +83,39 @@ class FeTSFederatedFlow(FLSpec):
         self.best_dice = -1.0
         self.best_dice_over_time_auc = 0
 
-        # if self.restore_from_checkpoint_folder is None:
-        #     checkpoint_folder = setup_checkpoint_folder()
-        #     logger.info(f'\nCreated experiment folder {checkpoint_folder}...')
-        #     starting_round_num = 0
-        # else:
-        #     if not Path(f'checkpoint/{restore_from_checkpoint_folder}').exists():
-        #         logger.warning(f'Could not find provided checkpoint folder: {restore_from_checkpoint_folder}. Exiting...')
-        #         exit(1)
-        #     else:
-        #         logger.info(f'Attempting to load last completed round from {restore_from_checkpoint_folder}')
-        #         state = load_checkpoint(restore_from_checkpoint_folder)
-        #         checkpoint_folder = restore_from_checkpoint_folder
+        self.checkpoint_folder = ""
+        self.collaborators_chosen_each_round = {}
+        self.collaborator_times_per_round = {}
+        if self.restore_from_checkpoint_folder is None:
+            self.checkpoint_folder = setup_checkpoint_folder()
+            logger.info(f'\nCreated experiment folder {self.checkpoint_folder}...')
+            starting_round_num = 0
+        else:
+            if not Path(f'checkpoint/{self.restore_from_checkpoint_folder}').exists():
+                logger.warning(f'Could not find provided checkpoint folder: {self.restore_from_checkpoint_folder}. Exiting...')
+                exit(1)
+            else:
+                logger.info(f'Attempting to load last completed round from {self.restore_from_checkpoint_folder}')
+                state = load_checkpoint(self.restore_from_checkpoint_folder)
+                self.checkpoint_folder = self.restore_from_checkpoint_folder
 
-        #         [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
-        #         total_simulated_time, best_dice, self.best_dice_over_time_auc, 
-        #         collaborators_chosen_each_round, collaborator_times_per_round, 
-        #         experiment_results, summary, agg_tensor_db] = state
+                [loaded_collaborator_names, starting_round_num, self.collaborator_time_stats,
+                self.total_simulated_time, self.best_dice, self.best_dice_over_time_auc,
+                self.collaborators_chosen_each_round, self.collaborator_times_per_round,
+                self.experiment_results, summary, agg_tensor_db] = state
 
-        #         if loaded_collaborator_names != self.collaborator_names:
-        #             logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
-        #                         f'do not match provided collaborators ({self.collaborator_names})')
-        #             exit(1)
+                if loaded_collaborator_names != self.collaborator_names:
+                    logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
+                                f'do not match provided collaborators ({self.collaborator_names})')
+                    exit(1)
 
-        #         logger.info(f'Previous summary for round {starting_round_num}')
-        #         logger.info(summary)
+                logger.info(f'Previous summary for round {starting_round_num}')
+                logger.info(summary)
 
-        #         starting_round_num += 1
-        #         self.tensor_db.tensor_db = agg_tensor_db
-        #         self.round_number = starting_round_num
+                starting_round_num += 1
+                #self.tensor_db.tensor_db = agg_tensor_db
+                self.round_number = starting_round_num
+        self.next(self.fetch_hyper_parameters)
     
     @aggregator
     def fetch_hyper_parameters(self):
@@ -119,13 +124,11 @@ class FeTSFederatedFlow(FLSpec):
         print("*" * 40)
         logger.info('Fetching hyperparameters')
         tensrdb = TensorDB()
-        collaborators_chosen_each_round = {}
-        collaborator_times_per_round = {}
         hparams = self.training_hyper_parameters_for_round(self.collaborators,
                                                             tensrdb._iterate(),
                                                             self.current_round,
-                                                            collaborators_chosen_each_round,
-                                                            collaborator_times_per_round)
+                                                            self.collaborators_chosen_each_round,
+                                                            self.collaborator_times_per_round)
 
         learning_rate, epochs_per_round = hparams
 
@@ -252,7 +255,7 @@ class FeTSFederatedFlow(FLSpec):
                 tensor_keys_per_col[str(idx + 1)] = tensor_keys
 
         # [TODO] : Aggregation Function -> Collaborator Weight Dict
-        collaborator_weight_dict = {"1":0.33, "2":0.33, "3":0.34}
+        collaborator_weight_dict = {'1': 0.3333333333333333, '2': 0.3333333333333333, '3': 0.3333333333333333}
         for col,tensor_keys in tensor_keys_per_col.items():
             for tensor_key in tensor_keys:
                 tensor_name, origin, round_number, report, tags = tensor_key
@@ -309,19 +312,19 @@ class FeTSFederatedFlow(FLSpec):
         if self.best_dice < round_dice:
             self.best_dice = round_dice
             # Set the weights for the final model
-            # if round_num == 0:
-            #     # here the initial model was validated (temp model does not exist)
-            #     logger.info(f'Skipping best model saving to disk as it is a random initialization.')
-            # elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
-            #     raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
-            # else:
-            #     # here the temp model was the one validated
-            #     shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
-            #     logger.info(f'Saved model with best average binary DICE: {self.best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+            if self.current_round == 0:
+                # here the initial model was validated (temp model does not exist)
+                logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+            elif not os.path.exists(f'checkpoint/{self.checkpoint_folder}/temp_model.pkl'):
+                raise ValueError(f'Expected temporary model at: checkpoint/{self.checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+            else:
+                # here the temp model was the one validated
+                shutil.copyfile(src=f'checkpoint/{self.checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{self.checkpoint_folder}/best_model.pkl')
+                logger.info(f'Saved model with best average binary DICE: {self.best_dice} to ~/.local/workspace/checkpoint/{self.checkpoint_folder}/best_model.pkl')
 
         ## CONVERGENCE METRIC COMPUTATION
         # update the auc score
-        # self.best_dice_over_time_auc += self.best_dice * round_time
+        self.best_dice_over_time_auc += self.best_dice * self.current_round
 
         # project the auc score as remaining time * best dice
         # this projection assumes that the current best score is carried forward for the entire week
@@ -359,18 +362,18 @@ class FeTSFederatedFlow(FLSpec):
             self.experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
             self.experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
 
-    #     if save_checkpoints:
-    #         logger.info(f'Saving checkpoint for round {round_num}')
-    #         logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{checkpoint_folder}\'')
-    #         save_checkpoint(checkpoint_folder, aggregator, 
-    #                         collaborator_names, collaborators,
-    #                         round_num, collaborator_time_stats, 
-    #                         self.total_simulated_time, self.best_dice, 
-    #                         self.best_dice_over_time_auc, 
-    #                         collaborators_chosen_each_round, 
-    #                         collaborator_times_per_round,
-    #                         experiment_results,
-    #                         summary)
+        if self.save_checkpoints:
+            logger.info(f'Saving checkpoint for round {self.current_round} : checkpoint folder {self.checkpoint_folder}')
+            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{self.checkpoint_folder}\'')
+            save_checkpoint(self.checkpoint_folder, agg_tensor_db,
+                            self.collaborator_names, self.runtime.collaborators,
+                            self.current_round, self.collaborator_time_stats,
+                            self.total_simulated_time, self.best_dice,
+                            self.best_dice_over_time_auc,
+                            self.collaborators_chosen_each_round,
+                            self.collaborator_times_per_round,
+                            self.experiment_results,
+                            summary)
 
         # if the total_simulated_time has exceeded the maximum time, we break
         # in practice, this means that the previous round's model is the last model scored,
@@ -382,8 +385,8 @@ class FeTSFederatedFlow(FLSpec):
 
         # save the most recent aggregated model in native format to be copied over as best when appropriate
         # (note this model has not been validated by the collaborators yet)
-    #     self.fets_model.rebuild_model(round_num, aggregator.last_tensor_dict, validation=True)
-    #     self.fets_model.save_native(f'checkpoint/{checkpoint_folder}/temp_model.pkl')
+        # self.fets_model.rebuild_model(round_num, aggregator.last_tensor_dict, validation=True)
+        self.fets_model.save_native(f'checkpoint/{self.checkpoint_folder}/temp_model.pkl')
 
         self.next(self.internal_loop)
 
