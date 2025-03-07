@@ -29,7 +29,7 @@ def get_metric(metric_name, fl_round, agg_tensor_db):
     metric_tensor_key = TensorKey(metric_name, 'aggregator', fl_round, True, target_tags)
     logger.info(f'Getting metric {metric_name} at round {fl_round} tensor key: {metric_tensor_key}')
     nparray = agg_tensor_db.get_tensor_from_cache(metric_tensor_key)
-    logger.info(f'nparray for {metric_name} at round {fl_round}: {nparray.item()}')
+    #logger.info(f'nparray for {metric_name} at round {fl_round}: {nparray.item()}')
     return nparray.item()
 
 def cache_tensor_dict(tensor_dict, agg_tensor_db, idx, agg_out_dict):
@@ -114,6 +114,9 @@ class FeTSFederatedFlow(FLSpec):
     
     @aggregator
     def fetch_hyper_parameters(self):
+        print("*" * 40)
+        print("Starting round  {}".format(self.current_round))
+        print("*" * 40)
         logger.info('Fetching hyperparameters')
         tensrdb = TensorDB()
         collaborators_chosen_each_round = {}
@@ -162,21 +165,20 @@ class FeTSFederatedFlow(FLSpec):
 
 
         if self.current_round == 1:
-            self.next(self.initialize_collaborators, foreach='collaborators')
+            logger.info('[Next Step] : Initializing collaborators')
+            self.next(self.initialize_colls, foreach='collaborators')
         else:
+            logger.info('[Next Step] : Aggregated model validation')
             self.next(self.aggregated_model_validation, foreach='collaborators')
         
 
     @collaborator
-    def initialize_collaborators(self):
+    def initialize_colls(self):
+        logger.info(f'Initializing collaborator {self.input}')
         if isinstance(self.gandlf_config, str) and os.path.exists(self.gandlf_config):
             gandlf_conf = yaml.safe_load(open(self.gandlf_config, "r"))
 
         logger.info(gandlf_conf)
-
-        #gandlf_config_path = "/home/ad_tbanda/code/fedAI/Challenge/Task_1/gandlf_config.yaml"
-        #gandlf_config = Plan.load(Path(self.gandlf_config))
-
         gandlf_conf = ConfigManager(self.gandlf_config)
 
         (
@@ -197,14 +199,24 @@ class FeTSFederatedFlow(FLSpec):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.epochs = 1
-        self.coll_tensor_db = TensorDB()
         self.next(self.aggregated_model_validation)
+
+    # @collaborator
+    # def init_tensors(self):
+    #     logger.info(f'Initializing tensors for collaborator {self.input}')
+    #     coll_tensor_dict = self.fets_model.get_tensor_dict(self.model)
+    #     # for key, value in coll_tensor_dict.items():
+    #     #     print(f'Adding tensor {key}')
+    #     #     print(f'Value of tensor {key} is {value}')
+
+    #     self.fets_model.rebuild_model(self.model, self.current_round, coll_tensor_dict, "cpu")
+    #     self.next(self.aggregated_model_validation)
 
     @collaborator
     def aggregated_model_validation(self):
         logger.info(f'Performing aggregated model validation for collaborator {self.input}')
-        self.agg_output_dict, _ = self.fets_model.validate(self.model, self.input, self.current_round, self.val_loader, self.params, self.scheduler, apply="global")
-        logger.info(f'{self.input} value of {self.agg_output_dict.keys()}')
+        self.agg_valid_dict, _ = self.fets_model.validate(self.model, self.input, self.current_round, self.val_loader, self.params, self.scheduler, apply="global")
+        #logger.info(f'{self.input} value of {self.agg_valid_dict.keys()}')
         self.next(self.train)
 
     @collaborator
@@ -216,8 +228,9 @@ class FeTSFederatedFlow(FLSpec):
 
     @collaborator
     def local_model_validation(self):
-        self.local_output_dict, _ = self.fets_model.validate(self.model, self.input, self.current_round, self.val_loader, self.params, self.scheduler, apply="local")
-        logger.info(f'Doing local model validation for collaborator {self.input}:' + f' {self.local_output_dict}')
+        logger.info(f'Performing local model validation for collaborator {self.input}')
+        self.local_valid_dict, _ = self.fets_model.validate(self.model, self.input, self.current_round, self.val_loader, self.params, self.scheduler, apply="local")
+        #logger.info(f'Doing local model validation for collaborator {self.input}:' + f' {self.local_output_dict}')
         self.next(self.join)
 
     @aggregator
@@ -227,51 +240,52 @@ class FeTSFederatedFlow(FLSpec):
         for idx, col in enumerate(inputs):
             logger.info(f'Aggregating results for {idx}')
             agg_out_dict = {}
-            cache_tensor_dict(col.local_output_dict, agg_tensor_db, idx, agg_out_dict)
-            cache_tensor_dict(col.agg_output_dict, agg_tensor_db, idx, agg_out_dict)
-            #cache_tensor_dict(col.global_output_tensor_dict, agg_tensor_db, idx, agg_out_dict)
+            cache_tensor_dict(col.local_valid_dict, agg_tensor_db, idx, agg_out_dict)
+            cache_tensor_dict(col.agg_valid_dict, agg_tensor_db, idx, agg_out_dict)
+            cache_tensor_dict(col.global_output_tensor_dict, agg_tensor_db, idx, agg_out_dict)
 
             # Store the keys for each collaborator
             tensor_keys = []
             for tensor_key in agg_out_dict.keys():
-                logger.info(f'Adding tensor key {tensor_key} to the dict of tensor keys')
+                #logger.info(f'Adding tensor key {tensor_key} to the dict of tensor keys')
                 tensor_keys.append(tensor_key)
                 tensor_keys_per_col[str(idx + 1)] = tensor_keys
 
         # [TODO] : Aggregation Function -> Collaborator Weight Dict
         collaborator_weight_dict = {"1":0.33, "2":0.33, "3":0.34}
-        aggrgegated_tensor_dict = {}
         for col,tensor_keys in tensor_keys_per_col.items():
             for tensor_key in tensor_keys:
                 tensor_name, origin, round_number, report, tags = tensor_key
-                logger.info(f'Aggregating tensor {tensor_name} from collaborator {origin} for round {round_number}')
+                #logger.info(f'Aggregating tensor {tensor_name} from collaborator {origin} for round {round_number}')
                 new_tags = change_tags(tags, remove_field=col)
                 agg_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
-                # returns the list of 2 elements if already processed otherwise 1
+                # Aggregates the tensor values for the tensor key and stores it in tensor_db
                 agg_results = agg_tensor_db.get_aggregated_tensor(
                     agg_tensor_key,
                     collaborator_weight_dict,
                     aggregation_function=self.aggregation_type,
                 )
-                logger.info(f'Aggregated tensor value for tensor key {agg_tensor_key}: {agg_results}')
+                #logger.info(f'Aggregated tensor value for tensor key {agg_tensor_key}')
 
-                # if agg_results.size == 1:
-                #     value = agg_results[0]
-                #     if report:
-                #         value = float(agg_results)
-                #     new_aggregated_tags = change_tags(new_tags, add_field='aggregated')
-                #     new_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_aggregated_tags)
-                #     logger.info(f'Stroing aggregated tensor key {new_tensor_key} with value {value}')
-                #     aggrgegated_tensor_dict[new_tensor_key] = value
-                # else:
-                #     logger.info(f'Aggregated tensor key {agg_tensor_key} already exists in the tensor database')
+        agg_tensor_dict = {}
+        for col,tensor_keys in tensor_keys_per_col.items():
+            for tensor_key in tensor_keys:
+                tensor_name, origin, round_number, report, tags = tensor_key
+                #logger.info(f'Training tensor_key {tensor_key}')
+                if 'trained' in tags:
+                    #logger.info(f'Fetching tensor {tensor_name} from tensor_db for round {round_number}')
+                    new_tags = change_tags(tags, remove_field=col)
+                    new_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
+                    if tensor_name not in agg_tensor_dict:
+                        agg_tensor_dict[tensor_name] = agg_tensor_db.get_tensor_from_cache(new_tensor_key)
+                        #logger.info(f'Fetched tensor {tensor_name} from tensor_db for round {round_number}')
 
-        # for input in inputs:
-        #     # Add some logic to get the aggregated tensors from tensor dict -> aggrgegated_tensor_dict
-        #     self.fets_model.rebuild_model(input.model, input, self.current_round, self.train_loader, self.params, self.optimizer, self.hparam_dict, self.epochs)
-
-        # Cache the aggregated tensor dictionary in the tensor database
-        # agg_tensor_db.cache_tensor(aggrgegated_tensor_dict)
+        # Rebuild the model with the aggregated tensor_dict
+        for input in inputs:
+            logger.info(f'Updating model for collaborator {input}')
+            local_tensor_dict = deepcopy(agg_tensor_dict)
+            self.fets_model.rebuild_model(input.model, self.current_round, local_tensor_dict, "cpu")
+            local_tensor_dict = None
 
         round_loss = get_metric('valid_loss', self.current_round, agg_tensor_db)
         round_dice = get_metric('valid_dice', self.current_round, agg_tensor_db)
@@ -344,7 +358,6 @@ class FeTSFederatedFlow(FLSpec):
             self.experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
             self.experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
             self.experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
-        logger.info(summary)
 
     #     if save_checkpoints:
     #         logger.info(f'Saving checkpoint for round {round_num}')
@@ -377,9 +390,9 @@ class FeTSFederatedFlow(FLSpec):
     @aggregator
     def internal_loop(self):
         if self.current_round == self.n_rounds:
-            logger.info('************* EXPERIMENT COMPLETED *************')
-            logger.info('Experiment results:')
-            logger.info(pd.DataFrame.from_dict(self.experiment_results))
+            print('************* EXPERIMENT COMPLETED *************')
+            print('Experiment results:')
+            print(pd.DataFrame.from_dict(self.experiment_results))
             self.next(self.end)
         else:
             self.current_round += 1

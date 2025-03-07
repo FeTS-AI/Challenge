@@ -94,7 +94,7 @@ class FeTSChallengeModel():
         self.tensor_dict_split_fn_kwargs = {}
         self.tensor_dict_split_fn_kwargs.update({"holdout_tensor_names": ["__opt_state_needed"]})
 
-    def rebuild_model(self, round_num, input_tensor_dict, validation=False):
+    def rebuild_model(self, model, round_num, input_tensor_dict, device, validation=False):
         """Parse tensor names and update weights of model. Handles the
         optimizer treatment.
 
@@ -108,18 +108,22 @@ class FeTSChallengeModel():
         Returns:
             None
         """
+        self.device = device # [TODO] - FIX ME
+        self.model = model
 
-        if self.opt_treatment == "RESET":
-            self.reset_opt_vars()
-            self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
-        elif (
-            self.training_round_completed
-            and self.opt_treatment == "CONTINUE_GLOBAL"
-            and not validation
-        ):
-            self.set_tensor_dict(input_tensor_dict, with_opt_vars=True)
-        else:
-            self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
+        self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
+
+        # if self.opt_treatment == "RESET":
+        #     self.reset_opt_vars()
+        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
+        # elif (
+        #     self.training_round_completed
+        #     and self.opt_treatment == "CONTINUE_GLOBAL"
+        #     and not validation
+        # ):
+        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=True)
+        # else:
+        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
 
     def validate(self, model, col_name, round_num, val_dataloader, params, scheduler, use_tqdm=False, **kwargs):
         """Validate.
@@ -137,7 +141,7 @@ class FeTSChallengeModel():
             {} (dict): Tensors to maintain in the local TensorDB.
         """
         #self.rebuild_model(round_num, input_tensor_dict, validation=True)
-        model.eval()
+        #model.eval()
 
         epoch_valid_loss, epoch_valid_metric = validate_network(
             model,
@@ -201,7 +205,7 @@ class FeTSChallengeModel():
 
         #self.rebuild_model(round_num, input_tensor_dict)
         # set to "training" mode
-        self.model.train()
+        model.train()
 
         # Set the learning rate
         #for group in optimizer.param_groups:
@@ -219,7 +223,7 @@ class FeTSChallengeModel():
             )
 
         # output model tensors (Doesn't include TensorKey)
-        tensor_dict = self.get_tensor_dict(with_opt_vars=True)
+        tensor_dict = self.get_tensor_dict(model, with_opt_vars=True)
 
         metric_dict = {'loss': epoch_train_loss}
         for k, v in epoch_train_metric.items():
@@ -263,7 +267,7 @@ class FeTSChallengeModel():
         # Return global_tensor_dict, local_tensor_dict
         return global_tensor_dict, local_tensor_dict
 
-    def get_tensor_dict(self, with_opt_vars=False):
+    def get_tensor_dict(self, model, with_opt_vars=False):
         """Return the tensor dictionary.
 
         Args:
@@ -279,7 +283,7 @@ class FeTSChallengeModel():
         # for now, state dict gives us names which is good
         # FIXME: do both and sanity check each time?
 
-        state = to_cpu_numpy(self.model.state_dict())
+        state = to_cpu_numpy(model.state_dict())
 
         if with_opt_vars:
             opt_state = _get_optimizer_state(self.optimizer)
@@ -363,7 +367,7 @@ class FeTSChallengeModel():
         #  all of the methods in the class and declare the tensors.
         # For now this is done manually
 
-        output_model_dict = self.get_tensor_dict(with_opt_vars=with_opt_vars)
+        output_model_dict = self.get_tensor_dict(self.model, with_opt_vars=with_opt_vars)
         global_model_dict, local_model_dict = split_tensor_dict_for_holdouts(
             self.logger, output_model_dict, **self.tensor_dict_split_fn_kwargs
         )
@@ -371,7 +375,7 @@ class FeTSChallengeModel():
             global_model_dict_val = global_model_dict
             local_model_dict_val = local_model_dict
         else:
-            output_model_dict = self.get_tensor_dict(with_opt_vars=False)
+            output_model_dict = self.get_tensor_dict(self.model, with_opt_vars=False)
             global_model_dict_val, local_model_dict_val = split_tensor_dict_for_holdouts(
                 self.logger,
                 output_model_dict,
