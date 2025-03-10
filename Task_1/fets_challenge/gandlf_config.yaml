@@ -17,7 +17,7 @@ output_dir: '.'
 metrics:
 - dice
 - dice_per_label
-- hd95_per_label
+#- hd95_per_label
 model:
   amp: true
   architecture: resunet        
@@ -31,7 +31,6 @@ model:
   final_layer: softmax
   ignore_label_validation: null
   norm_type: instance
-  num_channels: 4
 nested_training:
   testing: 1
   validation: -5
@@ -63,4 +62,4 @@ version:
   minimum: 0.0.14
 weighted_loss: true
 modality: rad
-problem_type: classification
+problem_type: segmentation

@@ -58,31 +58,14 @@ class FeTSChallengeModel():
             **kwargs: Additional parameters to pass to the function.
         """
 
-        if isinstance(gandlf_config_path, str) and os.path.exists(gandlf_config_path):
-            gandlf_conf = yaml.safe_load(open(gandlf_config_path, "r"))
-
-        gandlf_conf = ConfigManager(gandlf_config_path)
-
-        # TODO -> CHECK HOW TO CREATE A MODEL HERE
-        (
-            model,
-            optimizer,
-            train_loader,
-            val_loader,
-            scheduler,
-            params,
-        ) = create_pytorch_objects(
-            gandlf_conf, device="cpu"
-        )
-        self.model = model
-        self.optimizer = optimizer
-        self.scheduler = scheduler
-        self.params = params
+        self.model = None
+        self.optimizer = None
+        self.scheduler = None
+        self.params = None
+        self.device = None
 
         self.training_round_completed = False
-
         self.required_tensorkeys_for_function = {}
-
         self.logger = getLogger(__name__)
 
         # FIXME: why isn't this initial call in runner_pt?
@@ -94,7 +77,7 @@ class FeTSChallengeModel():
         self.tensor_dict_split_fn_kwargs = {}
         self.tensor_dict_split_fn_kwargs.update({"holdout_tensor_names": ["__opt_state_needed"]})
 
-    def rebuild_model(self, model, round_num, input_tensor_dict, device, validation=False):
+    def rebuild_model(self, round_num, input_tensor_dict, validation=False):
         """Parse tensor names and update weights of model. Handles the
         optimizer treatment.
 
@@ -108,8 +91,6 @@ class FeTSChallengeModel():
         Returns:
             None
         """
-        self.device = device # [TODO] - FIX ME
-        self.model = model
 
         self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
 
@@ -125,7 +106,7 @@ class FeTSChallengeModel():
         # else:
         #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
 
-    def validate(self, model, col_name, round_num, val_dataloader, params, scheduler, use_tqdm=False, **kwargs):
+    def validate(self, col_name, round_num, val_loader, use_tqdm=False, **kwargs):
         """Validate.
         Run validation of the model on the local data.
         Args:
@@ -141,13 +122,13 @@ class FeTSChallengeModel():
             {} (dict): Tensors to maintain in the local TensorDB.
         """
         #self.rebuild_model(round_num, input_tensor_dict, validation=True)
-        #model.eval()
+        self.model.eval()
 
         epoch_valid_loss, epoch_valid_metric = validate_network(
-            model,
-            val_dataloader,
-            scheduler,
-            params,
+            self.model,
+            val_loader,
+            self.scheduler,
+            self.params,
             round_num,
             mode="validation",
         )
@@ -169,7 +150,6 @@ class FeTSChallengeModel():
         output_tensor_dict = {}
         output_tensor_dict[TensorKey('valid_loss', origin, round_num, True, tags)] = np.array(epoch_valid_loss)
         for k, v in epoch_valid_metric.items():
-            print(f"Testing ->>>> Metric Key {k} Value {v}")
             if isinstance(v, str):
                 v = list(map(float, v.split('_')))
 
@@ -182,7 +162,7 @@ class FeTSChallengeModel():
         # Empty list represents metrics that should only be stored locally
         return output_tensor_dict, {}
 
-    def train(self, model, col_name, round_num, train_loader, params, optimizer, hparams_dict, use_tqdm=False, epochs=1, **kwargs):
+    def train(self, col_name, round_num, hparams_dict, train_loader, use_tqdm=False, **kwargs):
         """Train batches.
         Train the model on the requested number of batches.
         Args:
@@ -200,34 +180,34 @@ class FeTSChallengeModel():
                 TensorDB.
         """
         # handle the hparams
-        #epochs_per_round = int(input_tensor_dict.pop('epochs_per_round'))
-        #learning_rate = float(input_tensor_dict.pop('learning_rate'))
+        epochs_per_round = int(hparams_dict.pop('epochs_per_round'))
+        learning_rate = float(hparams_dict.pop('learning_rate'))
 
         #self.rebuild_model(round_num, input_tensor_dict)
         # set to "training" mode
-        model.train()
+        self.model.train()
 
         # Set the learning rate
-        #for group in optimizer.param_groups:
-        #    group['lr'] = learning_rate
+        self.logger.info(f"Setting learning rate to {learning_rate}")
+        for group in self.optimizer.param_groups:
+            group['lr'] = learning_rate
 
-        for epoch in range(epochs):
-            print(f"Run %s epoch of %s round", epoch, round_num)
+        for epoch in range(epochs_per_round):
+            print(f"Run {epoch} of {round_num}")
             # FIXME: do we want to capture these in an array
             # rather than simply taking the last value?
             epoch_train_loss, epoch_train_metric = train_network(
-                model,
+                self.model,
                 train_loader,
-                optimizer,
-                params,
+                self.optimizer,
+                self.params,
             )
 
         # output model tensors (Doesn't include TensorKey)
-        tensor_dict = self.get_tensor_dict(model, with_opt_vars=True)
+        tensor_dict = self.get_tensor_dict(self.model, with_opt_vars=True)
 
         metric_dict = {'loss': epoch_train_loss}
         for k, v in epoch_train_metric.items():
-            print(f"Testing ->>>> Metric Key {k} Value {v}")
             if isinstance(v, str):
                 v = list(map(float, v.split('_')))
             if np.array(v).size == 1:
@@ -267,7 +247,7 @@ class FeTSChallengeModel():
         # Return global_tensor_dict, local_tensor_dict
         return global_tensor_dict, local_tensor_dict
 
-    def get_tensor_dict(self, model, with_opt_vars=False):
+    def get_tensor_dict(self, model=None, with_opt_vars=False):
         """Return the tensor dictionary.
 
         Args:
@@ -282,6 +262,9 @@ class FeTSChallengeModel():
         # simple assignment is better
         # for now, state dict gives us names which is good
         # FIXME: do both and sanity check each time?
+
+        if model is None:
+            model = self.model
 
         state = to_cpu_numpy(model.state_dict())
 
@@ -333,81 +316,6 @@ class FeTSChallengeModel():
         """
         return self.optimizer
 
-    def get_required_tensorkeys_for_function(self, func_name, **kwargs):
-        """Get the required tensors for specified function that could be called
-        as part of a task.
-
-        By default, this is just all of the layers and optimizer of the model.
-
-        Args:
-            func_name (str): Function name.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            required_tensorkeys_for_function (list): List of required
-                TensorKey.
-        """
-        if func_name == "validate":
-            local_model = "apply=" + str(kwargs["apply"])
-            return self.required_tensorkeys_for_function[func_name][local_model]
-        else:
-            return self.required_tensorkeys_for_function[func_name]
-
-    def initialize_tensorkeys_for_functions(self, with_opt_vars=False):
-        """Set the required tensors for all publicly accessible task methods.
-
-        By default, this is just all of the layers and optimizer of the model.
-        Custom tensors should be added to this function.
-
-        Args:
-            with_opt_vars (bool, optional): Include the optimizer tensors.
-                Defaults to False.
-        """
-        # TODO there should be a way to programmatically iterate through
-        #  all of the methods in the class and declare the tensors.
-        # For now this is done manually
-
-        output_model_dict = self.get_tensor_dict(self.model, with_opt_vars=with_opt_vars)
-        global_model_dict, local_model_dict = split_tensor_dict_for_holdouts(
-            self.logger, output_model_dict, **self.tensor_dict_split_fn_kwargs
-        )
-        if not with_opt_vars:
-            global_model_dict_val = global_model_dict
-            local_model_dict_val = local_model_dict
-        else:
-            output_model_dict = self.get_tensor_dict(self.model, with_opt_vars=False)
-            global_model_dict_val, local_model_dict_val = split_tensor_dict_for_holdouts(
-                self.logger,
-                output_model_dict,
-                **self.tensor_dict_split_fn_kwargs,
-            )
-
-        self.required_tensorkeys_for_function["train"] = [
-            TensorKey(tensor_name, "GLOBAL", 0, False, ("model",))
-            for tensor_name in global_model_dict
-        ]
-        self.required_tensorkeys_for_function["train"] += [
-            TensorKey(tensor_name, "LOCAL", 0, False, ("model",))
-            for tensor_name in local_model_dict
-        ]
-
-        # Validation may be performed on local or aggregated (global) model,
-        # so there is an extra lookup dimension for kwargs
-        self.required_tensorkeys_for_function["validate"] = {}
-        # TODO This is not stateless. The optimizer will not be
-        self.required_tensorkeys_for_function["validate"]["apply=local"] = [
-            TensorKey(tensor_name, "LOCAL", 0, False, ("trained",))
-            for tensor_name in {**global_model_dict_val, **local_model_dict_val}
-        ]
-        self.required_tensorkeys_for_function["validate"]["apply=global"] = [
-            TensorKey(tensor_name, "GLOBAL", 0, False, ("model",))
-            for tensor_name in global_model_dict_val
-        ]
-        self.required_tensorkeys_for_function["validate"]["apply=global"] += [
-            TensorKey(tensor_name, "LOCAL", 0, False, ("model",))
-            for tensor_name in local_model_dict_val
-        ]
-
     def load_native(
         self,
         filepath,
@@ -452,6 +360,7 @@ class FeTSChallengeModel():
                 dict in picked file. Defaults to 'optimizer_state_dict'.
             **kwargs: Additional keyword arguments.
         """
+
         pickle_dict = {
             model_state_dict_key: self.model.state_dict(),
             optimizer_state_dict_key: self.optimizer.state_dict(),

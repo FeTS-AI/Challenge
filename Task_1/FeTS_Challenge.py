@@ -518,7 +518,7 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=True
+include_validation_with_hausdorff=False
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
@@ -526,7 +526,7 @@ include_validation_with_hausdorff=True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/fedAI/MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption

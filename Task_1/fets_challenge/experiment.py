@@ -30,6 +30,10 @@ from .fets_challenge_model import FeTSChallengeModel
 from openfl.experimental.workflow.interface import FLSpec, Aggregator, Collaborator
 from openfl.experimental.workflow.runtime import LocalRuntime
 
+logger = getLogger(__name__)
+# This catches PyTorch UserWarnings for CPU
+warnings.filterwarnings("ignore", category=UserWarning)
+
 # one week
 # MINUTE = 60
 # HOUR = 60 * MINUTE
@@ -37,228 +41,29 @@ from openfl.experimental.workflow.runtime import LocalRuntime
 # WEEK = 7 * DAY
 MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
 
-## COLLABORATOR TIMING DISTRIBUTIONS
-# These data are derived from the actual timing information in the real-world FeTS information
-# They reflect a subset of the institutions involved.
-# Tuples are (mean, stddev) in seconds
-
-# time to train one patient
-TRAINING_TIMES = [(6.710741331207654, 0.8726112813698301),
-                  (2.7343911917098445, 0.023976155580152165),
-                  (3.173076923076923, 0.04154320960517865),
-                  (6.580379746835443, 0.22461890673025595),
-                  (3.452046783625731, 0.47136389322749656),
-                  (6.090788461700995, 0.08541499003440205),
-                  (3.206933911159263, 0.1927067498514361),
-                  (3.3358208955223883, 0.2950567549663471),
-                  (4.391304347826087, 0.37464538999161057),
-                  (6.324805129494594, 0.1413885448869165),
-                  (7.415133477633478, 1.1198881747151301),
-                  (5.806410256410255, 0.029926699295169234),
-                  (6.300204918032787, 0.24932319729777577),
-                  (5.886317567567567, 0.018627858809133223),
-                  (5.478184991273998, 0.04902740607167421),
-                  (6.32440159574468, 0.15838847558954935),
-                  (20.661918328585003, 6.085405543890793),
-                  (3.197901325478645, 0.07049966132127056),
-                  (6.523963730569948, 0.2533266757118492),
-                  (2.6540077569489338, 0.025503099659276184),
-                  (1.8025746183640918, 0.06805805332403576)]
-
-# time to validate one patient
-VALIDATION_TIMES = [(23.129135113591072, 2.5975116854269507),
-                    (12.965544041450777, 0.3476297824941513),
-                    (14.782051282051283, 0.5262660449172765),
-                    (16.444936708860762, 0.42613177203005187),
-                    (15.728654970760235, 4.327559980390658),
-                    (12.946098012884802, 0.2449927822869217),
-                    (15.335950126991456, 1.1587597276712558),
-                    (24.024875621890544, 3.087348297794285),
-                    (38.361702127659576, 2.240113332190875),
-                    (16.320970580839827, 0.4995108101783225),
-                    (30.805555555555554, 3.1836337269688237),
-                    (12.100899742930592, 0.41122386959584895),
-                    (13.099897540983607, 0.6693132795197584),
-                    (9.690202702702702, 0.17513593019922968),
-                    (10.06980802792321, 0.7947848617875114),
-                    (14.605333333333334, 0.6012305898922827),
-                    (36.30294396961064, 9.24123672148819),
-                    (16.9130060292851, 0.7452868131028928),
-                    (40.244078460399706, 3.7700993678269037),
-                    (13.161603102779575, 0.1975347910041472),
-                    (11.222161868549701, 0.7021223062972527)]
-
-# time to download the model
-DOWNLOAD_TIMES = [(112.42869743589742, 14.456734719659513),
-                  (117.26870618556701, 12.549951446132013),
-                  (13.059666666666667, 4.8700489616521185),
-                  (47.50220338983051, 14.92128656898884),
-                  (162.27864210526315, 32.562113378948396),
-                  (99.46072058823529, 13.808785580783224),
-                  (33.6347090909091, 25.00299299660141),
-                  (216.25489393939392, 19.176465340447848),
-                  (217.4117230769231, 20.757673955585453),
-                  (98.38857297297298, 13.205048376808929),
-                  (88.87509473684209, 23.152936862511545),
-                  (66.96994262295081, 16.682497150763503),
-                  (36.668852040816326, 13.759109844677598),
-                  (149.31716326530614, 26.018185409516104),
-                  (139.847, 80.04755583050091),
-                  (54.97624444444445, 16.645170929316794)]
-
-# time to upload the model
-UPLOAD_TIMES = [(192.28497409326425, 21.537450985376967),
-                (194.60103626943004, 24.194406902237056),
-                (20.0, 0.0),
-                (52.43859649122807, 5.047207127169352),
-                (182.82417582417582, 14.793519078918195),
-                (143.38059701492537, 7.910690646792151),
-                (30.695652173913043, 9.668122350904568),
-                (430.95360824742266, 54.97790476867727),
-                (348.3174603174603, 30.14347985347738),
-                (141.43715846994536, 5.271340868190727),
-                (158.7433155080214, 64.87526819391198),
-                (81.06086956521739, 7.003461202082419),
-                (32.60621761658031, 5.0418315093016615),
-                (281.5388601036269, 90.60338778706557),
-                (194.34065934065933, 36.6519776778435),
-                (66.53787878787878, 16.456280602190606)]
-
-logger = getLogger(__name__)
-# This catches PyTorch UserWarnings for CPU
-warnings.filterwarnings("ignore", category=UserWarning)
-
-CollaboratorTimeStats = namedtuple('CollaboratorTimeStats',
-                                    [
-                                        'validation_mean',
-                                        'training_mean',
-                                        'download_speed_mean',
-                                        'upload_speed_mean',
-                                        'validation_std',
-                                        'training_std',
-                                        'download_speed_std',
-                                        'upload_speed_std',
-                                    ]
-                                    )
-
-def gen_collaborator_time_stats(collaborator_names, seed=0xFEEDFACE):
-
-    np.random.seed(seed)
-
-    stats = {}    
-    for col in collaborator_names:
-        ml_index    = np.random.randint(len(VALIDATION_TIMES))
-        validation  = VALIDATION_TIMES[ml_index]
-        training    = TRAINING_TIMES[ml_index]
-        net_index   = np.random.randint(len(DOWNLOAD_TIMES))
-        download    = DOWNLOAD_TIMES[net_index]
-        upload      = UPLOAD_TIMES[net_index]
-
-        stats[col] = CollaboratorTimeStats(validation_mean=validation[0],
-                                           training_mean=training[0],
-                                           download_speed_mean=download[0],
-                                           upload_speed_mean=upload[0],
-                                           validation_std=validation[1],
-                                           training_std=training[1],
-                                           download_speed_std=download[1],
-                                           upload_speed_std=upload[1])
-    return stats
-
-def compute_times_per_collaborator(collaborator_names,
-                                   training_collaborators,
-                                   epochs_per_round,
-                                   collaborator_data,
-                                   collaborator_time_stats,
-                                   round_num):
-    np.random.seed(round_num)
-    times = {}
-    for col in collaborator_names:
-        time = 0
-
-        # stats
-        stats = collaborator_time_stats[col]
-
-        # download time
-        download_time = np.random.normal(loc=stats.download_speed_mean,
-                                         scale=stats.download_speed_std)
-        download_time = max(1, download_time)
-        time += download_time
-
-        # data loader
-        data = collaborator_data[col]
-
-        # validation time
-        data_size = data.get_valid_data_size()
-        validation_time_per = np.random.normal(loc=stats.validation_mean,
-                                               scale=stats.validation_std)
-        validation_time_per = max(1, validation_time_per)
-        time += data_size * validation_time_per
-
-        # only if training
-        if col in training_collaborators:
-            # training time
-            data_size = data.get_train_data_size()
-            training_time_per = np.random.normal(loc=stats.training_mean,
-                                                 scale=stats.training_std)
-            training_time_per = max(1, training_time_per)
-
-            # training data size depends on the hparams
-            data_size *= epochs_per_round
-            time += data_size * training_time_per
-            
-            # if training, we also validate the locally updated model 
-            data_size = data.get_valid_data_size()
-            validation_time_per = np.random.normal(loc=stats.validation_mean,
-                                                   scale=stats.validation_std)
-            validation_time_per = max(1, validation_time_per)
-            time += data_size * validation_time_per
-
-            # upload time
-            upload_time = np.random.normal(loc=stats.upload_speed_mean,
-                                           scale=stats.upload_speed_std)
-            upload_time = max(1, upload_time)
-            time += upload_time
-        
-        times[col] = time
-    return times
-
-
-def get_metric(metric, fl_round, tensor_db):
-    metric_name = metric
-    target_tags = ('metric', 'validate_agg')
-    return float(tensor_db.tensor_db.query("tensor_name == @metric_name and round == @fl_round and tags == @target_tags").nparray)
-
 def aggregator_private_attributes(
-       uuid, aggregation_type, round_number, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, training_hyper_parameters_for_round, restore_from_checkpoint_folder, save_checkpoints, collaborator_time_stats):
-    print(f'aggregator_private_attributes ->>>>>> Aggregation Type: {aggregation_type}')
-    print(f'aggregator_private_attributes ->>>>>> Round Number: {round_number}')
-    print(f'aggregator_private_attributes ->>>>>> Collaborator Names: {collaborator_names}')
-    print(f'aggregator_private_attributes ->>>>>> Choose Training Collaborators: {choose_training_collaborators}')
-    print(f'aggregator_private_attributes ->>>>>> Training Hyper Parameters for Round: {training_hyper_parameters_for_round}')
-    print(f'aggregator_private_attributes ->>>>>> restore_from_checkpoint_folder: {restore_from_checkpoint_folder}')
-    return {"uuid": uuid, 
+       uuid, aggregation_type, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, 
+       training_hyper_parameters_for_round, restore_from_checkpoint_folder, save_checkpoints):
+    return {"uuid": uuid,
             "aggregation_type" : aggregation_type,
-             "round_number": round_number,
-             "collaborator_names": collaborator_names,
-             "include_validation_with_hausdorff": include_validation_with_hausdorff,
-             "choose_training_collaborators": choose_training_collaborators,
-             "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
-             "max_simulation_time": MAX_SIMULATION_TIME,
-             "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
-             "save_checkpoints":save_checkpoints,
-             "collaborator_time_stats": collaborator_time_stats
-    }
+            "collaborator_names": collaborator_names,
+            "include_validation_with_hausdorff": include_validation_with_hausdorff,
+            "choose_training_collaborators": choose_training_collaborators,
+            "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
+            "max_simulation_time": MAX_SIMULATION_TIME,
+            "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
+            "save_checkpoints":save_checkpoints
+}
  
 
 def collaborator_private_attributes(
-        index, n_collaborators, train_csv, valid_csv, gandlf_config, device, training_hyper_parameters_for_round
-    ):
+        index, n_collaborators, gandlf_config, train_csv_path, val_csv_path):
         return {
-            "train_csv": train_csv,
-            "val_csv": valid_csv,
+            "index": index,
+            "n_collaborators": n_collaborators,
             "gandlf_config": gandlf_config,
-            "device": device,
-            "training_hyper_parameters_for_round": training_hyper_parameters_for_round
+            "train_csv_path": train_csv_path,
+            "val_csv_path": val_csv_path
         }
 
 
@@ -275,8 +80,6 @@ def run_challenge_experiment(aggregation_function,
                              include_validation_with_hausdorff=True,
                              use_pretrained_model=False):
 
-    #fx.init('fets_challenge_workspace')
-    
     from sys import path, exit
 
     file = Path(__file__).resolve()
@@ -284,11 +87,6 @@ def run_challenge_experiment(aggregation_function,
     work = Path.cwd().resolve()
 
     gandlf_config_path = os.path.join(root, 'gandlf_config.yaml')
-
-    print(f"TESTING ->>>>>>  Gandlf Config Path: {gandlf_config_path}")
-
-    print(f"TESTING ->>>>>>  Work directory: {work}")
-
     path.append(str(root))
     path.insert(0, str(work))
     
@@ -300,18 +98,13 @@ def run_challenge_experiment(aggregation_function,
                                               0.8,
                                               gandlf_csv_path)
     
-    print(f'TESTING ->>>>>> Collaborator names: {collaborator_names}')
+    print(f'Collaborator names for experiment : {collaborator_names}')
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function) # ---> [TODO] Set the aggregation function in the workflow
-    
-    collaborator_time_stats = gen_collaborator_time_stats(collaborator_names)
 
     # [TODO] [Workflow - API] Need to check db_store rounds
     # overrides = {
-    #     'aggregator.settings.rounds_to_train': rounds_to_train,
     #     'aggregator.settings.db_store_rounds': db_store_rounds,
-    #     'tasks.train.aggregation_type': aggregation_wrapper,
-    #     'task_runner.settings.device': device,
     # }
 
     # [TODO] [Workflow - API] How to update the gandfl_config runtime
@@ -319,21 +112,6 @@ def run_challenge_experiment(aggregation_function,
     #     plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
 
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
-
-    aggregator = Aggregator(name="aggregator",
-                            private_attributes_callable=aggregator_private_attributes,
-                            num_cpus=0.0,
-                            num_gpus=0.0,
-                            uuid='aggregator',
-                            round_number=rounds_to_train,
-                            collaborator_names=collaborator_names,
-                            include_validation_with_hausdorff=include_validation_with_hausdorff,
-                            aggregation_type=aggregation_wrapper,
-                            choose_training_collaborators=choose_training_collaborators,
-                            training_hyper_parameters_for_round=training_hyper_parameters_for_round,
-                            restore_from_checkpoint_folder=restore_from_checkpoint_folder,
-                            save_checkpoints=save_checkpoints,
-                            collaborator_time_stats=collaborator_time_stats)
 
     collaborators = []
     for idx, col in enumerate(collaborator_names):
@@ -345,6 +123,7 @@ def run_challenge_experiment(aggregation_function,
 
         transformed_csv_dict[col]['train'].to_csv(train_csv_path)
         transformed_csv_dict[col]['val'].to_csv(val_csv_path)
+
         collaborators.append(
             Collaborator(
                 name=col,
@@ -352,43 +131,41 @@ def run_challenge_experiment(aggregation_function,
                 # If 1 GPU is available in the machine
                 # Set `num_gpus=0.0` to `num_gpus=0.3` to run on GPU
                 # with ray backend with 2 collaborators
-                num_cpus=0.0,
+                num_cpus=4.0,
                 num_gpus=0.0,
                 # arguments required to pass to callable
                 index=idx,
                 n_collaborators=len(collaborator_names),
-                train_csv=train_csv_path,
-                valid_csv=val_csv_path,
                 gandlf_config=gandlf_config_path,
-                device=device,
-                training_hyper_parameters_for_round=training_hyper_parameters_for_round
+                train_csv_path=train_csv_path,
+                val_csv_path=val_csv_path
             )
         )
 
+    aggregator = Aggregator(name="aggregator",
+                            private_attributes_callable=aggregator_private_attributes,
+                            num_cpus=4.0,
+                            num_gpus=0.0,
+                            uuid='aggregator',
+                            collaborator_names=collaborator_names,
+                            include_validation_with_hausdorff=include_validation_with_hausdorff,
+                            aggregation_type=aggregation_wrapper,
+                            choose_training_collaborators=choose_training_collaborators,
+                            training_hyper_parameters_for_round=training_hyper_parameters_for_round,
+                            restore_from_checkpoint_folder=restore_from_checkpoint_folder,
+                            save_checkpoints=save_checkpoints)
+
     local_runtime = LocalRuntime(
-        aggregator=aggregator, collaborators=collaborators, backend="single_process"
+        aggregator=aggregator, collaborators=collaborators, backend="single_process", num_actors=1
     )
 
     logger.info(f"Local runtime collaborators = {local_runtime.collaborators}")
 
     model = FeTSChallengeModel(gandlf_config_path)
-    top_model_accuracy = 0
-    # optimizers = {
-    #     collaborator.name: default_optimizer(model, optimizer_type=args.optimizer_type)
-    #     for collaborator in collaborators
-    # }
-    # flflow = FederatedFlow(
-    #     model,
-    #     optimizers,
-    #     device,
-    #     args.comm_round,
-    #     top_model_accuracy,
-    #     args.flow_internal_loop_test,
-    # )
-
     flflow = FeTSFederatedFlow(
         model,
-        1
+        rounds_to_train,
+        device,
     )
 
     flflow.runtime = local_runtime
@@ -415,9 +192,6 @@ def run_challenge_experiment(aggregation_function,
     #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
     #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
-    # [TODO] [Workflow - API] Compression Pipeline
-    # tensor_pipe = plan.get_tensor_pipe()
-
     # # Initialize model weights
     # # [TODO] [Workflow - API] How to set the initial state in the workflow
     # init_state_path = plan.config['aggregator']['settings']['init_state_path']
@@ -429,58 +203,5 @@ def run_challenge_experiment(aggregation_function,
 
     # utils.dump_proto(model_proto=model_snap, fpath=init_state_path)
 
-    # # [TODO] [Workflow - API] ->Fetch the required aggregator from plan
-    # # get the aggregator, now that we have the initial weights file set up
-    # # manually override the aggregator UUID (for checkpoint resume when rounds change)
-    # aggregator.uuid = 'aggregator'
-    # aggregator._load_initial_tensors()
-
-    # collaborators_chosen_each_round = {}
-    # collaborator_times_per_round = {}
-
-    # logger.info('Starting experiment')
-
-
-    # for round_num in range(starting_round_num, rounds_to_train):
-    #     # pick collaborators to train for the round
-    #     # ---> [TODO] [Workflow - API] In flow based API's, in start we can pass as foreach = 'collaborators' 
-    #     training_collaborators = choose_training_collaborators(collaborator_names,
-    #                                                            aggregator.tensor_db._iterate(),
-    #                                                            round_num,
-    #                                                            collaborators_chosen_each_round,
-    #                                                            collaborator_times_per_round)
-        
-    #     logger.info('Collaborators chosen to train for round {}:\n\t{}'.format(round_num, training_collaborators))
-
-    #     # save the collaborators chosen this round
-    #     collaborators_chosen_each_round[round_num] = training_collaborators
-
-    #     
-    #     # [TODO] [Workflow - API] How to cache the tensor in the workflow ? do we need to cache h-params ?
-    #     aggregator.tensor_db.cache_tensor(hparam_dict)
-
-    #     # pre-compute the times for each collaborator
-    #     # [TODO] [Workflow - API] What is the use of this ?
-    #     times_per_collaborator = compute_times_per_collaborator(collaborator_names,
-    #                                                             training_collaborators,
-    #                                                             epochs_per_round,
-    #                                                             collaborator_data_loaders,
-    #                                                             collaborator_time_stats,
-    #                                                             round_num)
-    #     collaborator_times_per_round[round_num] = times_per_collaborator
-
-
-    #     # update the state in the aggregation wrapper
-    #     # [TODO] [Workflow - API] See how to pass this in the workflow as aggregation function and use in JOIN step
-    #     aggregation_wrapper.set_state_data_for_round(collaborators_chosen_each_round, collaborator_times_per_round)
-
-    #     # turn the times list into a list of tuples and sort it
-    #     times_list = [(t, col) for col, t in times_per_collaborator.items()]
-    #     times_list = sorted(times_list)
-
-    #     # [TODO] [Workflow - API] Create LocalRunTime using ray bakcend and do flow.run() to start the training
-    #     for t, col in times_list:
-    #         logger.info("Collaborator {} took simulated time: {} minutes".format(col, round(t / 60, 2)))
-            
     #return pd.DataFrame.from_dict(experiment_results), checkpoint_folder
     return None
