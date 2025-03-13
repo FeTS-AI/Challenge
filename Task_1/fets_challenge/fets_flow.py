@@ -74,7 +74,6 @@ class FeTSFederatedFlow(FLSpec):
         self.agg_tensor_dict = {}
         self.tensor_keys_per_col = {}
         self.restored = False
-        self.checkpoint_folder = ""
 
         self.experiment_results = {
             'round':[],
@@ -203,7 +202,6 @@ class FeTSFederatedFlow(FLSpec):
         self.fets_model.optimizer = optimizer
         self.fets_model.scheduler = scheduler
         self.fets_model.params = params
-        
         logger.info(f'Initializing dataloaders for collaborator {self.input}')
         collaborator_data_loaders[self.input] = FeTSDataLoader(train_loader, val_loader)
 
@@ -274,23 +272,33 @@ class FeTSFederatedFlow(FLSpec):
     def join(self, inputs):
         join_start_time = time.time()
         self.aggregation_type.set_state_data_for_round(self.collaborators_chosen_each_round, self.collaborator_times_per_round)
-        agg_tensor_db = TensorDB() # [TODO] As tensordb cannot be used as FLSpec Attribute, should we load this tensor_db from agg_tensor_dict before checkpointing ? 
+        agg_tensor_db = TensorDB() # [TODO] As tensordb cannot be used as FLSpec Attribute, should we load this tensor_db from agg_tensor_dict before checkpointing ?
+        collaborator_task_weight = {}
         for idx, col in enumerate(inputs):
             logger.info(f'Aggregating results for {idx}')
             agg_out_dict = {}
             cache_tensor_dict(col.local_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.agg_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.global_output_tensor_dict, agg_tensor_db, idx, agg_out_dict)
+            collaborator_task_weight[col.input] = collaborator_data_loaders[col.input].get_train_data_size()
 
             # Store the keys for each collaborator
             tensor_keys = []
             for tensor_key in agg_out_dict.keys():
                 tensor_keys.append(tensor_key)
                 self.tensor_keys_per_col[str(idx + 1)] = tensor_keys
-
         # [TODO] : Aggregation Function -> Collaborator Weight Dict
         self.agg_tensor_dict = {}
-        collaborator_weight_dict = {'1': 0.3333333333333333, '2': 0.3333333333333333, '3': 0.3333333333333333}
+        # The collaborator data sizes for that task
+        collaborator_weights_unnormalized = {
+            col.input: collaborator_task_weight[col.input]
+            for _, col in enumerate(inputs)
+        }
+        weight_total = sum(collaborator_task_weight.values())
+        collaborator_weight_dict = {
+            k: v / weight_total for k, v in collaborator_weights_unnormalized.items()
+        }
+        print(f'Calculated Collaborator weights: {collaborator_weight_dict}')
         for col,tensor_keys in self.tensor_keys_per_col.items():
             for tensor_key in tensor_keys:
                 tensor_name, origin, round_number, report, tags = tensor_key
@@ -344,7 +352,7 @@ class FeTSFederatedFlow(FLSpec):
             else:
                 # here the temp model was the one validated
                 shutil.copyfile(src=f'checkpoint/{self.checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{self.checkpoint_folder}/best_model.pkl')
-                logger.info(f'Saved model with best average binary DICE: {self.best_dice} to ~/.local/workspace/checkpoint/{self.checkpoint_folder}/best_model.pkl')
+                logger.info(f'Saved model with best average binary DICE: {self.best_dice} to checkpoint/{self.checkpoint_folder}/best_model.pkl')
 
         ## CONVERGENCE METRIC COMPUTATION
         # update the auc score

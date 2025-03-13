@@ -17,7 +17,6 @@ from openfl.utilities.split import split_tensor_dict_for_holdouts
 from openfl.utilities import TensorKey
 from openfl.protocols import utils
 import openfl.native as fx
-from openfl.databases import TensorDB
 import torch
 
 from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
@@ -52,7 +51,8 @@ def aggregator_private_attributes(
             "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
             "max_simulation_time": MAX_SIMULATION_TIME,
             "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
-            "save_checkpoints":save_checkpoints
+            "save_checkpoints":save_checkpoints,
+            "checkpoint_folder":""
 }
  
 
@@ -85,22 +85,21 @@ def run_challenge_experiment(aggregation_function,
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
-
     gandlf_config_path = os.path.join(root, 'gandlf_config.yaml')
     path.append(str(root))
     path.insert(0, str(work))
     
     # create gandlf_csv and get collaborator names
     gandlf_csv_path = os.path.join(work, 'gandlf_paths.csv')
-    # split_csv_path = os.path.join(work, institution_split_csv_filename)
+    split_csv_path = os.path.join(work, institution_split_csv_filename)
     collaborator_names = construct_fedsim_csv(brats_training_data_parent_dir,
-                                              institution_split_csv_filename,
+                                              split_csv_path,
                                               0.8,
                                               gandlf_csv_path)
     
     print(f'Collaborator names for experiment : {collaborator_names}')
 
-    aggregation_wrapper = CustomAggregationWrapper(aggregation_function) # ---> [TODO] Set the aggregation function in the workflow
+    aggregation_wrapper = CustomAggregationWrapper(aggregation_function)
 
     # [TODO] [Workflow - API] Need to check db_store rounds
     # overrides = {
@@ -202,6 +201,4 @@ def run_challenge_experiment(aggregation_function,
     #                                          tensor_pipe=tensor_pipe)
 
     # utils.dump_proto(model_proto=model_snap, fpath=init_state_path)
-
-    #return pd.DataFrame.from_dict(experiment_results), checkpoint_folder
-    return None
+    return aggregator.private_attributes["checkpoint_folder"]

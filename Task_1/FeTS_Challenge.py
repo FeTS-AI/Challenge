@@ -14,7 +14,10 @@
 
 import os
 import numpy as np
-
+from fets_challenge import model_outputs_to_disc
+from pathlib import Path
+import shutil
+import glob
 from fets_challenge import run_challenge_experiment
 
 
@@ -526,7 +529,7 @@ include_validation_with_hausdorff=False
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_TrainingData'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -544,15 +547,37 @@ rounds_to_train = 1
 save_checkpoints = True
 
 # path to previous checkpoint folder for experiment that was stopped before completion. 
-# Checkpoints are stored in ~/.local/workspace/checkpoint, and you should provide the experiment directory 
+# Checkpoints are stored in checkpoint, and you should provide the experiment directory
 # relative to this path (i.e. 'experiment_1'). Please note that if you restore from a checkpoint, 
 # and save checkpoint is set to True, then the checkpoint you restore from will be subsequently overwritten.
 # restore_from_checkpoint_folder = 'experiment_1'
 restore_from_checkpoint_folder = None
 
+# infer participant home folder
+home = str(Path.home())
 
-# the scores are returned in a Pandas dataframe
-#scores_dataframe, 
+#Creating working directory and copying the required csv files
+working_directory= os.path.join(home, '.local/workspace/')
+Path(working_directory).mkdir(parents=True, exist_ok=True)
+source_dir=f'{Path.cwd()}/openfl-workspace/fets_challenge_workspace/'
+pattern = "*.csv"
+source_pattern = os.path.join(source_dir, pattern)
+files_to_copy = glob.glob(source_pattern)
+
+if not files_to_copy:
+    print(f"No files found matching pattern: {pattern}")
+
+for source_file in files_to_copy:
+    destination_file = os.path.join(working_directory, os.path.basename(source_file))
+    shutil.copy2(source_file, destination_file)
+try:
+    os.chdir(working_directory)
+    print("Directory changed to:", os.getcwd())
+except FileNotFoundError:
+    print("Error: Directory not found.")
+except PermissionError:
+    print("Error: Permission denied")
+
 checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
@@ -567,48 +592,37 @@ checkpoint_folder = run_challenge_experiment(
     restore_from_checkpoint_folder = restore_from_checkpoint_folder)
 
 
-#scores_dataframe
-
-
 # ## Produce NIfTI files for best model outputs on the validation set
 # Now we will produce model outputs to submit to the leader board.
 # 
 # At the end of every experiment, the best model (according to average ET, TC, WT DICE) 
-# is saved to disk at: ~/.local/workspace/checkpoint/\<checkpoint folder\>/best_model.pkl,
+# is saved to disk at: checkpoint/\<checkpoint folder\>/best_model.pkl,
 # where \<checkpoint folder\> is the one printed to stdout during the start of the 
 # experiment (look for the log entry: "Created experiment folder experiment_##..." above).
 
+# you will need to specify the correct experiment folder and the parent directory for
+# the data you want to run inference over (assumed to be the experiment that just completed)
 
-# from fets_challenge import model_outputs_to_disc
-# from pathlib import Path
+#checkpoint_folder='experiment_1'
+#data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
+data_path = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_ValidationData'
+validation_csv_filename = 'validation.csv'
 
-# # infer participant home folder
-# home = str(Path.home())
+# you can keep these the same if you wish
+final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'best_model.pkl')
 
-# # you will need to specify the correct experiment folder and the parent directory for
-# # the data you want to run inference over (assumed to be the experiment that just completed)
+# If the experiment is only run for a single round, use the temp model instead
+if not Path(final_model_path).exists():
+   final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'temp_model.pkl')
 
-# #checkpoint_folder='experiment_1'
-# #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-# data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData'
-# validation_csv_filename = 'validation.csv'
+outputs_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'model_outputs')
 
-# # you can keep these the same if you wish
-# final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
+# Using this best model, we can now produce NIfTI files for model outputs
+# using a provided data directory
 
-# # If the experiment is only run for a single round, use the temp model instead
-# if not Path(final_model_path).exists():
-#    final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'temp_model.pkl')
-
-# outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'model_outputs')
-
-
-# # Using this best model, we can now produce NIfTI files for model outputs 
-# # using a provided data directory
-
-# model_outputs_to_disc(data_path=data_path, 
-#                       validation_csv=validation_csv_filename,
-#                       output_path=outputs_path, 
-#                       native_model_path=final_model_path,
-#                       outputtag='',
-#                       device=device)
+model_outputs_to_disc(data_path=data_path,
+                      validation_csv=validation_csv_filename,
+                      output_path=outputs_path,
+                      native_model_path=final_model_path,
+                      outputtag='',
+                      device=device)

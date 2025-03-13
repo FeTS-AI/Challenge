@@ -133,9 +133,6 @@ class FeTSChallengeModel():
             mode="validation",
         )
 
-        #self.logger.info(epoch_valid_loss)
-        #self.logger.info(epoch_valid_metric)
-
         print(f"Validation loss: {epoch_valid_loss}")
         print(f"Validation metric: {epoch_valid_metric}")
 
@@ -158,6 +155,56 @@ class FeTSChallengeModel():
             else:
                 for idx,label in enumerate([0,1,2,4]):
                     output_tensor_dict[TensorKey(f'valid_{k}_{label}', origin, round_num, True, tags)] = np.array(v[idx])
+
+        # Empty list represents metrics that should only be stored locally
+        return output_tensor_dict, {}
+
+    def inference(self, col_name, round_num, val_loader, use_tqdm=False, **kwargs):
+        """Inference.
+        Run validation of the model on the local data.
+        Args:
+            col_name (str): Name of the collaborator.
+            round_num (int): Current round number.
+            input_tensor_dict (dict): Required input tensors (for model).
+            use_tqdm (bool, optional): Use tqdm to print a progress bar.
+                Defaults to False.
+            **kwargs: Key word arguments passed to GaNDLF main_run.
+
+        Returns:
+            output_tensor_dict (dict): Tensors to send back to the aggregator.
+            {} (dict): Tensors to maintain in the local TensorDB.
+        """
+        #self.rebuild_model(round_num, input_tensor_dict, validation=True)
+        self.model.eval()
+
+        epoch_inference_loss, epoch_inference_metric = validate_network(
+            self.model,
+            val_loader,
+            self.scheduler,
+            self.params,
+            round_num,
+            mode="inference",
+        )
+
+        origin = col_name
+        suffix = 'inference'
+        if kwargs['apply'] == 'local':
+            suffix += '_local'
+        else:
+            suffix += '_agg'
+        tags = ('metric', suffix)
+
+        output_tensor_dict = {}
+        output_tensor_dict[TensorKey('inference_loss', origin, round_num, True, tags)] = np.array(epoch_inference_loss)
+        for k, v in epoch_inference_metric.items():
+            if isinstance(v, str):
+                v = list(map(float, v.split('_')))
+
+            if np.array(v).size == 1:
+                output_tensor_dict[TensorKey(f'inference_{k}', origin, round_num, True, tags)] = np.array(v)
+            else:
+                for idx,label in enumerate([0,1,2,4]):
+                    output_tensor_dict[TensorKey(f'inference_{k}_{label}', origin, round_num, True, tags)] = np.array(v[idx])
 
         # Empty list represents metrics that should only be stored locally
         return output_tensor_dict, {}
