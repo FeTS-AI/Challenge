@@ -216,8 +216,6 @@ def model_outputs_to_disc(data_path,
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
 
-    path.append(str(root))
-    path.insert(0, str(work))
     generate_validation_csv(data_path,validation_csv, working_dir=work)
     
     # # overwrite datapath value for a single 'InferenceCol' collaborator
@@ -228,8 +226,7 @@ def model_outputs_to_disc(data_path,
 
     # # get the task runner, passing the data loader
     # task_runner = copy(plan).get_task_runner(data_loader)
-    
-    gandlf_config_path = os.path.join(root, 'gandlf_config.yaml')
+    gandlf_config_path = os.path.join(root, 'config', 'gandlf_config.yaml')
     fets_model = FeTSChallengeModel(gandlf_config_path)
     val_csv_path = os.path.join(work, 'validation_paths.csv')
     gandlf_conf = ConfigManager(gandlf_config_path)

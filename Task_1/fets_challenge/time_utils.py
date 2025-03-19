@@ -96,6 +96,13 @@ logger = getLogger(__name__)
 # This catches PyTorch UserWarnings for CPU
 warnings.filterwarnings("ignore", category=UserWarning)
 
+# one week
+# MINUTE = 60
+# HOUR = 60 * MINUTE
+# DAY = 24 * HOUR
+# WEEK = 7 * DAY
+MAX_SIMULATION_TIME = 7 * 24 * 60 * 60  #TODO check if this can be move to time_utils.py file
+
 CollaboratorTimeStats = namedtuple('CollaboratorTimeStats',
                                     [
                                         'validation_mean',

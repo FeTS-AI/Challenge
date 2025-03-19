@@ -521,7 +521,7 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=False
+include_validation_with_hausdorff=False #TODO change it to True
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
@@ -529,25 +529,25 @@ include_validation_with_hausdorff=False
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
-db_store_rounds = 5
+db_store_rounds = 5 #TODO store the tensor db for these many rounds
 
 # this is passed to PyTorch, so set it accordingly for your system
 device = 'cpu'
 
 # you'll want to increase this most likely. You can set it as high as you like, 
 # however, the experiment will exit once the simulated time exceeds one week. 
-rounds_to_train = 1
+rounds_to_train = 2 #TODO change it to 5 before merging
 
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
 save_checkpoints = True
 
 # path to previous checkpoint folder for experiment that was stopped before completion. 
-# Checkpoints are stored in checkpoint, and you should provide the experiment directory
+# Checkpoints are stored in ~/.local/workspace/checkpoint, and you should provide the experiment directory
 # relative to this path (i.e. 'experiment_1'). Please note that if you restore from a checkpoint, 
 # and save checkpoint is set to True, then the checkpoint you restore from will be subsequently overwritten.
 # restore_from_checkpoint_folder = 'experiment_1'
@@ -557,9 +557,9 @@ restore_from_checkpoint_folder = None
 home = str(Path.home())
 
 #Creating working directory and copying the required csv files
-working_directory= os.path.join(home, '.local/workspace/')
+working_directory= os.path.join(home, '.local/tarunNew/')
 Path(working_directory).mkdir(parents=True, exist_ok=True)
-source_dir=f'{Path.cwd()}/openfl-workspace/fets_challenge_workspace/'
+source_dir=f'{Path.cwd()}/partitioning_data/'
 pattern = "*.csv"
 source_pattern = os.path.join(source_dir, pattern)
 files_to_copy = glob.glob(source_pattern)
@@ -596,7 +596,7 @@ checkpoint_folder = run_challenge_experiment(
 # Now we will produce model outputs to submit to the leader board.
 # 
 # At the end of every experiment, the best model (according to average ET, TC, WT DICE) 
-# is saved to disk at: checkpoint/\<checkpoint folder\>/best_model.pkl,
+# is saved to disk at: ~/.local/workspace/checkpoint/checkpoint/\<checkpoint folder\>/best_model.pkl,
 # where \<checkpoint folder\> is the one printed to stdout during the start of the 
 # experiment (look for the log entry: "Created experiment folder experiment_##..." above).
 
@@ -605,24 +605,30 @@ checkpoint_folder = run_challenge_experiment(
 
 #checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_ValidationData'
+data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
-final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'best_model.pkl')
+if checkpoint_folder is not None:
+    final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'best_model.pkl')
+else:
+    exit("No checkpoint folder found. Please provide a valid checkpoint folder. Exiting the experiment without inferencing")
 
 # If the experiment is only run for a single round, use the temp model instead
 if not Path(final_model_path).exists():
    final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'temp_model.pkl')
 
+if not Path(final_model_path).exists():
+    exit("No model found. Please provide a valid checkpoint folder. Exiting the experiment without inferencing")
+
 outputs_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'model_outputs')
 
-# Using this best model, we can now produce NIfTI files for model outputs
+# Using this best model, we can now produce NIfTI files for model outputs 
 # using a provided data directory
 
-model_outputs_to_disc(data_path=data_path,
+model_outputs_to_disc(data_path=data_path, 
                       validation_csv=validation_csv_filename,
-                      output_path=outputs_path,
+                      output_path=outputs_path, 
                       native_model_path=final_model_path,
                       outputtag='',
                       device=device)

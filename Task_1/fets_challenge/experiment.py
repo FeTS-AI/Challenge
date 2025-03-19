@@ -4,63 +4,39 @@
 # Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
+from copy import deepcopy
 import warnings
-from collections import namedtuple
-from copy import copy
-import shutil
 from logging import getLogger
 from pathlib import Path
-
-import numpy as np
-import pandas as pd
-from openfl.utilities.split import split_tensor_dict_for_holdouts
-from openfl.utilities import TensorKey
-from openfl.protocols import utils
-import openfl.native as fx
-import torch
+from torch.utils.data import DataLoader
 
 from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
 from .custom_aggregation_wrapper import CustomAggregationWrapper
-from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
 from .fets_flow import FeTSFederatedFlow
 from .fets_challenge_model import FeTSChallengeModel
+from .fets_data_loader import FeTSDataLoader
 
-from openfl.experimental.workflow.interface import FLSpec, Aggregator, Collaborator
+from openfl.experimental.workflow.interface import Aggregator, Collaborator
 from openfl.experimental.workflow.runtime import LocalRuntime
 
 logger = getLogger(__name__)
 # This catches PyTorch UserWarnings for CPU
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# one week
-# MINUTE = 60
-# HOUR = 60 * MINUTE
-# DAY = 24 * HOUR
-# WEEK = 7 * DAY
-MAX_SIMULATION_TIME = 7 * 24 * 60 * 60 
-
 def aggregator_private_attributes(
-       uuid, aggregation_type, collaborator_names, include_validation_with_hausdorff, choose_training_collaborators, 
-       training_hyper_parameters_for_round, restore_from_checkpoint_folder, save_checkpoints):
-    return {"uuid": uuid,
-            "aggregation_type" : aggregation_type,
+       aggregation_type, collaborator_names, db_store_rounds):
+    return {"aggregation_type" : aggregation_type,
             "collaborator_names": collaborator_names,
-            "include_validation_with_hausdorff": include_validation_with_hausdorff,
-            "choose_training_collaborators": choose_training_collaborators,
-            "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
-            "max_simulation_time": MAX_SIMULATION_TIME,
-            "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
-            "save_checkpoints":save_checkpoints,
-            "checkpoint_folder":""
+            "checkpoint_folder":None,
+            "db_store_rounds":db_store_rounds
 }
  
 
 def collaborator_private_attributes(
-        index, n_collaborators, gandlf_config, train_csv_path, val_csv_path):
+        index, gandlf_config, train_csv_path, val_csv_path):
         return {
             "index": index,
-            "n_collaborators": n_collaborators,
             "gandlf_config": gandlf_config,
             "train_csv_path": train_csv_path,
             "val_csv_path": val_csv_path
@@ -80,14 +56,10 @@ def run_challenge_experiment(aggregation_function,
                              include_validation_with_hausdorff=True,
                              use_pretrained_model=False):
 
-    from sys import path, exit
-
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
-    gandlf_config_path = os.path.join(root, 'gandlf_config.yaml')
-    path.append(str(root))
-    path.insert(0, str(work))
+    gandlf_config_path = os.path.join(root, 'config', 'gandlf_config.yaml')
     
     # create gandlf_csv and get collaborator names
     gandlf_csv_path = os.path.join(work, 'gandlf_paths.csv')
@@ -101,14 +73,10 @@ def run_challenge_experiment(aggregation_function,
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function)
 
-    # [TODO] [Workflow - API] Need to check db_store rounds
+    # [TODO] Handle the storing of data in the fets flow (add db_sotre_rounds aggregator private attribute)
     # overrides = {
     #     'aggregator.settings.db_store_rounds': db_store_rounds,
     # }
-
-    # [TODO] [Workflow - API] How to update the gandfl_config runtime
-    # if not include_validation_with_hausdorff:
-    #     plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
 
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
 
@@ -134,7 +102,6 @@ def run_challenge_experiment(aggregation_function,
                 num_gpus=0.0,
                 # arguments required to pass to callable
                 index=idx,
-                n_collaborators=len(collaborator_names),
                 gandlf_config=gandlf_config_path,
                 train_csv_path=train_csv_path,
                 val_csv_path=val_csv_path
@@ -145,14 +112,9 @@ def run_challenge_experiment(aggregation_function,
                             private_attributes_callable=aggregator_private_attributes,
                             num_cpus=4.0,
                             num_gpus=0.0,
-                            uuid='aggregator',
                             collaborator_names=collaborator_names,
-                            include_validation_with_hausdorff=include_validation_with_hausdorff,
                             aggregation_type=aggregation_wrapper,
-                            choose_training_collaborators=choose_training_collaborators,
-                            training_hyper_parameters_for_round=training_hyper_parameters_for_round,
-                            restore_from_checkpoint_folder=restore_from_checkpoint_folder,
-                            save_checkpoints=save_checkpoints)
+                            db_store_rounds=db_store_rounds)
 
     local_runtime = LocalRuntime(
         aggregator=aggregator, collaborators=collaborators, backend="single_process", num_actors=1
@@ -160,17 +122,24 @@ def run_challenge_experiment(aggregation_function,
 
     logger.info(f"Local runtime collaborators = {local_runtime.collaborators}")
 
+    params_dict = {"include_validation_with_hausdorff": include_validation_with_hausdorff,
+              "choose_training_collaborators": choose_training_collaborators,  #TODO verify with different collaborators and check if works?
+              "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
+              "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
+              "save_checkpoints": save_checkpoints}
+
     model = FeTSChallengeModel(gandlf_config_path)
     flflow = FeTSFederatedFlow(
         model,
+        params_dict,
         rounds_to_train,
-        device,
+        device
     )
 
     flflow.runtime = local_runtime
     flflow.run()
 
-    # [TODO] [Workflow - API] -> Commenting as pretrained model is not used.
+    # #TODO [Workflow - API] -> Commenting as pretrained model is not used.
     # ---> Define a new step in federated flow before training to load the pretrained model
     # if use_pretrained_model:
     #     print('TESTING ->>>>>> Loading pretrained model...')
@@ -192,13 +161,11 @@ def run_challenge_experiment(aggregation_function,
     #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     # # Initialize model weights
-    # # [TODO] [Workflow - API] How to set the initial state in the workflow
+    # #TODO [Workflow - API] How to set the initial state in the workflow -> check if it needed to be done in workflow
     # init_state_path = plan.config['aggregator']['settings']['init_state_path']
     # tensor_dict, _ = split_tensor_dict_for_holdouts(logger, task_runner.get_tensor_dict(False))
-
     # model_snap = utils.construct_model_proto(tensor_dict=tensor_dict,
     #                                          round_number=0,
     #                                          tensor_pipe=tensor_pipe)
-
     # utils.dump_proto(model_proto=model_snap, fpath=init_state_path)
     return aggregator.private_attributes["checkpoint_folder"]

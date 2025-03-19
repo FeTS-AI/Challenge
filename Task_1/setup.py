@@ -24,7 +24,6 @@ setup(
     url='https://github.com/FETS-AI/Challenge',
     packages=[
         'fets_challenge',
-        'openfl-workspace',
     ],
     include_package_data=True,
     install_requires=[
