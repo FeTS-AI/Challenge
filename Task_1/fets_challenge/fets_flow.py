@@ -41,6 +41,17 @@ def cache_tensor_dict(tensor_dict, agg_tensor_db, idx, agg_out_dict):
         agg_out_dict[modified_key] = value
     agg_tensor_db.cache_tensor(agg_out_dict)
 
+def return_cleanup_key(tensor_key, col, round_data_to_delete):
+    new_tags = change_tags(tensor_key.tags, remove_field=col)
+    modified_key = TensorKey(
+        tensor_name=tensor_key.tensor_name,
+        origin=col,
+        round_number=round_data_to_delete,
+        report=tensor_key.report,
+        tags=new_tags
+    )
+    return modified_key
+
 def get_aggregated_dict_with_tensorname(agg_tensor_dict):
     agg_dict_with_tensornames = {}
     for tensor_key, value in agg_tensor_dict.items():
@@ -104,6 +115,7 @@ class FeTSFederatedFlow(FLSpec):
                 logger.warning(f'Could not find provided checkpoint folder: {self.restore_from_checkpoint_folder}. Exiting...')
                 exit(1)
             else:
+                #TODO : Validate load from checkpoint logic
                 logger.info(f'Attempting to load last completed round from {self.restore_from_checkpoint_folder}')
                 state = load_checkpoint(self.restore_from_checkpoint_folder)
                 self.checkpoint_folder = self.restore_from_checkpoint_folder
@@ -209,7 +221,7 @@ class FeTSFederatedFlow(FLSpec):
         collaborator_data_loaders[self.input] = FeTSDataLoader(train_loader, val_loader)
 
 
-        #TODO the times per collaborator is calculated based on the random values, it doesn't look like the actual time taken by the collaborator 
+        #TODO Validate the times per collaborator is calculated based on the random values, it doesn't look like the actual time taken by the collaborator 
         self.times_per_collaborator = compute_times_per_collaborator(self.input,
                                                                     self.training_collaborators,
                                                                     self.hparam_dict['epochs_per_round'],
@@ -280,10 +292,11 @@ class FeTSFederatedFlow(FLSpec):
 
     @aggregator
     def join(self, inputs):
-        join_start_time = time.time()
+        round_data_to_delete = 0
+        if self.current_round > self.db_store_rounds:
+            round_data_to_delete = self.current_round - self.db_store_rounds
         self.aggregation_type.set_state_data_for_round(self.collaborators_chosen_each_round, self.collaborator_times_per_round)
         agg_tensor_db = TensorDB()
-        cache_tensor_dict(self.agg_tensor_dict, agg_tensor_db, 0, {})
         collaborator_weights_unnormalized = {}
         times_per_collaborator = {}
         for idx, col in enumerate(inputs):
@@ -292,7 +305,9 @@ class FeTSFederatedFlow(FLSpec):
             cache_tensor_dict(col.local_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.agg_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.global_output_tensor_dict, agg_tensor_db, idx, agg_out_dict)            
-
+            self.agg_tensor_dict.update(col.local_valid_dict)
+            self.agg_tensor_dict.update(col.agg_valid_dict)
+            self.agg_tensor_dict.update(col.global_output_tensor_dict)
             # Store the keys for each collaborator
             tensor_keys = []
             for tensor_key in agg_out_dict.keys():
@@ -302,7 +317,6 @@ class FeTSFederatedFlow(FLSpec):
             # The collaborator data sizes for that task
             collaborator_weights_unnormalized[col.input] = col.collaborator_task_weight
             times_per_collaborator[col.input] = col.times_per_collaborator
-    
         print(f'Collaborator task weights: {collaborator_weights_unnormalized}')
         print(f'Collaborator times: {times_per_collaborator}')
         weight_total = sum(collaborator_weights_unnormalized.values())
@@ -310,6 +324,7 @@ class FeTSFederatedFlow(FLSpec):
             k: v / weight_total for k, v in collaborator_weights_unnormalized.items()
         }
         print(f'Calculated Collaborator weights: {collaborator_weight_dict}')
+        print("=" * 40)
         for col,tensor_keys in self.tensor_keys_per_col.items():
             for tensor_key in tensor_keys:
                 tensor_name, origin, round_number, report, tags = tensor_key
@@ -321,9 +336,15 @@ class FeTSFederatedFlow(FLSpec):
                     collaborator_weight_dict,
                     aggregation_function=self.aggregation_type,
                 )
-                if 'trained' in tags and tensor_name not in self.agg_tensor_dict:
-                    self.agg_tensor_dict[agg_tensor_key] = agg_tensor_db.get_tensor_from_cache(agg_tensor_key)
-
+                #cleaningup aggregated tensor dict based on db store rounds
+                if self.current_round > self.db_store_rounds:
+                    col_tensor_key_to_be_deleted = return_cleanup_key(tensor_key, col, round_data_to_delete)
+                    agg_tensor_key_to_be_deleted = TensorKey(tensor_name, origin, round_data_to_delete, report, new_tags)
+                    if col_tensor_key_to_be_deleted in self.agg_tensor_dict:
+                        self.agg_tensor_dict.pop(col_tensor_key_to_be_deleted)
+                    if agg_tensor_key_to_be_deleted in self.agg_tensor_dict:
+                        self.agg_tensor_dict.pop(agg_tensor_key_to_be_deleted)
+                self.agg_tensor_dict[agg_tensor_key] = agg_tensor_db.get_tensor_from_cache(agg_tensor_key)
         round_loss = get_metric('valid_loss', self.current_round, agg_tensor_db)
         round_dice = get_metric('valid_dice', self.current_round, agg_tensor_db)
         dice_label_0 = get_metric('valid_dice_per_label_0', self.current_round, agg_tensor_db)
@@ -396,6 +417,8 @@ class FeTSFederatedFlow(FLSpec):
             self.experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
             self.experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
 
+        cache_tensor_dict(self.agg_tensor_dict, agg_tensor_db, 0, {})
+
         if self.save_checkpoints:
             logger.info(f'Saving checkpoint for round {self.current_round} : checkpoint folder {self.checkpoint_folder}')
             logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{self.checkpoint_folder}\'')
@@ -413,7 +436,6 @@ class FeTSFederatedFlow(FLSpec):
         # in practice, this means that the previous round's model is the last model scored,
         # so a long final round should not actually benefit the competitor, since that final
         # model is never globally validated
-        # TODO : Added total time taken by running the experiment till join per round
         if self.total_simulated_time > MAX_SIMULATION_TIME:
             logger.info("Simulation time exceeded. Ending Experiment")
             self.next(self.end)
@@ -432,26 +454,12 @@ class FeTSFederatedFlow(FLSpec):
         local_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict)
         self.fets_model.rebuild_model(self.current_round, local_tensor_dict)
         self.fets_model.save_native(f'checkpoint/{self.checkpoint_folder}/temp_model.pkl')
-
-        #TODO : Remove below logging
-        join_end_time = time.time()
-        self.join_time = join_end_time - join_start_time
-        print(f'took {self.join_time} seconds for join_time')
-
-        total_time = 0
-        for input in inputs:
-            print(f"TIme taken by {input} : {input.aggregated_model_validation_time + input.training_time + input.local_model_validation_time + self.join_time}")
-            total_time += input.aggregated_model_validation_time + input.training_time + input.local_model_validation_time + self.join_time
-
-        print(f'took {total_time} seconds for total training and valid')
-        #TODO cleaup aggreated tensor dict based on db store rounds, get the round number of data to be deleted, by finding round number from the dictioinary keys
         self.next(self.internal_loop)
 
     @aggregator
     def internal_loop(self):
         if self.current_round == self.n_rounds:
             print('************* EXPERIMENT COMPLETED *************')
-            # TODO : Add the average time taken for completing n_rounds
             print('Experiment results:')
             print(pd.DataFrame.from_dict(self.experiment_results))
             self.next(self.end)

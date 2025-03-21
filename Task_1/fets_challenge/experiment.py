@@ -73,11 +73,6 @@ def run_challenge_experiment(aggregation_function,
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function)
 
-    # [TODO] Handle the storing of data in the fets flow (add db_sotre_rounds aggregator private attribute)
-    # overrides = {
-    #     'aggregator.settings.db_store_rounds': db_store_rounds,
-    # }
-
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
 
     collaborators = []
@@ -140,19 +135,9 @@ def run_challenge_experiment(aggregation_function,
     flflow.run()
 
     # #TODO [Workflow - API] -> Commenting as pretrained model is not used.
-    # ---> Define a new step in federated flow before training to load the pretrained model
     # if use_pretrained_model:
-    #     print('TESTING ->>>>>> Loading pretrained model...')
     #     if device == 'cpu':
     #         checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth',map_location=torch.device('cpu'))
-    #         print('TESTING ->>>>>> Loading checkpoint model...')
-    #         print(checkpoint.keys())
-    #         print('TESTING ->>>>>> Loading checkpoint state dict...')
-    #         model_state = checkpoint['model_state_dict']
-    #         for name, tensor in model_state.items():
-    #             print(f"Priting {name}: {tensor.shape}")
-    #         print('TESTING ->>>>>> Loading taskrunner model')
-    #         print(task_runner.model)    
     #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
     #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     #     else:
