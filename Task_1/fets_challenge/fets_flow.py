@@ -219,7 +219,15 @@ class FeTSFederatedFlow(FLSpec):
 
         print(f'Times per collaborator for round {self.current_round}: {self.times_per_collaborator}')
         if self.restored is False:
-            self.agg_tensor_dict = self.fets_model.get_tensor_dict()
+            tensor_dict = self.fets_model.get_tensor_dict()
+            for key, value in tensor_dict.items():
+                origin = 'collaborator'
+                round_number = self.current_round
+                report = False
+                tags = ('trained')
+                agg_tensor_key = TensorKey(key, origin, round_number, report, tags)
+
+                self.agg_tensor_dict[agg_tensor_key] = value
         self.next(self.aggregated_model_validation)
 
     @collaborator
