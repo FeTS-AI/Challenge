@@ -529,7 +529,7 @@ include_validation_with_hausdorff=False #TODO change it to True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
+brats_training_data_parent_dir = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -572,7 +572,7 @@ for source_file in files_to_copy:
     shutil.copy2(source_file, destination_file)
 try:
     os.chdir(working_directory)
-    logger.info("Directory changed to:", os.getcwd())
+    logger.info(f"Directory changed to : {os.getcwd()}")
 except FileNotFoundError:
     logger.info("Error: Directory not found.")
 except PermissionError:
@@ -605,7 +605,7 @@ checkpoint_folder = run_challenge_experiment(
 
 #checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
+data_path = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish

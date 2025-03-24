@@ -20,17 +20,16 @@ Please ask any additional questions in our discussion pages on our github site a
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
 4. ```git lfs pull```
-5. Create virtual environment (python 3.6-3.8): using Anaconda, a new environment can be created and activated using the following commands: 
+5. Create virtual environment (python 3.8-3.13): using python venv, a new environment can be created and activated using the following commands:
     ```sh
     ## create venv in specific path
-    conda create -p ./venv python=3.7 -y
-    conda activate ./venv
+    python -m venv venv
+    source venv/bin/activate
     ```
 6. ```pip install --upgrade pip```
-7. Install Pytorch LTS (1.8.2) for your system (use CUDA 11):
-   ```pip3 install torch==1.8.2 torchvision==0.9.2 torchaudio==0.8.2 --extra-index-url https://download.pytorch.org/whl/lts/1.8/cu111```
-*Note all previous versions of pytorch can be found in [these instructions]([https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/previous-versions/))
-9. Set the environment variable `SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
+7. Install dependent pip libraries:
+   ```pip install -r requirements.txt```
+9. Set the environment variable `export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True` (to avoid sklearn deprecation error)
 10. ```pip install .``` 
 > * _Note: if you run into ```ERROR: Failed building wheel for SimpleITK```, try running ```pip install SimpleITK --only-binary :all:``` then rerunning ```pip install .```_
 10. ```python FeTS_Challenge.py```

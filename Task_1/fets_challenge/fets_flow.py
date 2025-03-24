@@ -42,7 +42,9 @@ def cache_tensor_dict(tensor_dict, agg_tensor_db, idx, agg_out_dict):
     agg_tensor_db.cache_tensor(agg_out_dict)
 
 def return_cleanup_key(tensor_key, col, round_data_to_delete):
-    new_tags = change_tags(tensor_key.tags, remove_field=col)
+    new_tags = tensor_key.tags
+    if col in tensor_key.tags:
+        new_tags = change_tags(tensor_key.tags, remove_field=col)
     modified_key = TensorKey(
         tensor_name=tensor_key.tensor_name,
         origin=col,
@@ -401,7 +403,7 @@ class FeTSFederatedFlow(FLSpec):
         # update metrics and results
         summary = ""
         round_dice = 0
-        update_metrics(self.current_round, agg_tensor_db, summary. self.experiment_results, 
+        update_metrics(self.current_round, agg_tensor_db, summary, self.experiment_results, 
                         self.include_validation_with_hausdorff, self.total_simulated_time, round_dice, projected_auc)
 
         if self.best_dice < round_dice:
