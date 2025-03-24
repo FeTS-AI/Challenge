@@ -54,58 +54,76 @@ def return_cleanup_key(tensor_key, col, round_data_to_delete):
     )
     return modified_key
 
-def get_aggregated_dict_with_tensorname(agg_tensor_dict):
+def get_aggregated_dict_with_tensorname(agg_tensor_dict, current_round=0):
     agg_dict_with_tensornames = {}
     for tensor_key, value in agg_tensor_dict.items():
-        tensor_name, origin, round_number, report, tags = tensor_key
-        agg_dict_with_tensornames[tensor_name] = value
+        print(f"Tags : {tensor_key.tags}")
+        if 'aggregated' in tensor_key.tags or current_round == 0:
+            tensor_name, origin, round_number, report, tags = tensor_key
+            print(f"Tensor Name : {tensor_name}")
+            agg_dict_with_tensornames[tensor_name] = value
     return agg_dict_with_tensornames
 
 def update_metrics(current_round, agg_tensor_db, summary, experiment_results, include_validation_with_hausdorff, 
+<<<<<<< HEAD
+                   total_simulated_time, projected_auc):
+=======
                    total_simulated_time, round_dice, projected_auc):
+>>>>>>> 74cc059... Fixed typo
 
-        round_loss = get_metric('valid_loss', current_round, agg_tensor_db)
-        round_dice = get_metric('valid_dice', current_round, agg_tensor_db)
-        dice_label_0 = get_metric('valid_dice_per_label_0', current_round, agg_tensor_db)
-        dice_label_1 = get_metric('valid_dice_per_label_1', current_round, agg_tensor_db)
-        dice_label_2 = get_metric('valid_dice_per_label_2', current_round, agg_tensor_db)
-        dice_label_4 = get_metric('valid_dice_per_label_4', current_round, agg_tensor_db)
-        if include_validation_with_hausdorff:
-            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', current_round, agg_tensor_db)
-            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', current_round, agg_tensor_db)
-            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', current_round, agg_tensor_db)
-            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', current_round, agg_tensor_db)
+    round_loss = get_metric('valid_loss', current_round, agg_tensor_db)
+    round_dice = get_metric('valid_dice', current_round, agg_tensor_db)
+    dice_label_0 = get_metric('valid_dice_per_label_0', current_round, agg_tensor_db)
+    dice_label_1 = get_metric('valid_dice_per_label_1', current_round, agg_tensor_db)
+    dice_label_2 = get_metric('valid_dice_per_label_2', current_round, agg_tensor_db)
+    dice_label_4 = get_metric('valid_dice_per_label_4', current_round, agg_tensor_db)
+    if include_validation_with_hausdorff:
+        hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', current_round, agg_tensor_db)
+        hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', current_round, agg_tensor_db)
+        hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', current_round, agg_tensor_db)
+        hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', current_round, agg_tensor_db)
+<<<<<<< HEAD
+    
+    # # End of round summary
+=======
         
-        # # End of round summary
-        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(current_round)
-        summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
-        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tRound Loss: {}".format(round_loss)
-        summary += "\n\tRound Dice: {}".format(round_dice)
-        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-        if include_validation_with_hausdorff:
-            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
-        logger.info(summary)
+    # End of round summary
+>>>>>>> 74cc059... Fixed typo
+    summary = '"**** END OF ROUND {} SUMMARY *****"'.format(current_round)
+    summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
+    summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
+    summary += "\n\tRound Loss: {}".format(round_loss)
+    summary += "\n\tRound Dice: {}".format(round_dice)
+    summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+    summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+    summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+    summary += "\n\tDICE Label 4: {}".format(dice_label_4)
+    if include_validation_with_hausdorff:
+        summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+        summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+        summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+        summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+    logger.info(summary)
 
-        experiment_results['round'].append(current_round)
-        experiment_results['time'].append(total_simulated_time)
-        experiment_results['convergence_score'].append(projected_auc)
-        experiment_results['round_dice'].append(round_dice)
-        experiment_results['dice_label_0'].append(dice_label_0)
-        experiment_results['dice_label_1'].append(dice_label_1)
-        experiment_results['dice_label_2'].append(dice_label_2)
-        experiment_results['dice_label_4'].append(dice_label_4)
-        if include_validation_with_hausdorff:
-            experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-            experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-            experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-            experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+    experiment_results['round'].append(current_round)
+    experiment_results['time'].append(total_simulated_time)
+    experiment_results['convergence_score'].append(projected_auc)
+    experiment_results['round_dice'].append(round_dice)
+    experiment_results['dice_label_0'].append(dice_label_0)
+    experiment_results['dice_label_1'].append(dice_label_1)
+    experiment_results['dice_label_2'].append(dice_label_2)
+    experiment_results['dice_label_4'].append(dice_label_4)
+    if include_validation_with_hausdorff:
+        experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+        experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+        experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+        experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+<<<<<<< HEAD
+
+    return summary, round_dice
+=======
+    return round_dice
+>>>>>>> 74cc059... Fixed typo
 
 collaborator_data_loaders = {}
 
@@ -115,7 +133,7 @@ class FeTSFederatedFlow(FLSpec):
         self.fets_model = fets_model
         self.n_rounds = rounds
         self.device = device
-        self.current_round = 1
+        self.current_round = 0
         self.total_simulated_time = 0
         self.best_dice = -1.0
         self.best_dice_over_time_auc = 0
@@ -163,7 +181,6 @@ class FeTSFederatedFlow(FLSpec):
                 logger.warning(f'Could not find provided checkpoint folder: {self.restore_from_checkpoint_folder}. Exiting...')
                 exit(1)
             else:
-                #TODO : Validate load from checkpoint logic
                 logger.info(f'Attempting to load last completed round from {self.restore_from_checkpoint_folder}')
                 state = load_checkpoint(self.restore_from_checkpoint_folder)
                 self.checkpoint_folder = self.restore_from_checkpoint_folder
@@ -188,20 +205,18 @@ class FeTSFederatedFlow(FLSpec):
                 #Updating the agg_tensor_dict from stored tensor_db
                 starting_round_num += 1
                 self.current_round = starting_round_num
-                logger.info(f'Loading checkpoint from round {self.tensor_keys_per_col}')
                 for col,tensor_keys in self.tensor_keys_per_col.items():
                     for tensor_key in tensor_keys:
                         tensor_name, _, _, _, _ = tensor_key
                         if tensor_name not in self.agg_tensor_dict:
                             self.agg_tensor_dict[tensor_key] = aggregator_tensor_db.get_tensor_from_cache(tensor_key)
-                            logger.info(f'Loaded tensor key {tensor_key}')
 
         if self.current_round >= self.n_rounds:
             logger.info("Experiment already completed. Exiting...")
             self.next(self.end)
-                        
-        self.collaborator_time_stats = gen_collaborator_time_stats(self.collaborator_names)
-        self.next(self.fetch_parameters_for_colls)
+        else:                        
+            self.collaborator_time_stats = gen_collaborator_time_stats(self.collaborator_names)
+            self.next(self.fetch_parameters_for_colls)
     
     @aggregator
     def fetch_parameters_for_colls(self):
@@ -235,7 +250,7 @@ class FeTSFederatedFlow(FLSpec):
         
         logger.info('Collaborators chosen to train for round {}:\n\t{}'.format(self.current_round, self.training_collaborators))
         self.collaborators_chosen_each_round[self.current_round] = self.training_collaborators
-        if self.current_round == 1 or self.restored is True:
+        if self.current_round == 0 or self.restored is True:
             self.next(self.initialize_colls, foreach='collaborators')
             self.restored = False
         else:
@@ -275,8 +290,6 @@ class FeTSFederatedFlow(FLSpec):
         logger.info(f'Initializing dataloaders for collaborator {self.input}')
         collaborator_data_loaders[self.input] = FeTSDataLoader(train_loader, val_loader)
 
-
-        #TODO Validate the times per collaborator is calculated based on the random values, it doesn't look like the actual time taken by the collaborator 
         self.times_per_collaborator = compute_times_per_collaborator(self.input,
                                                                     self.training_collaborators,
                                                                     self.hparam_dict['epochs_per_round'],
@@ -299,7 +312,7 @@ class FeTSFederatedFlow(FLSpec):
     @collaborator
     def aggregated_model_validation(self):
         logger.info(f'Performing aggregated model validation for collaborator {self.input}')
-        input_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict)
+        input_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict, self.current_round)
         val_loader = collaborator_data_loaders[self.input].get_valid_loader()
         self.fets_model.rebuild_model(self.current_round, input_tensor_dict)
         self.agg_valid_dict, _ = self.fets_model.validate(self.input, self.current_round, val_loader, apply="global")
@@ -330,9 +343,11 @@ class FeTSFederatedFlow(FLSpec):
         if self.current_round > self.db_store_rounds:
             round_data_to_delete = self.current_round - self.db_store_rounds
         self.aggregation_type.set_state_data_for_round(self.collaborators_chosen_each_round, self.collaborator_times_per_round)
+
         agg_tensor_db = TensorDB()
         collaborator_weights_unnormalized = {}
         times_per_collaborator = {}
+        cache_tensor_dict(self.agg_tensor_dict, agg_tensor_db, 0, {})
         for idx, col in enumerate(inputs):
             logger.info(f'Aggregating results for {idx}')
             agg_out_dict = {}
@@ -343,8 +358,6 @@ class FeTSFederatedFlow(FLSpec):
             
             # Store the keys for each collaborator
             self.tensor_keys_per_col[str(idx + 1)] = list(agg_out_dict.keys())
-            
-            #TODO : Compare the weight from the old expermient, we saw three different sets of weights while running the experiment for single round
             collaborator_weights_unnormalized[col.input] = col.collaborator_task_weight
             times_per_collaborator[col.input] = col.times_per_collaborator
 
@@ -360,29 +373,34 @@ class FeTSFederatedFlow(FLSpec):
                 if col in tags:
                     new_tags = change_tags(tags, remove_field=col)
                     agg_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
-                    # Aggregates the tensor values for the tensor key and stores it in tensor_db
-                    if agg_tensor_key not in self.agg_tensor_dict:
+                    # Aggregates the tensor values for the tensor key and stores it in tensor_db. Checks if the tensor is already in tensor_db
+                    if agg_tensor_db.get_tensor_from_cache(agg_tensor_key) is None:
                         agg_results = agg_tensor_db.get_aggregated_tensor(
                             agg_tensor_key,
                             collaborator_weight_dict,
                             aggregation_function=self.aggregation_type,
                         )
-                        self.agg_tensor_dict[agg_tensor_key] = agg_tensor_db.get_tensor_from_cache(agg_tensor_key)
-                        agg_tensor_keys.append(agg_tensor_key)
+                        agg_tag_tk = TensorKey(tensor_name, origin, round_number, report, ("aggregated",))
+                        agg_tensor_db.cache_tensor({agg_tag_tk: agg_results})
+                        # self.agg_tensor_dict[agg_tag_tk] = agg_results
+                        # self.agg_tensor_dict[agg_tensor_key] = agg_results
+                        # agg_tensor_keys.append(agg_tensor_key)
+                        # agg_tensor_keys.append(agg_tag_tk)
 
                 #cleaningup aggregated tensor dict based on db store rounds
-                if self.current_round > self.db_store_rounds:
-                    col_tensor_key_to_be_deleted = return_cleanup_key(tensor_key, col, round_data_to_delete)
-                    agg_tensor_key_to_be_deleted = TensorKey(tensor_name, origin, round_data_to_delete, report, new_tags)
-                    if col_tensor_key_to_be_deleted in self.agg_tensor_dict:
-                        self.agg_tensor_dict.pop(col_tensor_key_to_be_deleted)
-                    if agg_tensor_key_to_be_deleted in self.agg_tensor_dict:
-                        self.agg_tensor_dict.pop(agg_tensor_key_to_be_deleted)
+                # if (self.current_round + 1) > self.db_store_rounds:
+                #     col_tensor_key_to_be_deleted = return_cleanup_key(tensor_key, col, round_data_to_delete)
+                #     agg_tensor_key_to_be_deleted = TensorKey(tensor_name, origin, round_data_to_delete, report, new_tags)
+                #     agg_tag_key = TensorKey(tensor_name, origin, round_number, report, ("aggregated",))
+                #     if col_tensor_key_to_be_deleted in self.agg_tensor_dict:
+                #         self.agg_tensor_dict.pop(col_tensor_key_to_be_deleted)
+                #     if agg_tensor_key_to_be_deleted in self.agg_tensor_dict:
+                #         self.agg_tensor_dict.pop(agg_tensor_key_to_be_deleted)
+                #     if agg_tag_key in self.agg_tensor_dict:
+                #         self.agg_tensor_dict.pop(agg_tag_key)
 
+        agg_tensor_db.clean_up(self.db_store_rounds)
         self.tensor_keys_per_col['aggregator'] = agg_tensor_keys
-
-        for key in self.agg_tensor_dict.keys():
-            print(f'[Kush Aggregated Tensor Dictionary] Keys : {key}')
 
         times_list = [(t, col) for col, t in times_per_collaborator.items()]
         times_list = sorted(times_list)
@@ -401,15 +419,21 @@ class FeTSFederatedFlow(FLSpec):
         projected_auc /= MAX_SIMULATION_TIME
 
         # update metrics and results
+<<<<<<< HEAD
+        #round_dice = 0
+        summary, round_dice = update_metrics(self.current_round, agg_tensor_db, self.experiment_results, 
+                        self.include_validation_with_hausdorff, self.total_simulated_time, projected_auc)
+=======
         summary = ""
         round_dice = 0
-        update_metrics(self.current_round, agg_tensor_db, summary, self.experiment_results, 
+        round_dice = update_metrics(self.current_round, agg_tensor_db, summary, self.experiment_results,
                         self.include_validation_with_hausdorff, self.total_simulated_time, round_dice, projected_auc)
+>>>>>>> 74cc059... Fixed typo
 
         if self.best_dice < round_dice:
             self.best_dice = round_dice
             # Set the weights for the final model
-            if self.current_round == 1:
+            if self.current_round == 0:
                 # here the initial model was validated (temp model does not exist)
                 logger.info(f'Skipping best model saving to disk as it is a random initialization.')
             elif not os.path.exists(f'checkpoint/{self.checkpoint_folder}/temp_model.pkl'):
@@ -419,12 +443,23 @@ class FeTSFederatedFlow(FLSpec):
                 shutil.copyfile(src=f'checkpoint/{self.checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{self.checkpoint_folder}/best_model.pkl')
                 logger.info(f'Saved model with best average binary DICE: {self.best_dice} to checkpoint/{self.checkpoint_folder}/best_model.pkl')
 
-        # cache the aggregated tensor_dict
-        cache_tensor_dict(self.agg_tensor_dict, agg_tensor_db, 0, {})
+        # Update the agg_tensor_dict for subsequent rounds with the aggregated tensor_db
+        self.agg_tensor_dict = {}
+        for _, record in agg_tensor_db.tensor_db.iterrows():
+            print(f'Record tensor_name {record["tensor_name"]}')
+            print(f'Record origin {record["origin"]}')
+            print(f'Record round {record["round"]}')
+            print(f'Record report {record["report"]}')
+            print(f'Record tags {record["tags"]}')
+
+            tensor_key = TensorKey(record["tensor_name"], record["origin"], record["round"], record["report"], record["tags"])
+            self.agg_tensor_dict[tensor_key] = record["nparray"]
+
+            print(f'************************')
 
         if self.save_checkpoints:
             logger.info(f'Saving checkpoint for round {self.current_round} : checkpoint folder {self.checkpoint_folder}')
-            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to \'{self.checkpoint_folder}\'')
+            logger.info(f'To resume from this checkpoint, set the restore_from_checkpoint_folder parameter to {self.checkpoint_folder}')
             save_checkpoint(self.checkpoint_folder, agg_tensor_db,
                             self.collaborator_names, self.runtime.collaborators,
                             self.current_round, self.collaborator_time_stats,
@@ -455,7 +490,8 @@ class FeTSFederatedFlow(FLSpec):
             self.fets_model.params = inputs[0].fets_model.params
 
         # Rebuild the model with the aggregated tensor_dict
-        local_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict)
+        local_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict, self.current_round)
+        print(f'Local Tensor Dict : {local_tensor_dict.keys()}')
         self.fets_model.rebuild_model(self.current_round, local_tensor_dict)
         self.fets_model.save_native(f'checkpoint/{self.checkpoint_folder}/temp_model.pkl')
         self.next(self.internal_loop)

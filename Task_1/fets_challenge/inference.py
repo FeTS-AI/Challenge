@@ -217,23 +217,14 @@ def model_outputs_to_disc(data_path,
     work = Path.cwd().resolve()
 
     generate_validation_csv(data_path,validation_csv, working_dir=work)
-    
-    # # overwrite datapath value for a single 'InferenceCol' collaborator
-    # plan.cols_data_paths['InferenceCol'] = data_path
-    
-    # # get the inference data loader
-    # data_loader = copy(plan).get_data_loader('InferenceCol')
-
-    # # get the task runner, passing the data loader
-    # task_runner = copy(plan).get_task_runner(data_loader)
     gandlf_config_path = os.path.join(root, 'config', 'gandlf_config.yaml')
-    fets_model = FeTSChallengeModel(gandlf_config_path)
+    fets_model = FeTSChallengeModel()
     val_csv_path = os.path.join(work, 'validation_paths.csv')
     gandlf_conf = ConfigManager(gandlf_config_path)
     (
         model,
         optimizer,
-        train_loader,
+        _,
         val_loader,
         scheduler,
         params,

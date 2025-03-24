@@ -337,7 +337,9 @@ def clipped_aggregation(local_tensors,
     
     # first, we need to determine how much each local update has changed the tensor from the previous value
     # we'll use the tensor_db search function to find the 
-    previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('model',), origin='aggregator')
+    previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('trained',), origin='aggregator')
+    logger.info(f"Tensor Values {previous_tensor_value}")
+    logger.info(f"Tensor Values Shape {previous_tensor_value.shape[0]}")
 
     if previous_tensor_value.shape[0] > 1:
         logger.info(previous_tensor_value)
@@ -436,6 +438,8 @@ def FedAvgM_Selection(local_tensors,
                 # Calculate aggregator's last value
                 previous_tensor_value = None
                 for _, record in tensor_db.iterrows():
+                    print(f'record tags {record["tags"]} record round {record["round"]} record tensor_name {record["tensor_name"]}')
+                    print(f'fl_round {fl_round} tensor_name {tensor_name}')
                     if (record['round'] == fl_round 
                         and record["tensor_name"] == tensor_name
                         and record["tags"] == ("aggregated",)): 
@@ -512,7 +516,7 @@ def FedAvgM_Selection(local_tensors,
 
 
 # change any of these you wish to your custom functions. You may leave defaults if you wish.
-aggregation_function = weighted_average_aggregation
+aggregation_function = FedAvgM_Selection
 choose_training_collaborators = all_collaborators_train
 training_hyper_parameters_for_round = constant_hyper_parameters
 
@@ -521,7 +525,7 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=False #TODO change it to True
+include_validation_with_hausdorff=True #TODO change it to True
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
@@ -529,7 +533,7 @@ include_validation_with_hausdorff=False #TODO change it to True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
+brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -545,6 +549,9 @@ rounds_to_train = 2 #TODO change it to 5 before merging
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
 save_checkpoints = True
+
+# (str) Determines the backend process to use for the experiment.(single_process, ray)
+backend_process = 'single_process'
 
 # path to previous checkpoint folder for experiment that was stopped before completion. 
 # Checkpoints are stored in ~/.local/workspace/checkpoint, and you should provide the experiment directory
@@ -582,14 +589,15 @@ checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
     training_hyper_parameters_for_round=training_hyper_parameters_for_round,
-    include_validation_with_hausdorff=include_validation_with_hausdorff,
     institution_split_csv_filename=institution_split_csv_filename,
     brats_training_data_parent_dir=brats_training_data_parent_dir,
     db_store_rounds=db_store_rounds,
     rounds_to_train=rounds_to_train,
     device=device,
     save_checkpoints=save_checkpoints,
-    restore_from_checkpoint_folder = restore_from_checkpoint_folder)
+    restore_from_checkpoint_folder = restore_from_checkpoint_folder,
+    include_validation_with_hausdorff=include_validation_with_hausdorff,
+    backend_process = backend_process)
 
 
 # ## Produce NIfTI files for best model outputs on the validation set
@@ -603,9 +611,8 @@ checkpoint_folder = run_challenge_experiment(
 # you will need to specify the correct experiment folder and the parent directory for
 # the data you want to run inference over (assumed to be the experiment that just completed)
 
-#checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
+data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData'
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
@@ -625,7 +632,6 @@ outputs_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 
 
 # Using this best model, we can now produce NIfTI files for model outputs 
 # using a provided data directory
-
 model_outputs_to_disc(data_path=data_path, 
                       validation_csv=validation_csv_filename,
                       output_path=outputs_path, 

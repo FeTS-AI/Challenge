@@ -37,15 +37,11 @@ class FeTSChallengeModel():
         device (str): Device for the model.
         training_round_completed (bool): Whether the training round has been
             completed.
-        required_tensorkeys_for_function (dict): Required tensorkeys for
-            function.
         tensor_dict_split_fn_kwargs (dict): Keyword arguments for the tensor
             dict split function.
     """
 
-    def __init__(
-        self, gandlf_config_path
-    ):
+    def __init__(self):
         """Initializes the GaNDLFTaskRunner object.
 
         Sets up the initial state of the GaNDLFTaskRunner object, initializing
@@ -65,7 +61,6 @@ class FeTSChallengeModel():
         self.device = None
 
         self.training_round_completed = False
-        self.required_tensorkeys_for_function = {}
         self.logger = getLogger(__name__)
 
         # FIXME: why isn't this initial call in runner_pt?
@@ -132,9 +127,6 @@ class FeTSChallengeModel():
             round_num,
             mode="validation",
         )
-
-        print(f"Validation loss: {epoch_valid_loss}")
-        print(f"Validation metric: {epoch_valid_metric}")
 
         origin = col_name
         suffix = 'validate'
@@ -452,9 +444,6 @@ def create_tensorkey_dicts(
         logger, tensor_dict, **tensor_dict_split_fn_kwargs
     )
 
-    # global_model_dict : [{x: np1}, {x1: np2}]
-    # global_tensorkey_model_dict : [{tk1: np1}, {tk2: np2}]
-
     # Create global tensorkeys
     global_tensorkey_model_dict = {
         TensorKey(tensor_name, origin, round_num, False, tags): nparray
@@ -502,6 +491,7 @@ def set_pt_model_from_tensor_dict(model, tensor_dict, device, with_opt_vars=Fals
     # Grabbing keys from model's state_dict helps to confirm we have
     # everything
     for k in model.state_dict():
+        #print(f" Fetching state for key = {k}  Value : {tensor_dict[k]}")
         new_state[k] = pt.from_numpy(tensor_dict.pop(k)).to(device)
 
     # set model state

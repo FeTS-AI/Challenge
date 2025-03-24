@@ -20,7 +20,7 @@ Please ask any additional questions in our discussion pages on our github site a
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
 4. ```git lfs pull```
-5. Create virtual environment (python 3.8-3.13): using python venv, a new environment can be created and activated using the following commands:
+5. Create virtual environment (python 3.10-3.13): using python venv, a new environment can be created and activated using the following commands:
     ```sh
     ## create venv in specific path
     python -m venv venv

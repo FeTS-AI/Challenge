@@ -54,7 +54,8 @@ def run_challenge_experiment(aggregation_function,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
                              include_validation_with_hausdorff=True,
-                             use_pretrained_model=False):
+                             use_pretrained_model=False,
+                             backend_process='single_process'):
 
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
@@ -112,18 +113,18 @@ def run_challenge_experiment(aggregation_function,
                             db_store_rounds=db_store_rounds)
 
     local_runtime = LocalRuntime(
-        aggregator=aggregator, collaborators=collaborators, backend="single_process", num_actors=1
+        aggregator=aggregator, collaborators=collaborators, backend=backend_process, num_actors=1
     )
 
     logger.info(f"Local runtime collaborators = {local_runtime.collaborators}")
 
     params_dict = {"include_validation_with_hausdorff": include_validation_with_hausdorff,
-              "choose_training_collaborators": choose_training_collaborators,  #TODO verify with different collaborators and check if works?
+              "choose_training_collaborators": choose_training_collaborators,
               "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
               "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
               "save_checkpoints": save_checkpoints}
 
-    model = FeTSChallengeModel(gandlf_config_path)
+    model = FeTSChallengeModel()
     flflow = FeTSFederatedFlow(
         model,
         params_dict,
@@ -144,13 +145,4 @@ def run_challenge_experiment(aggregation_function,
     #         checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth')
     #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
     #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-    # # Initialize model weights
-    # #TODO [Workflow - API] How to set the initial state in the workflow -> check if it needed to be done in workflow
-    # init_state_path = plan.config['aggregator']['settings']['init_state_path']
-    # tensor_dict, _ = split_tensor_dict_for_holdouts(logger, task_runner.get_tensor_dict(False))
-    # model_snap = utils.construct_model_proto(tensor_dict=tensor_dict,
-    #                                          round_number=0,
-    #                                          tensor_pipe=tensor_pipe)
-    # utils.dump_proto(model_proto=model_snap, fpath=init_state_path)
     return aggregator.private_attributes["checkpoint_folder"]

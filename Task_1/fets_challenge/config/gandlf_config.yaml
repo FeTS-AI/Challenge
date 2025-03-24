@@ -56,7 +56,7 @@ scaling_factor: 1
 scheduler:
   type: triangle_modified
 track_memory_usage: false
-verbose: false
+verbose: True
 version:
   maximum: 0.1.0
   minimum: 0.0.14
