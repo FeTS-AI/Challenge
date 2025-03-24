@@ -340,7 +340,7 @@ def clipped_aggregation(local_tensors,
     previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('model',), origin='aggregator')
 
     if previous_tensor_value.shape[0] > 1:
-        print(previous_tensor_value)
+        logger.info(previous_tensor_value)
         raise ValueError(f'found multiple matching tensors for {tensor_name}, tags=(model,), origin=aggregator')
 
     if previous_tensor_value.shape[0] < 1:
@@ -529,7 +529,7 @@ include_validation_with_hausdorff=False #TODO change it to True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
+brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData' #TODO revert to '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData' before raising the PR
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -565,18 +565,18 @@ source_pattern = os.path.join(source_dir, pattern)
 files_to_copy = glob.glob(source_pattern)
 
 if not files_to_copy:
-    print(f"No files found matching pattern: {pattern}")
+    logger.info(f"No files found matching pattern: {pattern}")
 
 for source_file in files_to_copy:
     destination_file = os.path.join(working_directory, os.path.basename(source_file))
     shutil.copy2(source_file, destination_file)
 try:
     os.chdir(working_directory)
-    print("Directory changed to:", os.getcwd())
+    logger.info("Directory changed to:", os.getcwd())
 except FileNotFoundError:
-    print("Error: Directory not found.")
+    logger.info("Error: Directory not found.")
 except PermissionError:
-    print("Error: Permission denied")
+    logger.info("Error: Permission denied")
 
 checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
@@ -605,7 +605,7 @@ checkpoint_folder = run_challenge_experiment(
 
 #checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_tbanda/code/fedAI/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
+data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData' #TODO revert to '/home/brats/MICCAI_FeTS2022_ValidationData' before raising the PR
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish

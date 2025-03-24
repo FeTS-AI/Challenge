@@ -17,7 +17,7 @@ output_dir: '.'
 metrics:
 - dice
 - dice_per_label
-#- hd95_per_label
+- hd95_per_label
 model:
   amp: true
   architecture: resunet        

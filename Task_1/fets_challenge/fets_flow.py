@@ -59,6 +59,52 @@ def get_aggregated_dict_with_tensorname(agg_tensor_dict):
         agg_dict_with_tensornames[tensor_name] = value
     return agg_dict_with_tensornames
 
+def update_metrics(current_round, agg_tensor_db, summary, experiment_results, include_validation_with_hausdorff, 
+                   total_simulated_time, round_dice, projected_auc):
+
+        round_loss = get_metric('valid_loss', current_round, agg_tensor_db)
+        round_dice = get_metric('valid_dice', current_round, agg_tensor_db)
+        dice_label_0 = get_metric('valid_dice_per_label_0', current_round, agg_tensor_db)
+        dice_label_1 = get_metric('valid_dice_per_label_1', current_round, agg_tensor_db)
+        dice_label_2 = get_metric('valid_dice_per_label_2', current_round, agg_tensor_db)
+        dice_label_4 = get_metric('valid_dice_per_label_4', current_round, agg_tensor_db)
+        if include_validation_with_hausdorff:
+            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', current_round, agg_tensor_db)
+            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', current_round, agg_tensor_db)
+            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', current_round, agg_tensor_db)
+            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', current_round, agg_tensor_db)
+        
+        # # End of round summary
+        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(current_round)
+        summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
+        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
+        summary += "\n\tRound Loss: {}".format(round_loss)
+        summary += "\n\tRound Dice: {}".format(round_dice)
+        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
+        if include_validation_with_hausdorff:
+            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+        logger.info(summary)
+
+        experiment_results['round'].append(current_round)
+        experiment_results['time'].append(total_simulated_time)
+        experiment_results['convergence_score'].append(projected_auc)
+        experiment_results['round_dice'].append(round_dice)
+        experiment_results['dice_label_0'].append(dice_label_0)
+        experiment_results['dice_label_1'].append(dice_label_1)
+        experiment_results['dice_label_2'].append(dice_label_2)
+        experiment_results['dice_label_4'].append(dice_label_4)
+        if include_validation_with_hausdorff:
+            experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+            experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+            experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+            experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+
 collaborator_data_loaders = {}
 
 class FeTSFederatedFlow(FLSpec):
@@ -123,7 +169,7 @@ class FeTSFederatedFlow(FLSpec):
                 [loaded_collaborator_names, starting_round_num, self.collaborator_time_stats,
                 self.total_simulated_time, self.best_dice, self.best_dice_over_time_auc,
                 self.collaborators_chosen_each_round, self.collaborator_times_per_round,
-                self.experiment_results, summary, agg_tensor_db] = state
+                self.tensor_keys_per_col, self.experiment_results, summary, agg_tensor_db] = state
 
                 if loaded_collaborator_names != self.collaborator_names:
                     logger.error(f'Collaborator names found in checkpoint ({loaded_collaborator_names}) '
@@ -134,18 +180,24 @@ class FeTSFederatedFlow(FLSpec):
                 logger.info(f'Previous summary for round {starting_round_num}')
                 logger.info(summary)
 
+                aggregator_tensor_db = TensorDB()
+                aggregator_tensor_db.tensor_db = agg_tensor_db
+
                 #Updating the agg_tensor_dict from stored tensor_db
                 starting_round_num += 1
                 self.current_round = starting_round_num
+                logger.info(f'Loading checkpoint from round {self.tensor_keys_per_col}')
                 for col,tensor_keys in self.tensor_keys_per_col.items():
                     for tensor_key in tensor_keys:
-                        tensor_name, origin, round_number, report, tags = tensor_key
-                        if 'trained' in tags:
-                            new_tags = change_tags(tags, remove_field=col)
-                            new_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
-                            if tensor_name not in self.agg_tensor_dict:
-                                self.agg_tensor_dict[new_tensor_key] = agg_tensor_db.get_tensor_from_cache(new_tensor_key)
+                        tensor_name, _, _, _, _ = tensor_key
+                        if tensor_name not in self.agg_tensor_dict:
+                            self.agg_tensor_dict[tensor_key] = aggregator_tensor_db.get_tensor_from_cache(tensor_key)
+                            logger.info(f'Loaded tensor key {tensor_key}')
 
+        if self.current_round >= self.n_rounds:
+            logger.info("Experiment already completed. Exiting...")
+            self.next(self.end)
+                        
         self.collaborator_time_stats = gen_collaborator_time_stats(self.collaborator_names)
         self.next(self.fetch_parameters_for_colls)
     
@@ -170,7 +222,7 @@ class FeTSFederatedFlow(FLSpec):
         self.hparam_dict['learning_rate'] = learning_rate
         self.hparam_dict['epochs_per_round'] = epochs_per_round
 
-        print(f'Hyperparameters for round {self.current_round}: {self.hparam_dict}')
+        logger.info(f'Hyperparameters for round {self.current_round}: {self.hparam_dict}')
 
         # pick collaborators to train for the round
         self.training_collaborators = self.choose_training_collaborators(self.collaborator_names,
@@ -183,6 +235,7 @@ class FeTSFederatedFlow(FLSpec):
         self.collaborators_chosen_each_round[self.current_round] = self.training_collaborators
         if self.current_round == 1 or self.restored is True:
             self.next(self.initialize_colls, foreach='collaborators')
+            self.restored = False
         else:
             self.next(self.aggregated_model_validation, foreach='training_collaborators')
 
@@ -229,7 +282,6 @@ class FeTSFederatedFlow(FLSpec):
                                                                     self.collaborator_time_stats,
                                                                     self.current_round)
 
-        print(f'Times per collaborator for round {self.current_round}: {self.times_per_collaborator}')
         if self.restored is False:
             tensor_dict = self.fets_model.get_tensor_dict()
             for key, value in tensor_dict.items():
@@ -244,46 +296,26 @@ class FeTSFederatedFlow(FLSpec):
 
     @collaborator
     def aggregated_model_validation(self):
-        validation_start_time = time.time()
-        
         logger.info(f'Performing aggregated model validation for collaborator {self.input}')
         input_tensor_dict = get_aggregated_dict_with_tensorname(self.agg_tensor_dict)
         val_loader = collaborator_data_loaders[self.input].get_valid_loader()
         self.fets_model.rebuild_model(self.current_round, input_tensor_dict)
         self.agg_valid_dict, _ = self.fets_model.validate(self.input, self.current_round, val_loader, apply="global")
-        
-        validation_end_time = time.time()
-        self.aggregated_model_validation_time = validation_end_time - validation_start_time
-        print(f'Collaborator {self.input} took {self.aggregated_model_validation_time} seconds for agg validation')
         self.next(self.train)
 
     @collaborator
     def train(self):
-        training_start_time = time.time()
-
         logger.info(f'Performing training for collaborator {self.input}')
         train_loader = collaborator_data_loaders[self.input].get_train_loader()
         self.global_output_tensor_dict, _ =  self.fets_model.train(self.input, self.current_round, self.hparam_dict, train_loader)
-        
         self.collaborator_task_weight = collaborator_data_loaders[self.input].get_train_data_size()
-
-        print(f'Collaborator task weight in training: {self.collaborator_task_weight}')
-        training_end_time = time.time()
-        self.training_time = training_end_time - training_start_time
-        print(f'Collaborator {self.input} took {self.training_time} seconds for training')
         self.next(self.local_model_validation)
 
     @collaborator
-    def local_model_validation(self):
-        validation_start_time = time.time()
-        
+    def local_model_validation(self):        
         logger.info(f'Performing local model validation for collaborator {self.input}')
         val_loader = collaborator_data_loaders[self.input].get_valid_loader()
         self.local_valid_dict, _ = self.fets_model.validate(self.input, self.current_round, val_loader, apply="local")
-        
-        validation_end_time = time.time()
-        self.local_model_validation_time = validation_end_time - validation_start_time
-        print(f'Collaborator {self.input} took {self.local_model_validation_time} seconds for local validation')
         self.next(self.join)
 
     @aggregator
@@ -305,37 +337,37 @@ class FeTSFederatedFlow(FLSpec):
             cache_tensor_dict(col.local_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.agg_valid_dict, agg_tensor_db, idx, agg_out_dict)
             cache_tensor_dict(col.global_output_tensor_dict, agg_tensor_db, idx, agg_out_dict)            
-            self.agg_tensor_dict.update(col.local_valid_dict)
-            self.agg_tensor_dict.update(col.agg_valid_dict)
-            self.agg_tensor_dict.update(col.global_output_tensor_dict)
+            self.agg_tensor_dict.update(agg_out_dict)
+            
             # Store the keys for each collaborator
-            tensor_keys = []
-            for tensor_key in agg_out_dict.keys():
-                tensor_keys.append(tensor_key)
-                self.tensor_keys_per_col[str(idx + 1)] = tensor_keys
+            self.tensor_keys_per_col[str(idx + 1)] = list(agg_out_dict.keys())
+            
             #TODO : Compare the weight from the old expermient, we saw three different sets of weights while running the experiment for single round
-            # The collaborator data sizes for that task
             collaborator_weights_unnormalized[col.input] = col.collaborator_task_weight
             times_per_collaborator[col.input] = col.times_per_collaborator
-        print(f'Collaborator task weights: {collaborator_weights_unnormalized}')
-        print(f'Collaborator times: {times_per_collaborator}')
+
         weight_total = sum(collaborator_weights_unnormalized.values())
         collaborator_weight_dict = {
             k: v / weight_total for k, v in collaborator_weights_unnormalized.items()
         }
-        print(f'Calculated Collaborator weights: {collaborator_weight_dict}')
-        print("=" * 40)
+        logger.info(f'Calculated Collaborator weights: {collaborator_weight_dict} and and times: {times_per_collaborator}')
+        agg_tensor_keys = []
         for col,tensor_keys in self.tensor_keys_per_col.items():
             for tensor_key in tensor_keys:
                 tensor_name, origin, round_number, report, tags = tensor_key
-                new_tags = change_tags(tags, remove_field=col)
-                agg_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
-                # Aggregates the tensor values for the tensor key and stores it in tensor_db
-                agg_results = agg_tensor_db.get_aggregated_tensor(
-                    agg_tensor_key,
-                    collaborator_weight_dict,
-                    aggregation_function=self.aggregation_type,
-                )
+                if col in tags:
+                    new_tags = change_tags(tags, remove_field=col)
+                    agg_tensor_key = TensorKey(tensor_name, origin, round_number, report, new_tags)
+                    # Aggregates the tensor values for the tensor key and stores it in tensor_db
+                    if agg_tensor_key not in self.agg_tensor_dict:
+                        agg_results = agg_tensor_db.get_aggregated_tensor(
+                            agg_tensor_key,
+                            collaborator_weight_dict,
+                            aggregation_function=self.aggregation_type,
+                        )
+                        self.agg_tensor_dict[agg_tensor_key] = agg_tensor_db.get_tensor_from_cache(agg_tensor_key)
+                        agg_tensor_keys.append(agg_tensor_key)
+
                 #cleaningup aggregated tensor dict based on db store rounds
                 if self.current_round > self.db_store_rounds:
                     col_tensor_key_to_be_deleted = return_cleanup_key(tensor_key, col, round_data_to_delete)
@@ -344,18 +376,11 @@ class FeTSFederatedFlow(FLSpec):
                         self.agg_tensor_dict.pop(col_tensor_key_to_be_deleted)
                     if agg_tensor_key_to_be_deleted in self.agg_tensor_dict:
                         self.agg_tensor_dict.pop(agg_tensor_key_to_be_deleted)
-                self.agg_tensor_dict[agg_tensor_key] = agg_tensor_db.get_tensor_from_cache(agg_tensor_key)
-        round_loss = get_metric('valid_loss', self.current_round, agg_tensor_db)
-        round_dice = get_metric('valid_dice', self.current_round, agg_tensor_db)
-        dice_label_0 = get_metric('valid_dice_per_label_0', self.current_round, agg_tensor_db)
-        dice_label_1 = get_metric('valid_dice_per_label_1', self.current_round, agg_tensor_db)
-        dice_label_2 = get_metric('valid_dice_per_label_2', self.current_round, agg_tensor_db)
-        dice_label_4 = get_metric('valid_dice_per_label_4', self.current_round, agg_tensor_db)
-        if self.include_validation_with_hausdorff:
-            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', self.current_round, agg_tensor_db)
-            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', self.current_round, agg_tensor_db)
-            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', self.current_round, agg_tensor_db)
-            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', self.current_round, agg_tensor_db)
+
+        self.tensor_keys_per_col['aggregator'] = agg_tensor_keys
+
+        for key in self.agg_tensor_dict.keys():
+            print(f'[Kush Aggregated Tensor Dictionary] Keys : {key}')
 
         times_list = [(t, col) for col, t in times_per_collaborator.items()]
         times_list = sorted(times_list)
@@ -363,6 +388,21 @@ class FeTSFederatedFlow(FLSpec):
         # the round time is the max of the times_list
         round_time = max([t for t, _ in times_list])
         self.total_simulated_time += round_time
+
+        ## CONVERGENCE METRIC COMPUTATION
+        # update the auc score
+        self.best_dice_over_time_auc += self.best_dice * round_time
+
+        # project the auc score as remaining time * best dice
+        # this projection assumes that the current best score is carried forward for the entire week
+        projected_auc = (MAX_SIMULATION_TIME - self.total_simulated_time) * self.best_dice + self.best_dice_over_time_auc
+        projected_auc /= MAX_SIMULATION_TIME
+
+        # update metrics and results
+        summary = ""
+        round_dice = 0
+        update_metrics(self.current_round, agg_tensor_db, summary. self.experiment_results, 
+                        self.include_validation_with_hausdorff, self.total_simulated_time, round_dice, projected_auc)
 
         if self.best_dice < round_dice:
             self.best_dice = round_dice
@@ -377,46 +417,7 @@ class FeTSFederatedFlow(FLSpec):
                 shutil.copyfile(src=f'checkpoint/{self.checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{self.checkpoint_folder}/best_model.pkl')
                 logger.info(f'Saved model with best average binary DICE: {self.best_dice} to checkpoint/{self.checkpoint_folder}/best_model.pkl')
 
-        ## CONVERGENCE METRIC COMPUTATION
-        # update the auc score
-        self.best_dice_over_time_auc += self.best_dice * round_time
-
-        # project the auc score as remaining time * best dice
-        # this projection assumes that the current best score is carried forward for the entire week
-        projected_auc = (MAX_SIMULATION_TIME - self.total_simulated_time) * self.best_dice + self.best_dice_over_time_auc
-        projected_auc /= MAX_SIMULATION_TIME
-
-        # # End of round summary
-        summary = '"**** END OF ROUND {} SUMMARY *****"'.format(self.current_round)
-        summary += "\n\tSimulation Time: {} minutes".format(round(self.total_simulated_time / 60, 2))
-        summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tRound Loss: {}".format(round_loss)
-        summary += "\n\tRound Dice: {}".format(round_dice)
-        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-        if self.include_validation_with_hausdorff:
-            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
-        logger.info(summary)
-
-        self.experiment_results['round'].append(self.current_round)
-        self.experiment_results['time'].append(self.total_simulated_time)
-        self.experiment_results['convergence_score'].append(projected_auc)
-        self.experiment_results['round_dice'].append(round_dice)
-        self.experiment_results['dice_label_0'].append(dice_label_0)
-        self.experiment_results['dice_label_1'].append(dice_label_1)
-        self.experiment_results['dice_label_2'].append(dice_label_2)
-        self.experiment_results['dice_label_4'].append(dice_label_4)
-        if self.include_validation_with_hausdorff:
-            self.experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-            self.experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-            self.experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-            self.experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
-
+        # cache the aggregated tensor_dict
         cache_tensor_dict(self.agg_tensor_dict, agg_tensor_db, 0, {})
 
         if self.save_checkpoints:
@@ -429,6 +430,7 @@ class FeTSFederatedFlow(FLSpec):
                             self.best_dice_over_time_auc,
                             self.collaborators_chosen_each_round,
                             self.collaborator_times_per_round,
+                            self.tensor_keys_per_col,
                             self.experiment_results,
                             summary)
 
@@ -458,7 +460,7 @@ class FeTSFederatedFlow(FLSpec):
 
     @aggregator
     def internal_loop(self):
-        if self.current_round == self.n_rounds:
+        if self.current_round >= self.n_rounds:
             print('************* EXPERIMENT COMPLETED *************')
             print('Experiment results:')
             print(pd.DataFrame.from_dict(self.experiment_results))

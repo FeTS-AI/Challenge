@@ -230,7 +230,6 @@ class FeTSChallengeModel():
         epochs_per_round = int(hparams_dict.pop('epochs_per_round'))
         learning_rate = float(hparams_dict.pop('learning_rate'))
 
-        #self.rebuild_model(round_num, input_tensor_dict)
         # set to "training" mode
         self.model.train()
 
