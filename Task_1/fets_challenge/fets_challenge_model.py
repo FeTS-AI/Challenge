@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-"""GaNDLFTaskRunner module."""
+"""FeTS Challenge Model class for Federated Learning."""
 
 import os
 from copy import deepcopy
@@ -22,14 +22,12 @@ from openfl.utilities.split import split_tensor_dict_for_holdouts
 from logging import getLogger
 
 class FeTSChallengeModel():
-    """GaNDLF Model class for Federated Learning.
+    """FeTS Challenge Model class for Federated Learning.
 
     This class provides methods to manage and manipulate GaNDLF models in a
     federated learning context.
 
     Attributes:
-        build_model (function or class): Function or Class to build the model.
-        lambda_opt (function): Lambda function for the optimizer.
         model (Model): The built model.
         optimizer (Optimizer): Optimizer for the model.
         scheduler (Scheduler): Scheduler for the model.
@@ -46,12 +44,6 @@ class FeTSChallengeModel():
 
         Sets up the initial state of the GaNDLFTaskRunner object, initializing
         various components needed for the federated model.
-        Args:
-            gandlf_config (Union[str, dict], optional): GaNDLF configuration.
-                Can be a string (file path) or a dictionary. Defaults to None.
-            device (str, optional): Compute device. Defaults to None
-                (default="cpu").
-            **kwargs: Additional parameters to pass to the function.
         """
 
         self.model = None
@@ -60,11 +52,10 @@ class FeTSChallengeModel():
         self.params = None
         self.device = None
 
+        self.opt_treatment = "RESET"
+
         self.training_round_completed = False
         self.logger = getLogger(__name__)
-
-        # FIXME: why isn't this initial call in runner_pt?
-        #self.initialize_tensorkeys_for_functions(with_opt_vars=False)
 
         # overwrite attribute to account for one optimizer param (in every
         # child model that does not overwrite get and set tensordict) that is
@@ -72,12 +63,11 @@ class FeTSChallengeModel():
         self.tensor_dict_split_fn_kwargs = {}
         self.tensor_dict_split_fn_kwargs.update({"holdout_tensor_names": ["__opt_state_needed"]})
 
-    def rebuild_model(self, round_num, input_tensor_dict, validation=False):
+    def rebuild_model(self, input_tensor_dict, validation=False):
         """Parse tensor names and update weights of model. Handles the
         optimizer treatment.
 
         Args:
-            round_num: The current round number.
             input_tensor_dict (dict): The input tensor dictionary used to
                 update the weights of the model.
             validation (bool, optional): A flag indicating whether the model
@@ -86,28 +76,26 @@ class FeTSChallengeModel():
         Returns:
             None
         """
+        if self.opt_treatment == "RESET":
+            self.reset_opt_vars()
+            self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
+        elif (
+            self.training_round_completed
+            and self.opt_treatment == "CONTINUE_GLOBAL"
+            and not validation
+        ):
+            self.set_tensor_dict(input_tensor_dict, with_opt_vars=True)
+        else:
+            self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
 
-        self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
-
-        # if self.opt_treatment == "RESET":
-        #     self.reset_opt_vars()
-        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
-        # elif (
-        #     self.training_round_completed
-        #     and self.opt_treatment == "CONTINUE_GLOBAL"
-        #     and not validation
-        # ):
-        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=True)
-        # else:
-        #     self.set_tensor_dict(input_tensor_dict, with_opt_vars=False)
-
-    def validate(self, col_name, round_num, val_loader, use_tqdm=False, **kwargs):
+    def validate(self, col_name, round_num, input_tensor_dict,  val_loader, use_tqdm=False, **kwargs):
         """Validate.
         Run validation of the model on the local data.
         Args:
             col_name (str): Name of the collaborator.
             round_num (int): Current round number.
             input_tensor_dict (dict): Required input tensors (for model).
+            val_loader (DataLoader): Validation data loader.
             use_tqdm (bool, optional): Use tqdm to print a progress bar.
                 Defaults to False.
             **kwargs: Key word arguments passed to GaNDLF main_run.
@@ -116,7 +104,7 @@ class FeTSChallengeModel():
             output_tensor_dict (dict): Tensors to send back to the aggregator.
             {} (dict): Tensors to maintain in the local TensorDB.
         """
-        #self.rebuild_model(round_num, input_tensor_dict, validation=True)
+        self.rebuild_model(input_tensor_dict, validation=True)
         self.model.eval()
 
         epoch_valid_loss, epoch_valid_metric = validate_network(
@@ -166,7 +154,6 @@ class FeTSChallengeModel():
             output_tensor_dict (dict): Tensors to send back to the aggregator.
             {} (dict): Tensors to maintain in the local TensorDB.
         """
-        #self.rebuild_model(round_num, input_tensor_dict, validation=True)
         self.model.eval()
 
         epoch_inference_loss, epoch_inference_metric = validate_network(
@@ -201,7 +188,7 @@ class FeTSChallengeModel():
         # Empty list represents metrics that should only be stored locally
         return output_tensor_dict, {}
 
-    def train(self, col_name, round_num, hparams_dict, train_loader, use_tqdm=False, **kwargs):
+    def train(self, col_name, round_num, input_tensor_dict, hparams_dict, train_loader, use_tqdm=False, **kwargs):
         """Train batches.
         Train the model on the requested number of batches.
         Args:
@@ -224,6 +211,7 @@ class FeTSChallengeModel():
 
         # set to "training" mode
         self.model.train()
+        self.rebuild_model(input_tensor_dict)
 
         # Set the learning rate
         self.logger.info(f"Setting learning rate to {learning_rate}")
@@ -264,19 +252,6 @@ class FeTSChallengeModel():
             self.logger,
             self.tensor_dict_split_fn_kwargs,
         )
-
-        # Update the required tensors if they need to be pulled from the
-        # aggregator
-        # TODO this logic can break if different collaborators have different
-        # roles between rounds.
-        # For example, if a collaborator only performs validation in the first
-        # round but training in the second, it has no way of knowing the
-        # optimizer state tensor names to request from the aggregator because
-        # these are only created after training occurs. A work around could
-        # involve doing a single epoch of training on random data to get the
-        # optimizer names, and then throwing away the model.
-        #if self.opt_treatment == "CONTINUE_GLOBAL":
-        #    self.initialize_tensorkeys_for_functions(with_opt_vars=True)
 
         # This will signal that the optimizer values are now present,
         # and can be loaded when the model is rebuilt

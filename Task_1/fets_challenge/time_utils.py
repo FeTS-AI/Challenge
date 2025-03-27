@@ -146,11 +146,8 @@ def compute_times_per_collaborator(collaborator_name,
                                    collaborator_time_stats,
                                    round_num):
     np.random.seed(round_num)
-    #times = {}
-    #for col in collaborator_names:
     time = 0
 
-    print(f'Computing time for collaborator {collaborator_name}')
     # stats
     stats = collaborator_time_stats[collaborator_name]
 
@@ -159,9 +156,6 @@ def compute_times_per_collaborator(collaborator_name,
                                         scale=stats.download_speed_std)
     download_time = max(1, download_time)
     time += download_time
-
-    # data loader
-    #data = collaborator_data[collaborator_name]
 
     # validation time
     data_size = collaborator_data.get_valid_data_size()
@@ -194,6 +188,4 @@ def compute_times_per_collaborator(collaborator_name,
                                         scale=stats.upload_speed_std)
         upload_time = max(1, upload_time)
         time += upload_time
-        
-        #times[col] = time
     return time

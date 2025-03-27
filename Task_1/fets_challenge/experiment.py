@@ -20,27 +20,28 @@ from .fets_data_loader import FeTSDataLoader
 from openfl.experimental.workflow.interface import Aggregator, Collaborator
 from openfl.experimental.workflow.runtime import LocalRuntime
 
+from GANDLF.config_manager import ConfigManager
+
 logger = getLogger(__name__)
 # This catches PyTorch UserWarnings for CPU
 warnings.filterwarnings("ignore", category=UserWarning)
 
-def aggregator_private_attributes(
-       aggregation_type, collaborator_names, db_store_rounds):
-    return {"aggregation_type" : aggregation_type,
-            "collaborator_names": collaborator_names,
-            "checkpoint_folder":None,
-            "db_store_rounds":db_store_rounds
-}
- 
+def aggregator_private_attributes(aggregation_type, collaborator_names, db_store_rounds):
+    return {
+        "aggregation_type" : aggregation_type,
+        "collaborator_names": collaborator_names,
+        "checkpoint_folder":None,
+        "db_store_rounds":db_store_rounds,
+        "agg_tensor_dict":{}
+    }
 
-def collaborator_private_attributes(
-        index, gandlf_config, train_csv_path, val_csv_path):
-        return {
-            "index": index,
-            "gandlf_config": gandlf_config,
-            "train_csv_path": train_csv_path,
-            "val_csv_path": val_csv_path
-        }
+
+def collaborator_private_attributes(index, train_csv_path, val_csv_path):
+    return {
+        "index": index,
+        "train_csv_path": train_csv_path,
+        "val_csv_path": val_csv_path
+    }
 
 
 def run_challenge_experiment(aggregation_function,
@@ -70,11 +71,19 @@ def run_challenge_experiment(aggregation_function,
                                               0.8,
                                               gandlf_csv_path)
     
-    print(f'Collaborator names for experiment : {collaborator_names}')
+    logger.info(f'Collaborator names for experiment : {collaborator_names}')
 
     aggregation_wrapper = CustomAggregationWrapper(aggregation_function)
 
     transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+
+    gandlf_conf = {}
+    if isinstance(gandlf_config_path, str) and os.path.exists(gandlf_config_path):
+        gandlf_conf = ConfigManager(gandlf_config_path)
+    elif isinstance(gandlf_config_path, dict):
+        gandlf_conf = gandlf_config_path
+    else:
+        exit("GANDLF config file not found. Exiting...")
 
     collaborators = []
     for idx, col in enumerate(collaborator_names):
@@ -96,9 +105,8 @@ def run_challenge_experiment(aggregation_function,
                 # with ray backend with 2 collaborators
                 num_cpus=4.0,
                 num_gpus=0.0,
-                # arguments required to pass to callable
+                # private arguments required to pass to callable
                 index=idx,
-                gandlf_config=gandlf_config_path,
                 train_csv_path=train_csv_path,
                 val_csv_path=val_csv_path
             )
@@ -108,6 +116,7 @@ def run_challenge_experiment(aggregation_function,
                             private_attributes_callable=aggregator_private_attributes,
                             num_cpus=4.0,
                             num_gpus=0.0,
+                            # private arguments required to pass to callable
                             collaborator_names=collaborator_names,
                             aggregation_type=aggregation_wrapper,
                             db_store_rounds=db_store_rounds)
@@ -119,10 +128,12 @@ def run_challenge_experiment(aggregation_function,
     logger.info(f"Local runtime collaborators = {local_runtime.collaborators}")
 
     params_dict = {"include_validation_with_hausdorff": include_validation_with_hausdorff,
-              "choose_training_collaborators": choose_training_collaborators,
-              "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
-              "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
-              "save_checkpoints": save_checkpoints}
+                   "use_pretrained_model": use_pretrained_model,
+                   "gandlf_config": gandlf_conf,
+                    "choose_training_collaborators": choose_training_collaborators,
+                    "training_hyper_parameters_for_round": training_hyper_parameters_for_round,
+                    "restore_from_checkpoint_folder": restore_from_checkpoint_folder,
+                    "save_checkpoints": save_checkpoints}
 
     model = FeTSChallengeModel()
     flflow = FeTSFederatedFlow(
@@ -134,15 +145,4 @@ def run_challenge_experiment(aggregation_function,
 
     flflow.runtime = local_runtime
     flflow.run()
-
-    # #TODO [Workflow - API] -> Commenting as pretrained model is not used.
-    # if use_pretrained_model:
-    #     if device == 'cpu':
-    #         checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth',map_location=torch.device('cpu'))
-    #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
-    #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #     else:
-    #         checkpoint = torch.load(f'{root}/pretrained_model/resunet_pretrained.pth')
-    #         task_runner.model.load_state_dict(checkpoint['model_state_dict'])
-    #         task_runner.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     return aggregator.private_attributes["checkpoint_folder"]

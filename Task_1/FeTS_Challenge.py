@@ -336,25 +336,18 @@ def clipped_aggregation(local_tensors,
     clip_to_percentile = 80
     
     # first, we need to determine how much each local update has changed the tensor from the previous value
-    # we'll use the tensor_db search function to find the 
-    previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('trained',), origin='aggregator')
-    logger.info(f"Tensor Values {previous_tensor_value}")
-    logger.info(f"Tensor Values Shape {previous_tensor_value.shape[0]}")
+    # we'll use the tensor_db retrieve function to find the previous tensor value
+    previous_tensor_value = tensor_db.retrieve(tensor_name=tensor_name, origin='aggregator', fl_round=fl_round - 1, tags=('aggregated',))
 
-    if previous_tensor_value.shape[0] > 1:
-        logger.info(previous_tensor_value)
-        raise ValueError(f'found multiple matching tensors for {tensor_name}, tags=(model,), origin=aggregator')
-
-    if previous_tensor_value.shape[0] < 1:
+    if previous_tensor_value is None:
         # no previous tensor, so just return the weighted average
+        logger.info(f"previous_tensor_value is None")
         return weighted_average_aggregation(local_tensors,
                                             tensor_db,
                                             tensor_name,
                                             fl_round,
                                             collaborators_chosen_each_round,
                                             collaborator_times_per_round)
-
-    previous_tensor_value = previous_tensor_value.nparray.iloc[0]
 
     # compute the deltas for each collaborator
     deltas = [t.tensor - previous_tensor_value for t in local_tensors]
@@ -428,21 +421,20 @@ def FedAvgM_Selection(local_tensors,
             if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
                 #weight_speeds[tensor_name] = np.zeros_like(local_tensors[0].tensor) # weight_speeds[tensor_name] = np.zeros(local_tensors[0].tensor.shape)
                 tensor_db.store(
-                    tensor_name=tensor_name, 
+                    tensor_name=tensor_name,
                     tags=('weight_speeds',), 
                     nparray=np.zeros_like(local_tensors[0].tensor),
                 )
+
             return new_tensor_weight        
         else:
             if tensor_name.endswith("weight") or tensor_name.endswith("bias"):
                 # Calculate aggregator's last value
                 previous_tensor_value = None
                 for _, record in tensor_db.iterrows():
-                    print(f'record tags {record["tags"]} record round {record["round"]} record tensor_name {record["tensor_name"]}')
-                    print(f'fl_round {fl_round} tensor_name {tensor_name}')
-                    if (record['round'] == fl_round 
+                    if (record['round'] == fl_round - 1 # Fetching aggregated value for previous round
                         and record["tensor_name"] == tensor_name
-                        and record["tags"] == ("aggregated",)): 
+                        and record["tags"] == ('aggregated',)):
                         previous_tensor_value = record['nparray']
                         break
 
@@ -457,7 +449,7 @@ def FedAvgM_Selection(local_tensors,
                     
                     if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
                         tensor_db.store(
-                            tensor_name=tensor_name, 
+                            tensor_name=tensor_name,
                             tags=('weight_speeds',), 
                             nparray=np.zeros_like(local_tensors[0].tensor),
                         )
@@ -481,7 +473,7 @@ def FedAvgM_Selection(local_tensors,
                     new_tensor_weight_speed = momentum * tensor_weight_speed + average_deltas # fix delete (1-momentum)
                     
                     tensor_db.store(
-                        tensor_name=tensor_name, 
+                        tensor_name=tensor_name,
                         tags=('weight_speeds',), 
                         nparray=new_tensor_weight_speed
                     )
@@ -516,7 +508,7 @@ def FedAvgM_Selection(local_tensors,
 
 
 # change any of these you wish to your custom functions. You may leave defaults if you wish.
-aggregation_function = FedAvgM_Selection
+aggregation_function = weighted_average_aggregation
 choose_training_collaborators = all_collaborators_train
 training_hyper_parameters_for_round = constant_hyper_parameters
 
@@ -525,7 +517,7 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=True #TODO change it to True
+include_validation_with_hausdorff=True
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
@@ -533,18 +525,18 @@ include_validation_with_hausdorff=True #TODO change it to True
 institution_split_csv_filename = 'small_split.csv'
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
-db_store_rounds = 1 #TODO store the tensor db for these many rounds
+db_store_rounds = 1
 
 # this is passed to PyTorch, so set it accordingly for your system
 device = 'cpu'
 
 # you'll want to increase this most likely. You can set it as high as you like, 
 # however, the experiment will exit once the simulated time exceeds one week. 
-rounds_to_train = 2 #TODO change it to 5 before merging
+rounds_to_train = 5
 
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
@@ -612,7 +604,7 @@ checkpoint_folder = run_challenge_experiment(
 # the data you want to run inference over (assumed to be the experiment that just completed)
 
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/ad_kagrawa2/Data/MICCAI_FeTS2022_ValidationData'
+data_path = '/raid/datasets/FeTS22/MICCAI_FeTS2022_ValidationData'
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
