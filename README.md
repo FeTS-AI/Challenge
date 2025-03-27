@@ -27,7 +27,7 @@ This task utilizes decentralized testing across various sites of the FeTS initia
 
 The code is located in [paper_analysis](./paper_analysis/). Please follow these instructions to reproduce the analysis from our paper:
 
-1. Download the source data from TODO-ADDED-AFTER-PUBLICATION
+1. Download the source data from the article website (link will be added after publication).
 1. Clone repository:
       ```
       git clone https://github.com/FETS-AI/Challenge.git
