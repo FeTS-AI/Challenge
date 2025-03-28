@@ -15,6 +15,9 @@ import torch, torchio
 
 import openfl.native as fx
 from .gandlf_csv_adapter import construct_fedsim_csv
+from GANDLF.compute.generic import create_pytorch_objects
+from GANDLF.config_manager import ConfigManager
+from .fets_challenge_model import FeTSChallengeModel
 
 logger = getLogger(__name__)
 
@@ -206,8 +209,6 @@ def model_outputs_to_disc(data_path,
                           native_model_path,
                           outputtag='',
                           device='cpu'):
-
-    fx.init('fets_challenge_workspace')
     
     from sys import path, exit
     
@@ -215,37 +216,35 @@ def model_outputs_to_disc(data_path,
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
 
-    path.append(str(root))
-    path.insert(0, str(work))
-
     generate_validation_csv(data_path,validation_csv, working_dir=work)
-    
-    overrides = {
-        'task_runner.settings.device': device,
-        'task_runner.settings.val_csv': 'validation_paths.csv',
-        'task_runner.settings.train_csv': None,
-    }
-    
-    # Update the plan if necessary
-    plan = fx.update_plan(overrides)
-    plan.config['task_runner']['settings']['fets_config_dict']['save_output'] = True
-    plan.config['task_runner']['settings']['fets_config_dict']['output_dir'] = output_path
+    gandlf_config_path = os.path.join(root, 'config', 'gandlf_config.yaml')
+    fets_model = FeTSChallengeModel()
+    val_csv_path = os.path.join(work, 'validation_paths.csv')
+    gandlf_conf = ConfigManager(gandlf_config_path)
+    (
+        model,
+        optimizer,
+        _,
+        val_loader,
+        scheduler,
+        params,
+    ) = create_pytorch_objects(
+        gandlf_conf, train_csv=None, val_csv=val_csv_path, device=device
+    )
+    gandlf_conf['output_dir'] = output_path
+    gandlf_conf['save_output'] = True
+    fets_model.model = model
+    fets_model.optimizer = optimizer
+    fets_model.scheduler = scheduler
+    fets_model.params = params
+    fets_model.device = device
 
-    # overwrite datapath value for a single 'InferenceCol' collaborator
-    plan.cols_data_paths['InferenceCol'] = data_path
-    
-    # get the inference data loader
-    data_loader = copy(plan).get_data_loader('InferenceCol')
-
-    # get the task runner, passing the data loader
-    task_runner = copy(plan).get_task_runner(data_loader)
-    
     # Populate model weights
     device = torch.device(device)
-    task_runner.load_native(filepath=native_model_path, map_location=device)
-    task_runner.opt_treatment = 'RESET'
+    fets_model.load_native(filepath=native_model_path, map_location=device)
+    #task_runner.opt_treatment = 'RESET'
     
     logger.info('Starting inference using data from {}\n'.format(data_path))
     
-    task_runner.inference('aggregator',-1,task_runner.get_tensor_dict(),apply='global')
+    fets_model.inference('aggregator',-1,val_loader,apply='global')
     logger.info(f"\nFinished generating predictions to output folder {output_path}")

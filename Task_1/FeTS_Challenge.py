@@ -14,7 +14,10 @@
 
 import os
 import numpy as np
-
+from fets_challenge import model_outputs_to_disc
+from pathlib import Path
+import shutil
+import glob
 from fets_challenge import run_challenge_experiment
 
 
@@ -333,23 +336,18 @@ def clipped_aggregation(local_tensors,
     clip_to_percentile = 80
     
     # first, we need to determine how much each local update has changed the tensor from the previous value
-    # we'll use the tensor_db search function to find the 
-    previous_tensor_value = tensor_db.search(tensor_name=tensor_name, fl_round=fl_round, tags=('model',), origin='aggregator')
+    # we'll use the tensor_db retrieve function to find the previous tensor value
+    previous_tensor_value = tensor_db.retrieve(tensor_name=tensor_name, origin='aggregator', fl_round=fl_round - 1, tags=('aggregated',))
 
-    if previous_tensor_value.shape[0] > 1:
-        print(previous_tensor_value)
-        raise ValueError(f'found multiple matching tensors for {tensor_name}, tags=(model,), origin=aggregator')
-
-    if previous_tensor_value.shape[0] < 1:
+    if previous_tensor_value is None:
         # no previous tensor, so just return the weighted average
+        logger.info(f"previous_tensor_value is None")
         return weighted_average_aggregation(local_tensors,
                                             tensor_db,
                                             tensor_name,
                                             fl_round,
                                             collaborators_chosen_each_round,
                                             collaborator_times_per_round)
-
-    previous_tensor_value = previous_tensor_value.nparray.iloc[0]
 
     # compute the deltas for each collaborator
     deltas = [t.tensor - previous_tensor_value for t in local_tensors]
@@ -423,19 +421,20 @@ def FedAvgM_Selection(local_tensors,
             if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
                 #weight_speeds[tensor_name] = np.zeros_like(local_tensors[0].tensor) # weight_speeds[tensor_name] = np.zeros(local_tensors[0].tensor.shape)
                 tensor_db.store(
-                    tensor_name=tensor_name, 
+                    tensor_name=tensor_name,
                     tags=('weight_speeds',), 
                     nparray=np.zeros_like(local_tensors[0].tensor),
                 )
+
             return new_tensor_weight        
         else:
             if tensor_name.endswith("weight") or tensor_name.endswith("bias"):
                 # Calculate aggregator's last value
                 previous_tensor_value = None
                 for _, record in tensor_db.iterrows():
-                    if (record['round'] == fl_round 
+                    if (record['round'] == fl_round - 1 # Fetching aggregated value for previous round
                         and record["tensor_name"] == tensor_name
-                        and record["tags"] == ("aggregated",)): 
+                        and record["tags"] == ('aggregated',)):
                         previous_tensor_value = record['nparray']
                         break
 
@@ -450,7 +449,7 @@ def FedAvgM_Selection(local_tensors,
                     
                     if tensor_name not in tensor_db.search(tags=('weight_speeds',))['tensor_name']:    
                         tensor_db.store(
-                            tensor_name=tensor_name, 
+                            tensor_name=tensor_name,
                             tags=('weight_speeds',), 
                             nparray=np.zeros_like(local_tensors[0].tensor),
                         )
@@ -474,7 +473,7 @@ def FedAvgM_Selection(local_tensors,
                     new_tensor_weight_speed = momentum * tensor_weight_speed + average_deltas # fix delete (1-momentum)
                     
                     tensor_db.store(
-                        tensor_name=tensor_name, 
+                        tensor_name=tensor_name,
                         tags=('weight_speeds',), 
                         nparray=new_tensor_weight_speed
                     )
@@ -530,7 +529,7 @@ brats_training_data_parent_dir = '/raid/datasets/FeTS22/MICCAI_FeTS2022_Training
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
-db_store_rounds = 5
+db_store_rounds = 1
 
 # this is passed to PyTorch, so set it accordingly for your system
 device = 'cpu'
@@ -543,68 +542,88 @@ rounds_to_train = 5
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
 save_checkpoints = True
 
+# (str) Determines the backend process to use for the experiment.(single_process, ray)
+backend_process = 'single_process'
+
 # path to previous checkpoint folder for experiment that was stopped before completion. 
-# Checkpoints are stored in ~/.local/workspace/checkpoint, and you should provide the experiment directory 
+# Checkpoints are stored in ~/.local/workspace/checkpoint, and you should provide the experiment directory
 # relative to this path (i.e. 'experiment_1'). Please note that if you restore from a checkpoint, 
 # and save checkpoint is set to True, then the checkpoint you restore from will be subsequently overwritten.
 # restore_from_checkpoint_folder = 'experiment_1'
 restore_from_checkpoint_folder = None
 
+# infer participant home folder
+home = str(Path.home())
 
-# the scores are returned in a Pandas dataframe
-scores_dataframe, checkpoint_folder = run_challenge_experiment(
+#Creating working directory and copying the required csv files
+working_directory= os.path.join(home, '.local/workspace/')
+Path(working_directory).mkdir(parents=True, exist_ok=True)
+source_dir=f'{Path.cwd()}/partitioning_data/'
+pattern = "*.csv"
+source_pattern = os.path.join(source_dir, pattern)
+files_to_copy = glob.glob(source_pattern)
+
+if not files_to_copy:
+    logger.info(f"No files found matching pattern: {pattern}")
+
+for source_file in files_to_copy:
+    destination_file = os.path.join(working_directory, os.path.basename(source_file))
+    shutil.copy2(source_file, destination_file)
+try:
+    os.chdir(working_directory)
+    logger.info(f"Directory changed to : {os.getcwd()}")
+except FileNotFoundError:
+    logger.info("Error: Directory not found.")
+except PermissionError:
+    logger.info("Error: Permission denied")
+
+checkpoint_folder = run_challenge_experiment(
     aggregation_function=aggregation_function,
     choose_training_collaborators=choose_training_collaborators,
     training_hyper_parameters_for_round=training_hyper_parameters_for_round,
-    include_validation_with_hausdorff=include_validation_with_hausdorff,
     institution_split_csv_filename=institution_split_csv_filename,
     brats_training_data_parent_dir=brats_training_data_parent_dir,
     db_store_rounds=db_store_rounds,
     rounds_to_train=rounds_to_train,
     device=device,
     save_checkpoints=save_checkpoints,
-    restore_from_checkpoint_folder = restore_from_checkpoint_folder)
-
-
-scores_dataframe
+    restore_from_checkpoint_folder = restore_from_checkpoint_folder,
+    include_validation_with_hausdorff=include_validation_with_hausdorff,
+    backend_process = backend_process)
 
 
 # ## Produce NIfTI files for best model outputs on the validation set
 # Now we will produce model outputs to submit to the leader board.
 # 
 # At the end of every experiment, the best model (according to average ET, TC, WT DICE) 
-# is saved to disk at: ~/.local/workspace/checkpoint/\<checkpoint folder\>/best_model.pkl,
+# is saved to disk at: ~/.local/workspace/checkpoint/checkpoint/\<checkpoint folder\>/best_model.pkl,
 # where \<checkpoint folder\> is the one printed to stdout during the start of the 
 # experiment (look for the log entry: "Created experiment folder experiment_##..." above).
-
-
-from fets_challenge import model_outputs_to_disc
-from pathlib import Path
-
-# infer participant home folder
-home = str(Path.home())
 
 # you will need to specify the correct experiment folder and the parent directory for
 # the data you want to run inference over (assumed to be the experiment that just completed)
 
-#checkpoint_folder='experiment_1'
 #data_path = </PATH/TO/CHALLENGE_VALIDATION_DATA>
-data_path = '/home/brats/MICCAI_FeTS2022_ValidationData'
+data_path = '/raid/datasets/FeTS22/MICCAI_FeTS2022_ValidationData'
 validation_csv_filename = 'validation.csv'
 
 # you can keep these the same if you wish
-final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'best_model.pkl')
+if checkpoint_folder is not None:
+    final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'best_model.pkl')
+else:
+    exit("No checkpoint folder found. Please provide a valid checkpoint folder. Exiting the experiment without inferencing")
 
 # If the experiment is only run for a single round, use the temp model instead
 if not Path(final_model_path).exists():
-   final_model_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'temp_model.pkl')
+   final_model_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'temp_model.pkl')
 
-outputs_path = os.path.join(home, '.local/workspace/checkpoint', checkpoint_folder, 'model_outputs')
+if not Path(final_model_path).exists():
+    exit("No model found. Please provide a valid checkpoint folder. Exiting the experiment without inferencing")
 
+outputs_path = os.path.join(working_directory, 'checkpoint', checkpoint_folder, 'model_outputs')
 
 # Using this best model, we can now produce NIfTI files for model outputs 
 # using a provided data directory
-
 model_outputs_to_disc(data_path=data_path, 
                       validation_csv=validation_csv_filename,
                       output_path=outputs_path, 
