@@ -59,7 +59,7 @@ It is possible to run the official evaluation pipeline on toy test cases for san
 
 The results and logs from your local test run are located in the `~/.medperf_fets/results` and `~/.medperf_fets/logs` folder, respectively. They can be compared to the test run executed on the organizers' infrastructure to guarantee reproducibility.
 
-During the FeTS Challenge 2022, making a submission on [synapse](https://www.synapse.org/#!Synapse:syn28546456/wiki/617255) triggers a test run through the organizers using the same pipeline. Note that we convert the docker images to singularity on our end. If you would like to run with singularity as well, please ask a question in the [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
+During the FeTS Challenge 2022, making a submission on [synapse](https://www.synapse.org/Synapse:syn28546456/wiki/630620) triggers a test run through the organizers using the same pipeline. Note that we convert the docker images to singularity on our end. If you would like to run with singularity as well, please ask a question in the [forum](https://www.synapse.org/#!Synapse:syn28546456/discussion/default).
 
 Note that the toy test cases are part of the FeTS 2022 training data and the same [data usage agreements](https://www.synapse.org/#!Synapse:syn28546456/wiki/617246) apply.
 

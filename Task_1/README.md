@@ -1,4 +1,4 @@
-# FeTS 2022 Challenge Task 1
+# FeTS 2022/24 Challenge Task 1
 Task 1 (**"Federated Training"**) aims at effective weight aggregation methods for the creation of a consensus model given a pre-defined segmentation algorithm for training, while also (optionally) accounting for network outages.
 
 Please ask any additional questions in our discussion pages on our github site and we will try to update this README.md as we identify confusions/gaps in our explanations and instructions.
@@ -16,7 +16,7 @@ Please ask any additional questions in our discussion pages on our github site a
 
 ### Instructions --- IMPORTANT
 
-1. Register for the FeTS 2022 Challenge [here](https://www.synapse.org/#!Synapse:syn28546456/wiki/617093) and submit a data request.
+1. Register for the FeTS 2022 Challenge [here](https://www.synapse.org/Synapse:syn54079892/wiki/626845) and submit a data request.
 2. ```git clone https://github.com/FETS-AI/Challenge.git```
 3. ```cd Challenge/Task_1```
 4. ```git lfs pull```

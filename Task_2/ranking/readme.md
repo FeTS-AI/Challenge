@@ -1,5 +1,7 @@
 # Task 2 Ranking
 
+>Update: We also implemented a Python-based version in the [paper analysis folder](../../paper_analysis/plots_task2.py), which gives identical results. This part is kept in case you are interested in the full challengeR reports.
+
 This is an implementation of the ranking method described on the [challenge website](https://www.synapse.org/#!Synapse:syn28546456/wiki/617245). To run this on your computer, you need to install R and the challengeR toolkit, as described in their [repository](https://github.com/wiesenfa/challengeR/#installation). The script `compute_ranking.R` should be invoked by
 ```
 Rscript compute_ranking.R data_path [report_save_dir]
