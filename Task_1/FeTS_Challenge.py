@@ -14,7 +14,7 @@
 
 import os
 import numpy as np
-
+from pathlib import Path
 from fets_challenge import run_challenge_experiment
 
 
@@ -524,12 +524,17 @@ include_validation_with_hausdorff=True # IF SET TO FALSE WHOLE CODE RUNS SEGMENT
 # other partitionings to test your changes for generalization to multiple partitionings.
 #institution_split_csv_filename = 'partitioning_1.csv'
 #institution_split_csv_filename = 'partitioning_1.csv'
+
+
+# Dynamically get working directory or environment variable
+data_root = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_TrainingData'
 institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/partitioning_2.csv' 
-institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/sanity_partitioning.csv' # a small subset for sanity checks and debugging. Comment out to run the actual challenge partition.
+institution_split_csv_filename = data_root / 'sanity_partitioning.csv'
+
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData'
-brats_training_data_parent_dir = '/home/locolinux2/datasets/MICCAI_FeTS2022_Resized'
+data_root = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_Resized'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -582,7 +587,6 @@ scores_dataframe
 
 
 from fets_challenge import model_outputs_to_disc
-from pathlib import Path
 
 # infer participant home folder
 home = str(Path.home())

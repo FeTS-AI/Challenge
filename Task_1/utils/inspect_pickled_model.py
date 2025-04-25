@@ -1,7 +1,9 @@
 import pickle
+from pathlib import Path
 
-# Path to the pickle file
-pickle_file_path = '/home/locolinux2/.local/workspace/checkpoint/experiment_109/best_model.pkl'
+# Construct path relative to current working directory
+pickle_file_path = Path.cwd() / '.local' / 'workspace' / 'checkpoint' / 'experiment_109' / 'best_model.pkl'
+
 
 # Function to load and inspect the pickle file
 def load_pickle(file_path):
