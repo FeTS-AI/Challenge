@@ -8,10 +8,10 @@ from copy import deepcopy
 import numpy as np
 import torch as pt
 
-from openfl.utilities import split_tensor_dict_for_holdouts
+from openfl.utilities.split import split_tensor_dict_for_holdouts
 from openfl.utilities import TensorKey
 
-from openfl.federated.task.runner_fets_challenge import *
+from openfl.federated.task.runner_gandlf import *
 
 from GANDLF.compute.generic             import create_pytorch_objects
 from GANDLF.compute.training_loop       import train_network
@@ -19,7 +19,7 @@ from GANDLF.compute.forward_pass        import validate_network
 
 from . import TRAINING_HPARAMS
 
-class FeTSChallengeModel(FeTSChallengeTaskRunner):
+class FeTSChallengeModel(GaNDLFTaskRunner):
     """FeTSChallenge Model class for Federated Learning."""
 
     def validate(self, col_name, round_num, input_tensor_dict,

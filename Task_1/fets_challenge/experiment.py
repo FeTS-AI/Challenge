@@ -4,6 +4,7 @@
 # Patrick Foley (Intel), Micah Sheller (Intel)
 
 import os
+from sys import path, exit
 import warnings
 from collections import namedtuple
 from copy import copy
@@ -13,12 +14,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from openfl.utilities import split_tensor_dict_for_holdouts, TensorKey
+from openfl.utilities import TensorKey
+from openfl.utilities.split import split_tensor_dict_for_holdouts
 from openfl.protocols import utils
 import openfl.native as fx
 import torch
 
-from .gandlf_csv_adapter import construct_fedsim_csv, extract_csv_partitions
+from .gandlf_csv_adapter import construct_fedsim_csv, extract_segmentation_csv_partitions, extract_classification_csv_partitions 
 from .custom_aggregation_wrapper import CustomAggregationWrapper
 from .checkpoint_utils import setup_checkpoint_folder, save_checkpoint, load_checkpoint
 
@@ -214,6 +216,28 @@ def compute_times_per_collaborator(collaborator_names,
         times[col] = time
     return times
 
+def split_tensor_dict_into_floats_and_non_floats(tensor_dict):
+    """
+    Split the tensor dictionary into float and non-floating point values.
+
+    Splits a tensor dictionary into float and non-float values.
+
+    Args:
+        tensor_dict: A dictionary of tensors
+
+    Returns:
+        Two dictionaries: the first contains all of the floating point tensors
+        and the second contains all of the non-floating point tensors
+
+    """
+    float_dict = {}
+    non_float_dict = {}
+    for k, v in tensor_dict.items():
+        if np.issubdtype(v.dtype, np.floating):
+            float_dict[k] = v
+        else:
+            non_float_dict[k] = v
+    return float_dict, non_float_dict
 
 def get_metric(metric, fl_round, tensor_db):
     metric_name = metric
@@ -231,12 +255,10 @@ def run_challenge_experiment(aggregation_function,
                              save_checkpoints=True,
                              restore_from_checkpoint_folder=None, 
                              include_validation_with_hausdorff=True,
-                             use_pretrained_model=True):
+                             use_pretrained_model=False):
 
     fx.init('fets_challenge_workspace')
     
-    from sys import path, exit
-
     file = Path(__file__).resolve()
     root = file.parent.resolve()  # interface root, containing command modules
     work = Path.cwd().resolve()
@@ -264,9 +286,10 @@ def run_challenge_experiment(aggregation_function,
 
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
+    print("****Debugging: plan is", plan)
 
     if not include_validation_with_hausdorff:
-        plan.config['task_runner']['settings']['fets_config_dict']['metrics'] = ['dice','dice_per_label']
+        plan.config['task_runner']['settings']['gandlf_config']['metrics'] = ['dice','dice_per_label']
 
     # Overwrite collaborator names
     plan.authorized_cols = collaborator_names
@@ -274,15 +297,29 @@ def run_challenge_experiment(aggregation_function,
     for col in collaborator_names:
         plan.cols_data_paths[col] = col
 
+        # # Update the plan's data loader template for each collaborator
+        # correct_template = "openfl.federated.data.loader_gandlf"
+        
+        # # Modify the plan's data loader settings if needed
+        # plan.config['data_loader'][col] = correct_template
+
     # get the data loaders for each collaborator
     collaborator_data_loaders = {col: copy(plan).get_data_loader(col) for col in collaborator_names}
 
-    transformed_csv_dict = extract_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    # Check the task type and use the appropriate function
+    if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'segmentation':
+        transformed_csv_dict = extract_segmentation_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    elif plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'classification':
+        transformed_csv_dict = extract_classification_csv_partitions(os.path.join(work, 'gandlf_paths.csv'))
+    else:
+        raise ValueError("Invalid problem type. Expected 'segmentation' or 'classification'.")
+
     # get the task runner, passing the first data loader
     for col in collaborator_data_loaders:
         #Insert logic to serialize train / val CSVs here
-        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, 'seg_test_train.csv'))
-        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, 'seg_test_val.csv'))
+        os.makedirs(os.path.join(work, col), exist_ok=True)
+        transformed_csv_dict[col]['train'].to_csv(os.path.join(work, col, 'train.csv'))
+        transformed_csv_dict[col]['val'].to_csv(os.path.join(work, col, 'valid.csv'))
         task_runner = copy(plan).get_task_runner(collaborator_data_loaders[col])
 
     if use_pretrained_model:
@@ -327,27 +364,27 @@ def run_challenge_experiment(aggregation_function,
     logger.info('Starting experiment')
 
     total_simulated_time = 0
-    best_dice = -1.0
-    best_dice_over_time_auc = 0
+    best_score = -1.0
+    best_score_over_time_auc = 0
 
     # results dataframe data
     experiment_results = {
             'round':[],
             'time': [],
             'convergence_score': [],
-            'round_dice': [],
-            'dice_label_0': [],
-            'dice_label_1': [],
-            'dice_label_2': [],
-            'dice_label_4': [],
+            'round_score': [],
+            # 'dice_label_0': [],
+            # 'dice_label_1': [],
+            # 'dice_label_2': [],
+            # 'dice_label_4': [],
         }
-    if include_validation_with_hausdorff:
-        experiment_results.update({
-            'hausdorff95_label_0': [],
-            'hausdorff95_label_1': [],
-            'hausdorff95_label_2': [],
-            'hausdorff95_label_4': [],
-            })
+    # if include_validation_with_hausdorff:
+    #     experiment_results.update({
+    #         'hausdorff95_label_0': [],
+    #         'hausdorff95_label_1': [],
+    #         'hausdorff95_label_2': [],
+    #         'hausdorff95_label_4': [],
+    #         })
         
 
     if restore_from_checkpoint_folder is None:
@@ -364,7 +401,7 @@ def run_challenge_experiment(aggregation_function,
             checkpoint_folder = restore_from_checkpoint_folder
 
             [loaded_collaborator_names, starting_round_num, collaborator_time_stats, 
-             total_simulated_time, best_dice, best_dice_over_time_auc, 
+             total_simulated_time, best_score, best_score_over_time_auc, 
              collaborators_chosen_each_round, collaborator_times_per_round, 
              experiment_results, summary, agg_tensor_db] = state
 
@@ -402,6 +439,7 @@ def run_challenge_experiment(aggregation_function,
                                                       collaborator_times_per_round)
 
         learning_rate, epochs_per_round = hparams
+        # learning_rate, epochs_per_round, _ = hparams #IrfanKhan
 
         if (epochs_per_round is None):
             logger.warning('Hyper-parameter function warning: function returned None for "epochs_per_round". Setting "epochs_per_round" to 1')
@@ -464,30 +502,53 @@ def run_challenge_experiment(aggregation_function,
 
        
         # get the performace validation scores for the round
-        round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
-        dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
-        dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
-        dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
-        dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
-        if include_validation_with_hausdorff:
-            hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
-            hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
-            hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
-            hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
+        if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'segmentation':
+            round_dice = get_metric('valid_dice', round_num, aggregator.tensor_db)
+            # dice_label_0 = get_metric('valid_dice_per_label_0', round_num, aggregator.tensor_db)
+            # dice_label_1 = get_metric('valid_dice_per_label_1', round_num, aggregator.tensor_db)
+            # dice_label_2 = get_metric('valid_dice_per_label_2', round_num, aggregator.tensor_db)
+            # dice_label_4 = get_metric('valid_dice_per_label_4', round_num, aggregator.tensor_db)
+            # if include_validation_with_hausdorff:
+            #     hausdorff95_label_0 = get_metric('valid_hd95_per_label_0', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_1 = get_metric('valid_hd95_per_label_1', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_2 = get_metric('valid_hd95_per_label_2', round_num, aggregator.tensor_db)
+            #     hausdorff95_label_4 = get_metric('valid_hd95_per_label_4', round_num, aggregator.tensor_db)
 
-        # update best score
-        if best_dice < round_dice:
-            best_dice = round_dice
-            # Set the weights for the final model
-            if round_num == 0:
-                # here the initial model was validated (temp model does not exist)
-                logger.info(f'Skipping best model saving to disk as it is a random initialization.')
-            elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
-                raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
-            else:
-                # here the temp model was the one validated
-                shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
-                logger.info(f'Saved model with best average binary DICE: {best_dice} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+            # update best score
+            if best_score < round_dice:
+                best_score = round_dice
+                # Set the weights for the final model
+                if round_num == 0:
+                    # here the initial model was validated (temp model does not exist)
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+                else:
+                    # here the temp model was the one validated
+                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl',dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary DICE: {best_score} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+
+            round_score = round_dice
+
+        if plan.config['task_runner']['settings']['gandlf_config']['problem_type'] == 'classification':
+            round_f1 = get_metric('valid_f1', round_num, aggregator.tensor_db)
+
+            # update best score
+            if best_score < round_f1:
+                best_score = round_f1
+                # Set the weights for the final model
+                if round_num == 0:
+                    # here the initial model was validated (temp model does not exist)
+                    logger.info(f'Skipping best model saving to disk as it is a random initialization.')
+                elif not os.path.exists(f'checkpoint/{checkpoint_folder}/temp_model.pkl'):
+                    raise ValueError(f'Expected temporary model at: checkpoint/{checkpoint_folder}/temp_model.pkl to exist but it was not found.')
+                else:
+                    # here the temp model was the one validated
+                    shutil.copyfile(src=f'checkpoint/{checkpoint_folder}/temp_model.pkl', dst=f'checkpoint/{checkpoint_folder}/best_model.pkl')
+                    logger.info(f'Saved model with best average binary F1: {best_score} to ~/.local/workspace/checkpoint/{checkpoint_folder}/best_model.pkl')
+
+            round_score = round_f1
+
 
         ## RUN VALIDATION ON INTERMEDIATE CONSENSUS MODEL
         # set the task_runner data loader
@@ -495,41 +556,41 @@ def run_challenge_experiment(aggregation_function,
 
         ## CONVERGENCE METRIC COMPUTATION
         # update the auc score
-        best_dice_over_time_auc += best_dice * round_time
+        best_score_over_time_auc += best_score * round_time
 
         # project the auc score as remaining time * best dice
         # this projection assumes that the current best score is carried forward for the entire week
-        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_dice + best_dice_over_time_auc
+        projected_auc = (MAX_SIMULATION_TIME - total_simulated_time) * best_score + best_score_over_time_auc
         projected_auc /= MAX_SIMULATION_TIME
 
         # End of round summary
         summary = '"**** END OF ROUND {} SUMMARY *****"'.format(round_num)
         summary += "\n\tSimulation Time: {} minutes".format(round(total_simulated_time / 60, 2))
         summary += "\n\t(Projected) Convergence Score: {}".format(projected_auc)
-        summary += "\n\tDICE Label 0: {}".format(dice_label_0)
-        summary += "\n\tDICE Label 1: {}".format(dice_label_1)
-        summary += "\n\tDICE Label 2: {}".format(dice_label_2)
-        summary += "\n\tDICE Label 4: {}".format(dice_label_4)
-        if include_validation_with_hausdorff:
-            summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
-            summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
-            summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
-            summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
+        # summary += "\n\tDICE Label 0: {}".format(dice_label_0)
+        # summary += "\n\tDICE Label 1: {}".format(dice_label_1)
+        # summary += "\n\tDICE Label 2: {}".format(dice_label_2)
+        # summary += "\n\tDICE Label 4: {}".format(dice_label_4)
+        # if include_validation_with_hausdorff:
+        #     summary += "\n\tHausdorff95 Label 0: {}".format(hausdorff95_label_0)
+        #     summary += "\n\tHausdorff95 Label 1: {}".format(hausdorff95_label_1)
+        #     summary += "\n\tHausdorff95 Label 2: {}".format(hausdorff95_label_2)
+        #     summary += "\n\tHausdorff95 Label 4: {}".format(hausdorff95_label_4)
 
 
         experiment_results['round'].append(round_num)
         experiment_results['time'].append(total_simulated_time)
         experiment_results['convergence_score'].append(projected_auc)
-        experiment_results['round_dice'].append(round_dice)
-        experiment_results['dice_label_0'].append(dice_label_0)
-        experiment_results['dice_label_1'].append(dice_label_1)
-        experiment_results['dice_label_2'].append(dice_label_2)
-        experiment_results['dice_label_4'].append(dice_label_4)
-        if include_validation_with_hausdorff:
-            experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
-            experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
-            experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
-            experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
+        experiment_results['round_score'].append(round_score)
+        # experiment_results['dice_label_0'].append(dice_label_0)
+        # experiment_results['dice_label_1'].append(dice_label_1)
+        # experiment_results['dice_label_2'].append(dice_label_2)
+        # experiment_results['dice_label_4'].append(dice_label_4)
+        # if include_validation_with_hausdorff:
+        #     experiment_results['hausdorff95_label_0'].append(hausdorff95_label_0)
+        #     experiment_results['hausdorff95_label_1'].append(hausdorff95_label_1)
+        #     experiment_results['hausdorff95_label_2'].append(hausdorff95_label_2)
+        #     experiment_results['hausdorff95_label_4'].append(hausdorff95_label_4)
         logger.info(summary)
 
         if save_checkpoints:
@@ -538,8 +599,8 @@ def run_challenge_experiment(aggregation_function,
             save_checkpoint(checkpoint_folder, aggregator, 
                             collaborator_names, collaborators,
                             round_num, collaborator_time_stats, 
-                            total_simulated_time, best_dice, 
-                            best_dice_over_time_auc, 
+                            total_simulated_time, best_score, 
+                            best_score_over_time_auc, 
                             collaborators_chosen_each_round, 
                             collaborator_times_per_round,
                             experiment_results,

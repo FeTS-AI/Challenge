@@ -28,11 +28,11 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        'openfl @ git+https://github.com/intel/openfl.git@f4b28d710e2be31cdfa7487fdb4e8cb3a1387a5f',
-        'GANDLF @ git+https://github.com/CBICA/GaNDLF.git@e4d0d4bfdf4076130817001a98dfb90189956278',
+        'openfl @ git+https://github.com/securefederatedai/openfl.git@84cff481b1ec8c92fc88c759ab5b8b6f950f9ca4',
+        'GANDLF @ git+https://github.com/mlcommons/GaNDLF.git@0.1.0',
         'fets @ git+https://github.com/FETS-AI/Algorithms.git@fets_challenge',
     ],
-    python_requires='>=3.6, <3.9',
+    python_requires='>=3.9',
     classifiers=[
         'Environment :: Console',
         # How mature is this project? Common values are
@@ -46,9 +46,6 @@ setup(
         'License :: OSI Approved :: FETS UI License',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3'
     ]
 )

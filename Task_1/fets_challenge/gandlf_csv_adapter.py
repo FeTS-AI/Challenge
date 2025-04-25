@@ -5,7 +5,7 @@
 # Patrick Foley (Intel)
 # Micah Sheller (Intel)
 
-import os
+import os, sys
 
 import numpy as np
 import pandas as pd
@@ -108,6 +108,7 @@ def construct_fedsim_csv(pardir,
                          split_subdirs_path, 
                          percent_train, 
                          federated_simulation_train_val_csv_path,
+                         problem_type,
                          training_and_validation=True):
     
     # read in the csv defining the subdirs per institution
@@ -159,15 +160,56 @@ def construct_fedsim_csv(pardir,
                                       train_val_headers=train_val_headers, 
                                       numeric_header_name_to_key=numeric_header_name_to_key)
     else: 
-        df =  construct_validation_dataframe(paths_dict=paths_dict, 
-                                             val_headers=val_headers, 
-                                             numeric_header_name_to_key=numeric_header_name_to_key)
+        if problem_type == "classification":
+            df =  construct_validation_dataframe_classification(paths_dict=paths_dict, 
+                                                val_headers=val_headers, 
+                                                numeric_header_name_to_key=numeric_header_name_to_key)        
+        elif problem_type == "segmentation":
+            df =  construct_validation_dataframe_segmentation(paths_dict=paths_dict, 
+                                                val_headers=val_headers, 
+                                                numeric_header_name_to_key=numeric_header_name_to_key)
         return df
 
     df.to_csv(federated_simulation_train_val_csv_path, index=False)
     return list(sorted(df.Partition_ID.unique()))
 
-def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_to_key):
+
+def construct_validation_dataframe_classification(paths_dict, val_headers, numeric_header_name_to_key):
+    # Define a mapping for channel labels
+    channel_label_mapping = {
+        'Channel_0': 0,  # t1
+        'Channel_1': 1,  # t2
+        'Channel_2': 2,  # flair
+        'Channel_3': 3   # t1ce
+    }
+    
+    # Initialize list to store rows in the new format
+    rows = []
+
+    for inst_name, inst_paths_dict in paths_dict.items():
+        for usage in ['train', 'val']:
+            for key_to_fpath in inst_paths_dict[usage]:
+                subject_id = key_to_fpath['Subject_ID']
+                
+                # Iterate through each channel to create a separate row for each
+                for header in val_headers:
+                    if header != 0:  # Skip SubjectID, as it's handled separately
+                        channel_key = f"Channel_{header - 1}"  # Map header to 'Channel_0', 'Channel_1', etc.
+                        channel_path = key_to_fpath[numeric_header_name_to_key[header]]
+                        value_to_predict = channel_label_mapping[channel_key]
+                        
+                        # Append a row with the final headers format
+                        rows.append({
+                            'SubjectID': subject_id,
+                            'Channel': channel_path,
+                            'ValueToPredict': value_to_predict
+                        })
+    
+    # Convert the list of rows into a DataFrame
+    df = pd.DataFrame(rows, dtype=str)
+    return df
+
+def construct_validation_dataframe_segmentation(paths_dict, val_headers, numeric_header_name_to_key):
     
     # intitialize columns
     columns = {str(header): [] for header in val_headers}
@@ -193,9 +235,7 @@ def construct_validation_dataframe(paths_dict, val_headers, numeric_header_name_
                        '4': 'Channel_3'})
     return df
 
-
-
-def extract_csv_partitions(csv_path):
+def extract_segmentation_csv_partitions(csv_path):
     df = pd.read_csv(csv_path)
     df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
                        '2': 'Channel_1', '3': 'Channel_2', 
@@ -210,5 +250,70 @@ def extract_csv_partitions(csv_path):
         transformed_csv_dict[str(col)]['val'] = \
                 df[(df['Partition_ID'] == col) & (df['TrainOrVal'] == 'val')].drop(columns=['TrainOrVal','Partition_ID'])
 
+        # Prints for easy debugging
+        # print(f"\n=== Sample of Partition {col} - Train Data ===")
+        # transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+
+        # print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        # transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+
     return transformed_csv_dict
 
+def extract_classification_csv_partitions(csv_path):
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={'0': 'SubjectID', '1': 'Channel_0', 
+                            '2': 'Channel_1', '3': 'Channel_2', 
+                            '4': 'Channel_3', '5': 'Label'})
+    
+    cols = df['Partition_ID'].unique()
+    transformed_csv_dict = {}
+
+    # Define a mapping for channel labels
+    channel_label_mapping = {
+        'Channel_0': 0,  # t1
+        'Channel_1': 1,  # t2
+        'Channel_2': 2,  # flair
+        'Channel_3': 3   # t1ce
+    }
+
+    for col in cols:
+        transformed_csv_dict[str(col)] = {}
+
+        # Create lists for train and val partitions
+        train_list = []
+        val_list = []
+
+        # Filter rows by partition
+        for _, row in df[df['Partition_ID'] == col].iterrows():
+            subject_id = row['SubjectID']
+            train_or_val = row['TrainOrVal']
+
+            # Iterate through the channels (up to 4 channels)
+            for channel_name, channel_index in channel_label_mapping.items():
+                channel_path = row[channel_name]
+
+                # Create a row for the CSV output with the correct channel label
+                row_dict = {
+                    'SubjectID': subject_id,
+                    'Channel': channel_path,
+                    'ValueToPredict': channel_index  # Correct label (0-3 for t1, t2, flair, t1ce)
+                }
+
+                # Add row to the correct partition list
+                if train_or_val == 'train':
+                    train_list.append(row_dict)
+                else:
+                    val_list.append(row_dict)
+                    
+        # Convert lists to DataFrames for train and val
+        transformed_csv_dict[str(col)]['train'] = pd.DataFrame(train_list)
+        transformed_csv_dict[str(col)]['val'] = pd.DataFrame(val_list)
+
+        # # Prints for easy debugging
+        print(f"\n=== Sample of Partition {col} - Train Data ===")
+        transformed_csv_dict[str(col)]['train'].head(10).to_csv(sys.stdout, index=False)
+        
+        print(f"\n=== Sample of Partition {col} - Validation Data ===")
+        transformed_csv_dict[str(col)]['val'].head(10).to_csv(sys.stdout, index=False)
+
+    return transformed_csv_dict

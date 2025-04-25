@@ -71,7 +71,7 @@ def get_binarized_and_belief(array, threshold=0.5):
     
     return binarized, belief
 
-def generate_validation_csv(data_path, validation_csv_filename, working_dir):
+def generate_validation_csv(data_path, validation_csv_filename, working_dir, problem_type):
     """
     Create the validation CSV to be consumed by the FeTSChallengeTaskRunner
     """
@@ -80,8 +80,10 @@ def generate_validation_csv(data_path, validation_csv_filename, working_dir):
                               validation_csv_path,
                               0.0,
                               'placeholder',
-                              training_and_validation=False)
-    validation_csv_dict.to_csv(os.path.join(working_dir, 'validation_paths.csv'),index=False)
+                              training_and_validation=False,
+                              problem_type=problem_type)
+    os.makedirs(os.path.join(working_dir, 'inference_col'), exist_ok=True)
+    validation_csv_dict.to_csv(os.path.join(working_dir, 'inference_col', 'valid.csv'),index=False)
 
 def replace_initializations(done_replacing, array, mask, replacement_value, initialization_value):
     """
@@ -204,6 +206,7 @@ def model_outputs_to_disc(data_path,
                           validation_csv,
                           output_path, 
                           native_model_path,
+                          problem_type,
                           outputtag='',
                           device='cpu'):
 
@@ -218,7 +221,7 @@ def model_outputs_to_disc(data_path,
     path.append(str(root))
     path.insert(0, str(work))
 
-    generate_validation_csv(data_path,validation_csv, working_dir=work)
+    generate_validation_csv(data_path,validation_csv, working_dir=work, problem_type=problem_type)
     
     overrides = {
         'task_runner.settings.device': device,
@@ -228,12 +231,13 @@ def model_outputs_to_disc(data_path,
     
     # Update the plan if necessary
     plan = fx.update_plan(overrides)
-    plan.config['task_runner']['settings']['fets_config_dict']['save_output'] = True
-    plan.config['task_runner']['settings']['fets_config_dict']['output_dir'] = output_path
+    plan.config['task_runner']['settings']['gandlf_config']['save_output'] = True
+    plan.config['task_runner']['settings']['gandlf_config']['output_dir'] = output_path
 
     # overwrite datapath value for a single 'InferenceCol' collaborator
-    plan.cols_data_paths['InferenceCol'] = data_path
-    
+    # plan.cols_data_paths['InferenceCol'] = data_path
+    plan.cols_data_paths['InferenceCol'] = 'inference_col'
+
     # get the inference data loader
     data_loader = copy(plan).get_data_loader('InferenceCol')
 

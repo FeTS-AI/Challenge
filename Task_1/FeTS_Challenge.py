@@ -14,7 +14,7 @@
 
 import os
 import numpy as np
-
+from pathlib import Path
 from fets_challenge import run_challenge_experiment
 
 
@@ -518,15 +518,23 @@ training_hyper_parameters_for_round = constant_hyper_parameters
 # to those you specify immediately above. Changing the below value to False will change 
 # this fact, excluding the three hausdorff measurements. As hausdorff distance is 
 # expensive to compute, excluding them will speed up your experiments.
-include_validation_with_hausdorff=True
+include_validation_with_hausdorff=True # IF SET TO FALSE WHOLE CODE RUNS SEGMENTATION FOR SOME REASON
 
 # We encourage participants to experiment with partitioning_1 and partitioning_2, as well as to create
 # other partitionings to test your changes for generalization to multiple partitionings.
 #institution_split_csv_filename = 'partitioning_1.csv'
-institution_split_csv_filename = 'small_split.csv'
+#institution_split_csv_filename = 'partitioning_1.csv'
+
+
+# Dynamically get working directory or environment variable
+data_root = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_TrainingData'
+institution_split_csv_filename = '/home/locolinux2/datasets/MICCAI_FeTS2022_TrainingData/partitioning_2.csv' 
+institution_split_csv_filename = data_root / 'sanity_partitioning.csv'
+
 
 # change this to point to the parent directory of the data
-brats_training_data_parent_dir = '/raid/datasets/FeTS22/MICCAI_FeTS2022_TrainingData'
+data_root = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_TrainingData'
+brats_training_data_parent_dir = Path.cwd() / 'datasets' / 'MICCAI_FeTS2022_Resized'
 
 # increase this if you need a longer history for your algorithms
 # decrease this if you need to reduce system RAM consumption
@@ -537,7 +545,7 @@ device = 'cpu'
 
 # you'll want to increase this most likely. You can set it as high as you like, 
 # however, the experiment will exit once the simulated time exceeds one week. 
-rounds_to_train = 5
+rounds_to_train = 20
 
 # (bool) Determines whether checkpoints should be saved during the experiment. 
 # The checkpoints can grow quite large (5-10GB) so only the latest will be saved when this parameter is enabled
@@ -579,7 +587,6 @@ scores_dataframe
 
 
 from fets_challenge import model_outputs_to_disc
-from pathlib import Path
 
 # infer participant home folder
 home = str(Path.home())
