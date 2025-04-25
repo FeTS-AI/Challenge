@@ -1,8 +1,9 @@
 import pickle
 from pathlib import Path
 
-# Construct path relative to current working directory
-pickle_file_path = Path.cwd() / '.local' / 'workspace' / 'checkpoint' / 'experiment_109' / 'best_model.pkl'
+experiment_number = 109 # change to your experiment number
+
+pickle_file_path = Path.cwd() / '.local' / 'workspace' / 'checkpoint' / f'experiment_{experiment_number}' / 'best_model.pkl'
 
 
 # Function to load and inspect the pickle file
