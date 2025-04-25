@@ -29,7 +29,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'openfl @ git+https://github.com/securefederatedai/openfl.git@84cff481b1ec8c92fc88c759ab5b8b6f950f9ca4',
-        'GANDLF @ git+https://github.com/CBICA/GaNDLF.git@0.1.0',
+        'GANDLF @ git+https://github.com/mlcommons/GaNDLF.git@0.1.0',
         'fets @ git+https://github.com/FETS-AI/Algorithms.git@fets_challenge',
     ],
     python_requires='>=3.9',
